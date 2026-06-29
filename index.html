@@ -917,9 +917,9 @@ async function loadUserInfo() {
 async function loadDriveFiles() {
   showLoading('Loading your Drive files…');
   try {
-    const q = encodeURIComponent("mimeType='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' and trashed=false and 'me' in owners");
+    const q = encodeURIComponent("mimeType='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' and trashed=false");
     const fields = encodeURIComponent('files(id,name,modifiedTime)');
-    const data = await apiGet(`https://www.googleapis.com/drive/v3/files?q=${q}&fields=${fields}&orderBy=modifiedTime+desc`);
+    const data = await apiGet(`https://www.googleapis.com/drive/v3/files?q=${q}&fields=${fields}&orderBy=modifiedTime+desc&includeItemsFromAllDrives=true&supportsAllDrives=true&corpora=user`);
     driveFiles = data.files || [];
 
     fileListEl.innerHTML = '<option value="">— Choose from Google Drive —</option>';
@@ -936,8 +936,9 @@ async function loadDriveFiles() {
       loadBtn.disabled = false;
     }
   } catch(e) {
-    showToast('Failed to load Drive files');
-    console.error(e);
+    fileListEl.innerHTML = `<option value="">Error: ${e.message}</option>`;
+    showToast('Drive error: ' + e.message);
+    console.error('Drive error:', e);
   }
   hideLoading();
 }
