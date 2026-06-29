@@ -2,7 +2,7 @@
 <html lang="en" data-theme="light">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover" />
   <meta name="theme-color" content="#2d7d46" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
@@ -55,8 +55,8 @@
    BASE
 ============================================================ */
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-html{-webkit-text-size-adjust:none;text-size-adjust:none;-webkit-font-smoothing:antialiased}
-body{font-family:var(--font);font-size:var(--base);background:var(--bg);color:var(--text);min-height:100dvh;display:flex;justify-content:center;background-image:radial-gradient(ellipse at 20% 50%, rgba(45,125,70,0.06) 0%, transparent 60%), radial-gradient(ellipse at 80% 20%, rgba(255,215,0,0.04) 0%, transparent 50%);transition:background .3s,color .3s}
+html{-webkit-text-size-adjust:none;text-size-adjust:none;-webkit-font-smoothing:antialiased;overscroll-behavior-y:none}
+body{font-family:var(--font);font-size:var(--base);background:var(--bg);color:var(--text);min-height:100dvh;display:flex;justify-content:center;background-image:radial-gradient(ellipse at 20% 50%, rgba(45,125,70,0.06) 0%, transparent 60%), radial-gradient(ellipse at 80% 20%, rgba(255,215,0,0.04) 0%, transparent 50%);transition:background .3s,color .3s;overscroll-behavior-y:none}
 button{cursor:pointer;font:inherit;color:inherit;background:none;border:none}
 input,select{font:inherit;color:inherit}
 ::selection{background:rgba(45,125,70,.2)}
@@ -127,69 +127,45 @@ input,select{font:inherit;color:inherit}
 /* ============================================================
    SWIPE ZONE (Full height)
 ============================================================ */
-.swipe-zone{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:12px 16px;overflow:hidden;min-height:0}
+/* ============================================================
+   CARD — COMPACT MOBILE OPTIMIZED
+============================================================ */
+.swipe-zone{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:8px 12px 4px;overflow:hidden;min-height:0}
 .empty-state{display:flex;flex-direction:column;align-items:center;text-align:center;padding:40px 20px;color:var(--text-muted)}
 .empty-icon{font-size:48px;margin-bottom:16px}
 .empty-state h3{font-size:var(--lg);font-weight:700;color:var(--text);margin-bottom:8px}
 .empty-state p{font-size:var(--sm);line-height:1.6;max-width:28ch}
-
-/* Card stack */
-.card-stack{position:relative;width:100%;max-width:400px;flex-shrink:0}
-.card-stack::before,.card-stack::after{content:'';position:absolute;inset:0;background:var(--surface);border-radius:var(--r-xl);border:1px solid var(--divider);backdrop-filter:blur(10px)}
-.card-stack::before{transform:rotate(-3deg) translateY(6px);z-index:0;opacity:.4}
-.card-stack::after{transform:rotate(2deg) translateY(3px);z-index:1;opacity:.7}
-
-/* Inventory card — GLASSMORPHISM + SPRING */
-.inv-card{position:relative;z-index:10;background:var(--surface);backdrop-filter:blur(24px) saturate(180%);-webkit-backdrop-filter:blur(24px) saturate(180%);border-radius:var(--r-xl);padding:20px 18px;width:100%;border:1px solid rgba(255,255,255,0.4);box-shadow:var(--shadow-lg);user-select:none;touch-action:pan-y;will-change:transform;max-height:72vh;overflow-y:auto;-webkit-overflow-scrolling:touch;transition:transform 0.5s var(--ease-spring), opacity 0.4s var(--ease-smooth), box-shadow 0.3s ease}
-[data-theme="dark"] .inv-card{border-color:rgba(255,255,255,0.06)}
-.inv-card.dragging{transition:none !important}
-
-/* Swipe indicators */
-.swipe-ind{position:absolute;top:16px;padding:5px 14px;border-radius:var(--r-full);font-size:var(--sm);font-weight:700;opacity:0;pointer-events:none;z-index:20;transition:opacity .1s}
-.swipe-ind.save{right:14px;background:var(--primary-lt);color:var(--primary)}
-.swipe-ind.skip{left:14px;background:var(--danger-lt);color:var(--danger)}
-
-/* Card parts */
-.card-cat-pill{display:inline-flex;align-items:center;gap:4px;background:var(--surface-2);border:1px solid var(--divider);border-radius:var(--r-full);padding:3px 10px;font-size:var(--xs);font-weight:600;color:var(--text-muted);margin-bottom:8px}
-.card-name-row{display:flex;align-items:center;margin-bottom:12px}
-.prod-icon{display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:var(--r-full);color:#fff;font-weight:800;font-size:16px;margin-right:10px;flex-shrink:0;box-shadow:var(--shadow-sm)}
-.card-prod-name{font-size:var(--xl);font-weight:800;line-height:1.2}
-.history-box{background:var(--surface-2);border:1px solid var(--divider);border-radius:var(--r-md);padding:8px 12px;font-size:var(--xs);color:var(--text-muted);margin-bottom:12px;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
-.hist-tag{background:var(--surface);border:1px solid var(--divider);border-radius:var(--r-full);padding:2px 10px;font-size:var(--xs);color:var(--text-muted);white-space:nowrap}
-
-/* Stats */
-.card-stats{display:flex;gap:6px;margin-bottom:12px}
-.stat-chip{flex:1;background:var(--surface-2);border:1px solid var(--divider);border-radius:var(--r-md);padding:8px 10px;text-align:center}
-.stat-label{font-size:10px;color:var(--text-muted);margin-bottom:2px;font-weight:600}
-.stat-val{font-size:var(--base);font-weight:700;font-variant-numeric:tabular-nums}
-
-/* Inputs — Neumorphic inspired */
-.inp-group{display:flex;align-items:center;gap:10px;margin-bottom:8px}
-.inp-label{width:68px;font-size:var(--sm);font-weight:600;color:var(--text-muted);flex-shrink:0}
-.inp-wrap{flex:1;display:flex;align-items:center;background:var(--surface-2);border-radius:var(--r-md);border:2px solid var(--border);transition:border-color .2s,box-shadow .2s}
-.inp-wrap:focus-within{border-color:var(--primary);box-shadow:0 0 0 4px rgba(45,125,70,.1)}
-.stepper-btn{width:40px;height:44px;background:transparent;font-size:18px;font-weight:300;color:var(--text-muted);flex-shrink:0;transition:background .15s;display:flex;align-items:center;justify-content:center}
-.stepper-btn:first-child{border-radius:var(--r-md) 0 0 var(--r-md)}
-.stepper-btn:last-child{border-radius:0 var(--r-md) var(--r-md) 0}
-.stepper-btn:hover{background:rgba(0,0,0,.04);color:var(--text)}
-.stepper-btn:active{background:rgba(0,0,0,.08)}
-.card-input{flex:1;padding:10px 4px;background:transparent;border:none;font-size:var(--lg);font-weight:700;text-align:center;outline:none;font-variant-numeric:tabular-nums;-moz-appearance:textfield;min-width:0}
-.card-input:focus{background:transparent;box-shadow:none}
+.card-stack{position:relative;width:100%;max-width:420px;flex-shrink:0}
+.card-stack::before{content:'';position:absolute;inset:0;background:var(--surface);border-radius:var(--r-xl);border:1px solid var(--divider);transform:rotate(-2.5deg) translateY(5px);z-index:0;opacity:.4}
+.card-stack::after{content:'';position:absolute;inset:0;background:var(--surface);border-radius:var(--r-xl);border:1px solid var(--divider);transform:rotate(1.5deg) translateY(3px);z-index:1;opacity:.65}
+.inv-card{position:relative;z-index:10;background:var(--surface);backdrop-filter:blur(20px) saturate(160%);-webkit-backdrop-filter:blur(20px) saturate(160%);border-radius:var(--r-xl);padding:14px 14px 10px;width:100%;box-shadow:var(--shadow-lg);border:1px solid var(--divider);user-select:none;will-change:transform;overflow:hidden;touch-action:none}
+.inv-card.dragging{transition:none}
+.card-sticky-top{background:var(--surface);padding-bottom:6px;margin-bottom:6px;border-bottom:1px solid var(--divider)}
+.card-cat-pill{display:inline-flex;align-items:center;gap:3px;background:var(--surface-2);border:1px solid var(--divider);border-radius:var(--r-full);padding:2px 8px;font-size:11px;font-weight:600;color:var(--text-muted);margin-bottom:4px}
+.card-name-row{display:flex;align-items:center;gap:8px}
+.prod-icon{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;min-width:30px;border-radius:var(--r-full);color:#fff;font-weight:800;font-size:14px;box-shadow:var(--shadow-sm)}
+.card-prod-name{font-size:clamp(.95rem,4vw,1.2rem);font-weight:800;line-height:1.2;word-break:break-word}
+.card-stats{display:flex;gap:5px;margin-bottom:8px}
+.stat-chip{flex:1;background:var(--surface-2);border:1px solid var(--divider);border-radius:var(--r-md);padding:5px 6px;text-align:center}
+.stat-label{font-size:9px;color:var(--text-muted);margin-bottom:1px;font-weight:600;text-transform:uppercase;letter-spacing:.02em}
+.stat-val{font-size:clamp(.8rem,3.5vw,.95rem);font-weight:700;font-variant-numeric:tabular-nums}
+.inp-row{display:flex;gap:8px;margin-bottom:6px}
+.inp-col{flex:1;display:flex;flex-direction:column;gap:3px}
+.inp-col-label{font-size:10px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.04em;text-align:center}
+.inp-wrap-sm{display:flex;align-items:center;background:var(--surface-2);border:2px solid var(--border);border-radius:var(--r-md);overflow:hidden;transition:border-color .15s}
+.inp-wrap-sm:focus-within{border-color:var(--primary)}
+.stepper-btn{width:32px;height:38px;background:transparent;font-size:18px;font-weight:400;color:var(--text-muted);flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:background .1s;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+.stepper-btn:active{background:var(--surface-off)}
+.card-input{flex:1;min-width:0;padding:6px 2px;background:transparent;border:none;font-size:clamp(1rem,4vw,1.15rem);font-weight:800;text-align:center;outline:none;font-variant-numeric:tabular-nums;-moz-appearance:textfield;color:var(--text)}
 .card-input::-webkit-outer-spin-button,.card-input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
-.cost-preview{font-size:var(--xs);color:var(--text-faint);text-align:right;margin-bottom:14px}
-
-/* Card actions */
-.card-btns{display:flex;gap:8px;margin-top:4px}
-.btn-skip-c{flex:1;padding:13px 0;background:var(--surface-off);border:1px solid var(--divider);border-radius:var(--r-full);font-size:var(--sm);font-weight:700;color:var(--text-muted);transition:background .15s,transform .1s var(--ease-spring)}
-.btn-skip-c:active{transform:scale(.94)}
-.btn-save-c{flex:2;padding:13px 0;background:var(--primary);border-radius:var(--r-full);font-size:var(--sm);font-weight:700;color:#fff;transition:background .15s,transform .1s var(--ease-spring)}
-.btn-save-c:active{transform:scale(.94)}
+.cost-preview{font-size:10px;color:var(--text-faint);text-align:center;margin-bottom:8px}
+.card-btns{display:flex;gap:6px}
+.btn-skip-c{flex:1;padding:10px 0;background:var(--surface-off);border:1px solid var(--divider);border-radius:var(--r-full);font-size:var(--sm);font-weight:700;color:var(--text-muted);touch-action:manipulation}
+.btn-save-c{flex:2;padding:10px 0;background:var(--primary);border-radius:var(--r-full);font-size:var(--sm);font-weight:700;color:#fff;touch-action:manipulation}
 .btn-save-c:hover{background:var(--primary-h)}
+.btn-save-c:active,.btn-skip-c:active{transform:scale(.97)}
+.swipe-hint{display:flex;justify-content:space-between;width:100%;max-width:420px;padding:5px 6px 0;font-size:11px;color:var(--text-faint);font-weight:500}
 
-/* Swipe hint */
-.swipe-hint{display:flex;justify-content:space-between;width:100%;max-width:400px;padding:8px 6px 0;font-size:var(--xs);color:var(--text-faint);font-weight:500}
-
-/* Done card */
 .done-card{background:var(--surface);backdrop-filter:blur(20px);border-radius:var(--r-xl);padding:36px 24px;text-align:center;width:100%;max-width:400px;box-shadow:var(--shadow-md);border:1px solid var(--divider)}
 .done-emoji{font-size:52px;margin-bottom:10px}
 .done-title{font-size:var(--xl);font-weight:800;margin-bottom:6px}
@@ -557,6 +533,17 @@ async function handleTokenResponse(tr){
   await loadDriveFiles();
   showApp();
 }
+// Prevent pull-to-refresh on mobile
+document.addEventListener('touchmove', e => {
+  if (e.touches.length === 1 && !e.target.closest('.cat-filter-bar') && !e.target.closest('.review-view') && !e.target.closest('.summary-view') && !e.target.closest('.modal-sheet')) {
+    // Only prevent if at top of page (the pull-to-refresh gesture)
+    if (window.scrollY === 0 && e.touches[0].clientY > 0) {
+      // Let card dragging handle it, prevent browser refresh
+      e.preventDefault();
+    }
+  }
+}, {passive: false});
+
 window.addEventListener('load', () => {
   tokenClient = google.accounts.oauth2.initTokenClient({
     client_id: GOOGLE_CLIENT_ID, scope: SCOPES, callback: handleTokenResponse
@@ -786,18 +773,35 @@ function renderCard(){
       <div class="inv-card" id="cur-card">
         <span class="swipe-ind save" id="ind-save">✅ Save</span>
         <span class="swipe-ind skip" id="ind-skip">⏭ Skip</span>
-        <div class="card-cat-pill">📁 ${esc(item.category)}</div>
-        <div class="card-name-row">${prodIcon(item.name)}<div class="card-prod-name">${esc(item.name)}</div></div>
-        ${historyHtml(item.name)}
+        <div class="card-sticky-top">
+          <div class="card-cat-pill">📁 ${esc(item.category)}</div>
+          <div class="card-name-row">${prodIcon(item.name)}<div class="card-prod-name">${esc(item.name)}</div></div>
+        </div>
         <div class="card-stats">
-          <div class="stat-chip"><div class="stat-label">Opening</div><div class="stat-val">${item.open}</div></div>
+          <div class="stat-chip"><div class="stat-label">Open</div><div class="stat-val">${item.open}</div></div>
           <div class="stat-chip"><div class="stat-label">Last Close</div><div class="stat-val">${item.close||'—'}</div></div>
           <div class="stat-chip"><div class="stat-label">Price</div><div class="stat-val">$${item.price.toFixed(2)}</div></div>
         </div>
-        <div class="inp-group"><label class="inp-label">📥 Add</label><div class="inp-wrap"><button class="stepper-btn" data-target="inp-add" data-delta="-1">−</button><input class="card-input" type="number" id="inp-add" value="0" min="0" inputmode="numeric" /><button class="stepper-btn" data-target="inp-add" data-delta="1">+</button></div></div>
-        <div class="inp-group"><label class="inp-label">📦 Close</label><div class="inp-wrap"><button class="stepper-btn" data-target="inp-close" data-delta="-1">−</button><input class="card-input" type="number" id="inp-close" value="${item.close}" min="0" inputmode="numeric" /><button class="stepper-btn" data-target="inp-close" data-delta="1">+</button></div></div>
+        <div class="inp-row">
+          <div class="inp-col">
+            <div class="inp-col-label">📥 Add</div>
+            <div class="inp-wrap-sm">
+              <button class="stepper-btn" data-target="inp-add" data-delta="-1" type="button">−</button>
+              <input class="card-input" type="number" id="inp-add" value="0" min="0" inputmode="numeric" pattern="[0-9]*" autocomplete="off" />
+              <button class="stepper-btn" data-target="inp-add" data-delta="1" type="button">+</button>
+            </div>
+          </div>
+          <div class="inp-col">
+            <div class="inp-col-label">📦 Close</div>
+            <div class="inp-wrap-sm">
+              <button class="stepper-btn" data-target="inp-close" data-delta="-1" type="button">−</button>
+              <input class="card-input" type="number" id="inp-close" value="${item.close}" min="0" inputmode="numeric" pattern="[0-9]*" autocomplete="off" />
+              <button class="stepper-btn" data-target="inp-close" data-delta="1" type="button">+</button>
+            </div>
+          </div>
+        </div>
         <div class="cost-preview" id="cost-preview">—</div>
-        <div class="card-btns"><button class="btn-skip-c" id="btn-skip">⬅ Skip</button><button class="btn-save-c" id="btn-save">Save ➡</button></div>
+        <div class="card-btns"><button class="btn-skip-c" id="btn-skip" type="button">⬅ Skip</button><button class="btn-save-c" id="btn-save" type="button">Save ➡</button></div>
       </div>
     </div>
     <div class="swipe-hint"><span>⬅ Skip</span><span>Save ➡</span></div>`;
@@ -834,38 +838,48 @@ function renderCard(){
   document.getElementById('btn-save').addEventListener('click', () => swipeCard('right'));
   document.getElementById('btn-skip').addEventListener('click', () => swipeCard('left'));
 
-  // Drag
-  let startX=0, isDragging=false;
-  const dragStart = x => { if(isProcessing) return; isDragging=true; startX=x; card.classList.add('dragging'); };
-  const dragMove  = x => {
+  // Drag/swipe — horizontal only, skip taps on controls, keep keyboard open
+  let startX=0, startY=0, isDragging=false, isHoriz=false;
+  const IGNORE = new Set(['BUTTON','INPUT','TEXTAREA','SELECT','LABEL']);
+
+  const dragStart = (x, y, tgt) => {
+    if (isProcessing || IGNORE.has(tgt.tagName) || tgt.closest('.stepper-btn')) return;
+    isDragging=true; isHoriz=false; startX=x; startY=y;
+    card.classList.add('dragging');
+  };
+  const dragMove = (x, y) => {
     if (!isDragging) return;
-    const d = x - startX;
-    card.style.transform = `translateX(${d}px) rotate(${d*.04}deg)`;
-    card.style.opacity = String(1 - Math.abs(d)/350);
-    indSave.style.opacity = d > 30 ? String(Math.min(1,(d-30)/60)) : '0';
-    indSkip.style.opacity = d < -30 ? String(Math.min(1,(-d-30)/60)) : '0';
+    const dx=x-startX, dy=y-startY;
+    if (!isHoriz) {
+      if (Math.abs(dx)<5 && Math.abs(dy)<5) return;
+      if (Math.abs(dx)>Math.abs(dy)) isHoriz=true;
+      else { isDragging=false; card.classList.remove('dragging'); return; }
+    }
+    card.style.transform=`translateX(${dx}px) rotate(${dx*.035}deg)`;
+    card.style.opacity=String(1-Math.abs(dx)/350);
+    indSave.style.opacity=dx>30?String(Math.min(1,(dx-30)/60)):'0';
+    indSkip.style.opacity=dx<-30?String(Math.min(1,(-dx-30)/60)):'0';
   };
   const dragEnd = x => {
     if (!isDragging) return;
-    isDragging = false; card.classList.remove('dragging');
-    const d = x - startX;
-    if (d > 80) swipeCard('right');
-    else if (d < -80) swipeCard('left');
+    isDragging=false; isHoriz=false; card.classList.remove('dragging');
+    const d=x-startX;
+    if (d>80) swipeCard('right');
+    else if (d<-80) swipeCard('left');
     else { card.style.transform=''; card.style.opacity='1'; indSave.style.opacity='0'; indSkip.style.opacity='0'; }
   };
-  card.addEventListener('mousedown', e => dragStart(e.clientX));
-  document.addEventListener('mousemove', e => { if(isDragging) dragMove(e.clientX); });
-  document.addEventListener('mouseup', e => dragEnd(e.clientX));
-  card.addEventListener('touchstart', e => dragStart(e.touches[0].clientX), {passive:true});
-  card.addEventListener('touchmove', e => dragMove(e.touches[0].clientX), {passive:true});
-  card.addEventListener('touchend', e => dragEnd(e.changedTouches[0].clientX));
+  card.addEventListener('mousedown', e=>dragStart(e.clientX,e.clientY,e.target));
+  document.addEventListener('mousemove', e=>{ if(isDragging) dragMove(e.clientX,e.clientY); });
+  document.addEventListener('mouseup', e=>dragEnd(e.clientX));
+  card.addEventListener('touchstart', e=>dragStart(e.touches[0].clientX,e.touches[0].clientY,e.target),{passive:true});
+  card.addEventListener('touchmove', e=>{
+    if(isDragging&&isHoriz) e.preventDefault();
+    dragMove(e.touches[0].clientX,e.touches[0].clientY);
+  },{passive:false});
+  card.addEventListener('touchend', e=>dragEnd(e.changedTouches[0].clientX));
 
-  [closeInp, addInp].forEach(inp => {
-    inp.addEventListener('focus', () => setTimeout(() => inp.scrollIntoView({behavior:'smooth',block:'center'}), 350));
-  });
-  if (!('ontouchstart' in window)) closeInp.focus();
-}
-
+  // Focus close input to open keyboard — keep it open across swipes
+  closeInp.focus();
 function swipeCard(direction){
   if (isProcessing) return;
   const card = document.getElementById('cur-card');
@@ -889,7 +903,14 @@ function swipeCard(direction){
   }
   showUndoBar(direction === 'right' ? `✅ "${item.name}" saved` : `⏭ "${item.name}" skipped`);
   autosave();
-  setTimeout(() => { currentIndex++; isProcessing = false; renderCard(); }, 290);
+  setTimeout(() => {
+    currentIndex++;
+    isProcessing = false;
+    renderCard();
+    // Keep keyboard open on next card
+    const nextInp = document.getElementById('inp-close');
+    if (nextInp) { nextInp.focus(); nextInp.select(); }
+  }, 290);
 }
 
 /* ============================================================
