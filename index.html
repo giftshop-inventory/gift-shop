@@ -17,18 +17,18 @@
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <style>
 /* ============================================================
-   DESIGN TOKENS
+   DESIGN TOKENS (Upgraded with Spring & Glass)
 ============================================================ */
 :root,[data-theme="light"]{
-  --bg:#f7f6f2; --surface:#fff; --surface-2:#f9f8f5; --surface-off:#f0ede8;
+  --bg:#f7f6f2; --surface:rgba(255,255,255,0.72); --surface-2:#f9f8f5; --surface-off:#f0ede8;
   --divider:#e0dbd5; --border:#d4d0c9;
   --text:#1f1c18; --text-muted:#6b6258; --text-faint:#b0a89e;
   --primary:#2d7d46; --primary-h:#1f5f34; --primary-lt:#e6f4ea;
   --danger:#c62828; --danger-lt:#fce8e6;
   --warn:#e65100; --warn-lt:#fff3e0;
-  --shadow-sm:0 1px 3px rgba(0,0,0,.06),0 1px 2px rgba(0,0,0,.04);
-  --shadow-md:0 4px 16px rgba(0,0,0,.08),0 2px 6px rgba(0,0,0,.04);
-  --shadow-lg:0 12px 40px rgba(0,0,0,.12),0 4px 12px rgba(0,0,0,.06);
+  --shadow-sm:0 2px 8px rgba(0,0,0,.04),0 1px 3px rgba(0,0,0,.06);
+  --shadow-md:0 8px 30px rgba(0,0,0,.08);
+  --shadow-lg:0 20px 60px rgba(0,0,0,.10);
   --r-sm:8px;--r-md:14px;--r-lg:20px;--r-xl:28px;--r-full:9999px;
   --font:'Inter',system-ui,sans-serif;
   --xs:clamp(.75rem,.7rem + .25vw,.875rem);
@@ -36,17 +36,19 @@
   --base:clamp(1rem,.95rem + .25vw,1.125rem);
   --lg:clamp(1.125rem,1rem + .6vw,1.375rem);
   --xl:clamp(1.375rem,1.1rem + 1vw,1.75rem);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-smooth: cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 [data-theme="dark"]{
-  --bg:#13120f;--surface:#1c1b18;--surface-2:#232118;--surface-off:#2a2823;
-  --divider:#2d2b26;--border:#363330;
-  --text:#e8e5df;--text-muted:#8a8278;--text-faint:#5a5650;
-  --primary:#4caf6e;--primary-h:#3a9458;--primary-lt:#1a2f1e;
-  --danger:#ef5350;--danger-lt:#2a1a1a;
-  --warn:#ffb74d;--warn-lt:#2a1e0a;
-  --shadow-sm:0 1px 3px rgba(0,0,0,.3);
-  --shadow-md:0 4px 16px rgba(0,0,0,.4);
-  --shadow-lg:0 12px 40px rgba(0,0,0,.5);
+  --bg:#13120f; --surface:rgba(28,27,24,0.85); --surface-2:#232118; --surface-off:#2a2823;
+  --divider:#2d2b26; --border:#363330;
+  --text:#e8e5df; --text-muted:#8a8278; --text-faint:#5a5650;
+  --primary:#4caf6e; --primary-h:#3a9458; --primary-lt:#1a2f1e;
+  --danger:#ef5350; --danger-lt:#2a1a1a;
+  --warn:#ffb74d; --warn-lt:#2a1e0a;
+  --shadow-sm:0 2px 8px rgba(0,0,0,.3);
+  --shadow-md:0 8px 30px rgba(0,0,0,.4);
+  --shadow-lg:0 20px 60px rgba(0,0,0,.5);
 }
 
 /* ============================================================
@@ -54,7 +56,7 @@
 ============================================================ */
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html{-webkit-text-size-adjust:none;text-size-adjust:none;-webkit-font-smoothing:antialiased}
-body{font-family:var(--font);font-size:var(--base);background:var(--bg);color:var(--text);min-height:100dvh;display:flex;justify-content:center;transition:background .3s,color .3s}
+body{font-family:var(--font);font-size:var(--base);background:var(--bg);color:var(--text);min-height:100dvh;display:flex;justify-content:center;background-image:radial-gradient(ellipse at 20% 50%, rgba(45,125,70,0.06) 0%, transparent 60%), radial-gradient(ellipse at 80% 20%, rgba(255,215,0,0.04) 0%, transparent 50%);transition:background .3s,color .3s}
 button{cursor:pointer;font:inherit;color:inherit;background:none;border:none}
 input,select{font:inherit;color:inherit}
 ::selection{background:rgba(45,125,70,.2)}
@@ -70,76 +72,62 @@ input,select{font:inherit;color:inherit}
    LOGIN
 ============================================================ */
 #login-screen{align-items:center;justify-content:center;min-height:100dvh;padding:24px;background:var(--bg)}
-.login-card{background:var(--surface);border-radius:var(--r-xl);padding:44px 32px;text-align:center;width:100%;max-width:380px;box-shadow:var(--shadow-lg);border:1px solid var(--divider)}
+.login-card{background:var(--surface);backdrop-filter:blur(20px) saturate(180%);-webkit-backdrop-filter:blur(20px) saturate(180%);border:1px solid rgba(255,255,255,0.3);border-radius:var(--r-xl);padding:44px 32px;text-align:center;width:100%;max-width:380px;box-shadow:var(--shadow-lg)}
+[data-theme="dark"] .login-card{border-color:rgba(255,255,255,0.05)}
 .login-logo{font-size:56px;margin-bottom:8px;line-height:1}
 .login-title{font-size:var(--xl);font-weight:800;margin-bottom:6px}
 .login-sub{font-size:var(--sm);color:var(--text-muted);margin-bottom:32px;line-height:1.5}
-.btn-google{display:flex;align-items:center;justify-content:center;gap:10px;background:var(--text);color:var(--bg);border-radius:var(--r-full);width:100%;padding:16px 24px;font-size:var(--base);font-weight:700;transition:opacity .15s,transform .15s}
-.btn-google:hover{opacity:.85;transform:scale(1.02)}
-.btn-google:active{transform:scale(.98)}
+.btn-google{display:flex;align-items:center;justify-content:center;gap:10px;background:var(--text);color:var(--bg);border-radius:var(--r-full);width:100%;padding:16px 24px;font-size:var(--base);font-weight:700;transition:transform .15s var(--ease-spring), opacity .15s ease}
+.btn-google:active{transform:scale(.94)}
 .login-note{margin-top:20px;font-size:var(--xs);color:var(--text-faint)}
 
 /* ============================================================
-   HEADER
+   HEADER (Upgraded - File name in center)
 ============================================================ */
-.app-header{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:var(--surface);border-bottom:1px solid var(--divider);position:sticky;top:0;z-index:100}
-.header-brand{font-size:var(--lg);font-weight:800}
-.header-actions{display:flex;align-items:center;gap:6px}
-.header-avatar{width:32px;height:32px;border-radius:var(--r-full);object-fit:cover;border:2px solid var(--divider)}
+.app-header{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:var(--surface);backdrop-filter:blur(20px) saturate(180%);-webkit-backdrop-filter:blur(20px) saturate(180%);border-bottom:1px solid var(--divider);position:sticky;top:0;z-index:100}
+[data-theme="dark"] .app-header{background:rgba(28,27,24,0.85)}
+.header-brand{font-size:var(--lg);font-weight:800;flex-shrink:0}
+.header-file{display:flex;align-items:center;gap:6px;font-size:var(--sm);font-weight:600;color:var(--text-muted);padding:4px 12px;background:var(--surface-2);border-radius:var(--r-full);border:1px solid var(--divider);cursor:pointer;transition:background .15s;max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.header-file:hover{background:var(--surface-off)}
+.header-file .arrow{font-size:10px;margin-left:2px}
+.header-actions{display:flex;align-items:center;gap:4px;flex-shrink:0}
+.header-avatar{width:30px;height:30px;border-radius:var(--r-full);object-fit:cover;border:2px solid var(--divider)}
 .btn-icon{width:34px;height:34px;border-radius:var(--r-full);display:flex;align-items:center;justify-content:center;background:var(--surface-2);border:1px solid var(--divider);font-size:15px;transition:background .15s}
 .btn-icon:hover{background:var(--surface-off)}
+.btn-icon:active{transform:scale(.92)}
+
+/* File Dropdown (hidden by default, shown on header click) */
+.file-dropdown{position:absolute;top:calc(100% + 8px);left:50%;transform:translateX(-50%);background:var(--surface);backdrop-filter:blur(20px);border:1px solid var(--divider);border-radius:var(--r-lg);padding:12px;width:calc(100% - 32px);max-width:340px;box-shadow:var(--shadow-lg);z-index:200;display:none}
+.file-dropdown.open{display:block}
+.file-dropdown .file-select{width:100%;padding:10px 12px;background:var(--surface-2);border:1px solid var(--border);border-radius:var(--r-md);font-size:var(--sm);outline:none}
+.file-dropdown .btn-load{width:100%;margin-top:8px;padding:10px;background:var(--primary);color:#fff;border-radius:var(--r-md);font-weight:700;transition:background .15s}
+.file-dropdown .btn-load:hover{background:var(--primary-h)}
+.file-dropdown .btn-load:disabled{opacity:.5}
 
 /* ============================================================
-   TAB BAR (bottom navigation)
+   CATEGORY FILTER (Compact floating pill row)
 ============================================================ */
-.tab-bar{display:flex;background:var(--surface);border-top:1px solid var(--divider);padding:0 4px 4px}
-.tab-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 4px;border-radius:var(--r-md);font-size:10px;font-weight:600;color:var(--text-faint);transition:color .15s,background .15s}
-.tab-btn.active{color:var(--primary)}
-.tab-btn svg,.tab-btn .tab-icon{font-size:20px;line-height:1}
-.tab-btn:hover{background:var(--surface-2)}
-
-/* ============================================================
-   VIEWS (inside app screen)
-============================================================ */
-.view{display:none;flex:1;flex-direction:column;overflow:hidden}
-.view.active{display:flex}
-
-/* ============================================================
-   FILE SECTION
-============================================================ */
-.file-section{padding:12px 16px;background:var(--surface);border-bottom:1px solid var(--divider)}
-.file-section-label{font-size:var(--xs);font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px}
-.file-select-row{display:flex;gap:8px}
-.file-select{flex:1;padding:10px 32px 10px 12px;background:var(--surface-2);border:1px solid var(--border);border-radius:var(--r-md);font-size:var(--sm);outline:none;transition:border-color .15s;appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236b6258' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center}
-.file-select:focus{border-color:var(--primary)}
-.btn-load{padding:10px 16px;background:var(--primary);color:#fff;border-radius:var(--r-md);font-size:var(--sm);font-weight:700;white-space:nowrap;transition:background .15s,transform .1s}
-.btn-load:hover{background:var(--primary-h)}
-.btn-load:active{transform:scale(.97)}
-.btn-load:disabled{opacity:.5;cursor:not-allowed;transform:none}
-
-/* ============================================================
-   CATEGORY FILTER BAR
-============================================================ */
-.cat-filter-bar{display:flex;gap:6px;padding:10px 16px;background:var(--surface);border-bottom:1px solid var(--divider);overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
-.cat-filter-bar::-webkit-scrollbar{display:none}
-.cat-chip{display:flex;align-items:center;gap:4px;padding:6px 12px;background:var(--surface-2);border:1px solid var(--border);border-radius:var(--r-full);font-size:var(--xs);font-weight:600;white-space:nowrap;color:var(--text-muted);transition:all .15s;cursor:pointer;flex-shrink:0}
+.cat-filter-wrap{padding:8px 16px;background:var(--surface);backdrop-filter:blur(20px);border-bottom:1px solid var(--divider);display:flex;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;align-items:center}
+.cat-filter-wrap::-webkit-scrollbar{display:none}
+.cat-chip{display:flex;align-items:center;gap:4px;padding:4px 12px;background:var(--surface-2);border:1px solid var(--border);border-radius:var(--r-full);font-size:var(--xs);font-weight:600;white-space:nowrap;color:var(--text-muted);transition:all .15s;cursor:pointer;flex-shrink:0}
 .cat-chip.active{background:var(--primary-lt);border-color:var(--primary);color:var(--primary)}
+.cat-chip:active{transform:scale(.94)}
 
-/* ============================================================
-   SEARCH BAR
-============================================================ */
-.search-bar-wrap{padding:10px 16px;background:var(--surface);border-bottom:1px solid var(--divider)}
+/* Search toggle in header */
+.search-toggle{font-size:16px;padding:4px 8px;color:var(--text-muted);cursor:pointer}
+.search-bar-wrap{padding:6px 16px 10px;background:var(--surface);border-bottom:1px solid var(--divider);display:none}
+.search-bar-wrap.open{display:block}
 .search-input-wrap{position:relative;display:flex;align-items:center}
-.search-icon{position:absolute;left:12px;color:var(--text-faint);pointer-events:none}
-.search-input{width:100%;padding:10px 12px 10px 36px;background:var(--surface-2);border:1px solid var(--border);border-radius:var(--r-full);font-size:var(--sm);outline:none;transition:border-color .15s}
+.search-icon{position:absolute;left:12px;color:var(--text-faint)}
+.search-input{width:100%;padding:8px 12px 8px 36px;background:var(--surface-2);border:1px solid var(--border);border-radius:var(--r-full);font-size:var(--sm);outline:none;transition:border-color .15s}
 .search-input:focus{border-color:var(--primary)}
-.search-clear{position:absolute;right:10px;background:var(--surface-off);border:none;border-radius:var(--r-full);width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--text-muted);cursor:pointer;display:none}
+.search-clear{position:absolute;right:10px;background:var(--surface-off);border-radius:var(--r-full);width:20px;height:20px;display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--text-muted);cursor:pointer;display:none}
 .search-clear.show{display:flex}
 
 /* ============================================================
-   SWIPE ZONE
+   SWIPE ZONE (Full height)
 ============================================================ */
-.swipe-zone{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:12px 16px 8px;overflow-y:auto;min-height:0}
+.swipe-zone{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:12px 16px;overflow:hidden;min-height:0}
 .empty-state{display:flex;flex-direction:column;align-items:center;text-align:center;padding:40px 20px;color:var(--text-muted)}
 .empty-icon{font-size:48px;margin-bottom:16px}
 .empty-state h3{font-size:var(--lg);font-weight:700;color:var(--text);margin-bottom:8px}
@@ -147,13 +135,14 @@ input,select{font:inherit;color:inherit}
 
 /* Card stack */
 .card-stack{position:relative;width:100%;max-width:400px;flex-shrink:0}
-.card-stack::before,.card-stack::after{content:'';position:absolute;inset:0;background:var(--surface);border-radius:var(--r-xl);border:1px solid var(--divider)}
-.card-stack::before{transform:rotate(-3deg) translateY(6px);z-index:0;opacity:.5}
-.card-stack::after{transform:rotate(2deg) translateY(3px);z-index:1;opacity:.75}
+.card-stack::before,.card-stack::after{content:'';position:absolute;inset:0;background:var(--surface);border-radius:var(--r-xl);border:1px solid var(--divider);backdrop-filter:blur(10px)}
+.card-stack::before{transform:rotate(-3deg) translateY(6px);z-index:0;opacity:.4}
+.card-stack::after{transform:rotate(2deg) translateY(3px);z-index:1;opacity:.7}
 
-/* Inventory card */
-.inv-card{position:relative;z-index:10;background:var(--surface);border-radius:var(--r-xl);padding:20px 18px;width:100%;box-shadow:var(--shadow-lg);border:1px solid var(--divider);user-select:none;touch-action:pan-y;will-change:transform;max-height:72vh;overflow-y:auto;-webkit-overflow-scrolling:touch}
-.inv-card.dragging{transition:none}
+/* Inventory card — GLASSMORPHISM + SPRING */
+.inv-card{position:relative;z-index:10;background:var(--surface);backdrop-filter:blur(24px) saturate(180%);-webkit-backdrop-filter:blur(24px) saturate(180%);border-radius:var(--r-xl);padding:20px 18px;width:100%;border:1px solid rgba(255,255,255,0.4);box-shadow:var(--shadow-lg);user-select:none;touch-action:pan-y;will-change:transform;max-height:72vh;overflow-y:auto;-webkit-overflow-scrolling:touch;transition:transform 0.5s var(--ease-spring), opacity 0.4s var(--ease-smooth), box-shadow 0.3s ease}
+[data-theme="dark"] .inv-card{border-color:rgba(255,255,255,0.06)}
+.inv-card.dragging{transition:none !important}
 
 /* Swipe indicators */
 .swipe-ind{position:absolute;top:16px;padding:5px 14px;border-radius:var(--r-full);font-size:var(--sm);font-weight:700;opacity:0;pointer-events:none;z-index:20;transition:opacity .1s}
@@ -166,7 +155,6 @@ input,select{font:inherit;color:inherit}
 .prod-icon{display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:var(--r-full);color:#fff;font-weight:800;font-size:16px;margin-right:10px;flex-shrink:0;box-shadow:var(--shadow-sm)}
 .card-prod-name{font-size:var(--xl);font-weight:800;line-height:1.2}
 .history-box{background:var(--surface-2);border:1px solid var(--divider);border-radius:var(--r-md);padding:8px 12px;font-size:var(--xs);color:var(--text-muted);margin-bottom:12px;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
-.history-box strong{color:var(--text)}
 .hist-tag{background:var(--surface);border:1px solid var(--divider);border-radius:var(--r-full);padding:2px 10px;font-size:var(--xs);color:var(--text-muted);white-space:nowrap}
 
 /* Stats */
@@ -175,128 +163,135 @@ input,select{font:inherit;color:inherit}
 .stat-label{font-size:10px;color:var(--text-muted);margin-bottom:2px;font-weight:600}
 .stat-val{font-size:var(--base);font-weight:700;font-variant-numeric:tabular-nums}
 
-/* Inputs */
+/* Inputs — Neumorphic inspired */
 .inp-group{display:flex;align-items:center;gap:10px;margin-bottom:8px}
 .inp-label{width:68px;font-size:var(--sm);font-weight:600;color:var(--text-muted);flex-shrink:0}
-.inp-wrap{flex:1;display:flex;align-items:center;gap:0}
-.stepper-btn{width:38px;height:44px;background:var(--surface-2);border:2px solid var(--border);font-size:18px;font-weight:700;color:var(--text-muted);flex-shrink:0;transition:background .1s,color .1s;display:flex;align-items:center;justify-content:center}
-.stepper-btn:first-child{border-radius:var(--r-md) 0 0 var(--r-md);border-right:none}
-.stepper-btn:last-child{border-radius:0 var(--r-md) var(--r-md) 0;border-left:none}
-.stepper-btn:hover{background:var(--surface-off);color:var(--text)}
-.stepper-btn:active{background:var(--divider)}
-.card-input{flex:1;padding:10px 8px;background:var(--surface-2);border:2px solid var(--border);border-top:2px solid var(--border);border-bottom:2px solid var(--border);border-left:none;border-right:none;font-size:var(--lg);font-weight:700;text-align:center;outline:none;transition:border-color .15s,background .15s;font-variant-numeric:tabular-nums;-moz-appearance:textfield;min-width:0}
+.inp-wrap{flex:1;display:flex;align-items:center;background:var(--surface-2);border-radius:var(--r-md);border:2px solid var(--border);transition:border-color .2s,box-shadow .2s}
+.inp-wrap:focus-within{border-color:var(--primary);box-shadow:0 0 0 4px rgba(45,125,70,.1)}
+.stepper-btn{width:40px;height:44px;background:transparent;font-size:18px;font-weight:300;color:var(--text-muted);flex-shrink:0;transition:background .15s;display:flex;align-items:center;justify-content:center}
+.stepper-btn:first-child{border-radius:var(--r-md) 0 0 var(--r-md)}
+.stepper-btn:last-child{border-radius:0 var(--r-md) var(--r-md) 0}
+.stepper-btn:hover{background:rgba(0,0,0,.04);color:var(--text)}
+.stepper-btn:active{background:rgba(0,0,0,.08)}
+.card-input{flex:1;padding:10px 4px;background:transparent;border:none;font-size:var(--lg);font-weight:700;text-align:center;outline:none;font-variant-numeric:tabular-nums;-moz-appearance:textfield;min-width:0}
+.card-input:focus{background:transparent;box-shadow:none}
 .card-input::-webkit-outer-spin-button,.card-input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
-.card-input:focus{border-color:var(--primary);background:var(--surface);border-top-color:var(--primary);border-bottom-color:var(--primary)}
 .cost-preview{font-size:var(--xs);color:var(--text-faint);text-align:right;margin-bottom:14px}
 
 /* Card actions */
 .card-btns{display:flex;gap:8px;margin-top:4px}
-.btn-skip-c{flex:1;padding:13px 0;background:var(--surface-off);border:1px solid var(--divider);border-radius:var(--r-full);font-size:var(--sm);font-weight:700;color:var(--text-muted);transition:background .15s}
-.btn-skip-c:hover{background:var(--divider)}
-.btn-save-c{flex:2;padding:13px 0;background:var(--primary);border-radius:var(--r-full);font-size:var(--sm);font-weight:700;color:#fff;transition:background .15s}
+.btn-skip-c{flex:1;padding:13px 0;background:var(--surface-off);border:1px solid var(--divider);border-radius:var(--r-full);font-size:var(--sm);font-weight:700;color:var(--text-muted);transition:background .15s,transform .1s var(--ease-spring)}
+.btn-skip-c:active{transform:scale(.94)}
+.btn-save-c{flex:2;padding:13px 0;background:var(--primary);border-radius:var(--r-full);font-size:var(--sm);font-weight:700;color:#fff;transition:background .15s,transform .1s var(--ease-spring)}
+.btn-save-c:active{transform:scale(.94)}
 .btn-save-c:hover{background:var(--primary-h)}
-.btn-save-c:active,.btn-skip-c:active{transform:scale(.97)}
 
 /* Swipe hint */
 .swipe-hint{display:flex;justify-content:space-between;width:100%;max-width:400px;padding:8px 6px 0;font-size:var(--xs);color:var(--text-faint);font-weight:500}
 
 /* Done card */
-.done-card{background:var(--surface);border-radius:var(--r-xl);padding:36px 24px;text-align:center;width:100%;max-width:400px;box-shadow:var(--shadow-md);border:1px solid var(--divider)}
+.done-card{background:var(--surface);backdrop-filter:blur(20px);border-radius:var(--r-xl);padding:36px 24px;text-align:center;width:100%;max-width:400px;box-shadow:var(--shadow-md);border:1px solid var(--divider)}
 .done-emoji{font-size:52px;margin-bottom:10px}
 .done-title{font-size:var(--xl);font-weight:800;margin-bottom:6px}
 .done-sub{font-size:var(--sm);color:var(--text-muted);margin-bottom:20px}
 .btn-restart{padding:12px 24px;background:var(--surface-off);border:1px solid var(--divider);border-radius:var(--r-full);font-size:var(--sm);font-weight:700;transition:background .15s}
-.btn-restart:hover{background:var(--divider)}
+.btn-restart:active{transform:scale(.94)}
 
 /* ============================================================
    PROGRESS
 ============================================================ */
-.progress-section{padding:8px 16px 6px;background:var(--surface);border-top:1px solid var(--divider)}
+.progress-section{padding:8px 16px 6px;background:var(--surface);backdrop-filter:blur(20px);border-top:1px solid var(--divider)}
 .progress-track{height:6px;background:var(--surface-off);border-radius:var(--r-full);overflow:hidden}
-.progress-fill{height:100%;background:linear-gradient(90deg,var(--primary),#4caf6e);border-radius:var(--r-full);transition:width .5s cubic-bezier(.25,.46,.45,.94);width:0%}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--primary),#4caf6e);border-radius:var(--r-full);transition:width .5s var(--ease-smooth);width:0%}
 .progress-label{display:block;text-align:center;font-size:var(--xs);font-weight:600;color:var(--text-muted);margin-top:4px}
 
 /* ============================================================
-   ACTION BAR
+   FLOATING ACTION BAR (Overlay style)
 ============================================================ */
-.action-bar{padding:10px 16px 14px;background:var(--surface);border-top:1px solid var(--divider)}
-.btn-generate{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:15px;background:var(--text);color:var(--bg);border-radius:var(--r-full);font-size:var(--base);font-weight:700;transition:opacity .15s,transform .1s}
-.btn-generate:hover:not(:disabled){opacity:.85}
-.btn-generate:active:not(:disabled){transform:scale(.98)}
-.btn-generate:disabled{opacity:.35;cursor:not-allowed}
-.report-result{margin-top:8px;padding:10px 14px;border-radius:var(--r-md);font-size:var(--sm);font-weight:500;text-align:center;display:none}
+.action-bar{position:sticky;bottom:60px;padding:8px 20px 16px;background:transparent;pointer-events:none;z-index:50}
+.action-bar .btn-generate{pointer-events:auto;display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:16px;background:var(--text);color:var(--bg);border-radius:var(--r-full);font-size:var(--base);font-weight:700;box-shadow:0 8px 32px rgba(0,0,0,.15);border:1px solid rgba(255,255,255,.1);transition:transform .3s var(--ease-spring), box-shadow .3s ease, opacity .3s ease}
+.action-bar .btn-generate:not(:disabled):active{transform:scale(.96)}
+.action-bar .btn-generate:disabled{opacity:.35;cursor:not-allowed}
+.report-result{margin-top:8px;padding:10px 14px;border-radius:var(--r-md);font-size:var(--sm);font-weight:500;text-align:center;display:none;pointer-events:auto}
 .report-result.success{display:block;background:var(--primary-lt);color:var(--primary)}
 .report-result.error{display:block;background:var(--danger-lt);color:var(--danger)}
 .report-result a{color:inherit;font-weight:700;text-decoration:underline}
 
 /* ============================================================
-   REVIEW VIEW
+   TAB BAR (iOS style glass + pill)
 ============================================================ */
-.review-view{flex:1;overflow-y:auto;padding:12px 16px}
-.review-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;padding:0 2px}
-.review-count{font-size:var(--sm);font-weight:700;color:var(--text)}
-.review-sub{font-size:var(--xs);color:var(--text-muted)}
-.review-item{display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--divider);border-radius:var(--r-lg);padding:12px 14px;margin-bottom:8px;transition:border-color .15s}
-.review-item:hover{border-color:var(--border)}
-.review-item-icon{width:36px;height:36px;border-radius:var(--r-full);color:#fff;font-weight:800;font-size:15px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
-.review-item-info{flex:1;min-width:0}
-.review-item-name{font-size:var(--sm);font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.review-item-cat{font-size:var(--xs);color:var(--text-muted)}
-.review-item-val{display:flex;flex-direction:column;align-items:flex-end;gap:2px}
-.review-val-close{font-size:var(--base);font-weight:800;color:var(--text);font-variant-numeric:tabular-nums}
-.review-val-add{font-size:var(--xs);color:var(--text-muted)}
-.btn-edit-review{padding:5px 12px;background:var(--surface-2);border:1px solid var(--divider);border-radius:var(--r-full);font-size:var(--xs);font-weight:600;color:var(--text-muted);flex-shrink:0;transition:background .15s}
-.btn-edit-review:hover{background:var(--surface-off)}
-.review-empty{text-align:center;padding:40px 20px;color:var(--text-muted);font-size:var(--sm)}
-
-/* Edit modal */
-.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);backdrop-filter:blur(4px);z-index:500;display:flex;align-items:flex-end;justify-content:center}
-.modal-overlay.hidden{display:none}
-.modal-sheet{background:var(--surface);border-radius:var(--r-xl) var(--r-xl) 0 0;padding:24px 20px 32px;width:100%;max-width:480px;box-shadow:var(--shadow-lg)}
-.modal-handle{width:40px;height:4px;background:var(--divider);border-radius:var(--r-full);margin:0 auto 20px}
-.modal-title{font-size:var(--lg);font-weight:800;margin-bottom:4px}
-.modal-sub{font-size:var(--sm);color:var(--text-muted);margin-bottom:20px}
-.modal-inp-group{display:flex;align-items:center;gap:10px;margin-bottom:12px}
-.modal-inp-label{width:72px;font-size:var(--sm);font-weight:600;color:var(--text-muted)}
-.modal-inp{flex:1;padding:12px 14px;background:var(--surface-2);border:2px solid var(--border);border-radius:var(--r-md);font-size:var(--lg);font-weight:700;outline:none;transition:border-color .15s;font-variant-numeric:tabular-nums}
-.modal-inp:focus{border-color:var(--primary)}
-.modal-btns{display:flex;gap:8px;margin-top:16px}
-.btn-modal-cancel{flex:1;padding:13px;background:var(--surface-off);border:1px solid var(--divider);border-radius:var(--r-full);font-size:var(--sm);font-weight:700;color:var(--text-muted)}
-.btn-modal-save{flex:2;padding:13px;background:var(--primary);border-radius:var(--r-full);font-size:var(--sm);font-weight:700;color:#fff;transition:background .15s}
-.btn-modal-save:hover{background:var(--primary-h)}
+.tab-bar{display:flex;background:var(--surface);backdrop-filter:blur(30px) saturate(180%);-webkit-backdrop-filter:blur(30px) saturate(180%);border-top:1px solid rgba(0,0,0,.05);padding:4px 4px env(safe-area-inset-bottom);position:sticky;bottom:0;z-index:100}
+[data-theme="dark"] .tab-bar{background:rgba(28,27,24,0.85);border-top-color:rgba(255,255,255,.05)}
+.tab-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 4px;border-radius:var(--r-md);font-size:10px;font-weight:600;color:var(--text-faint);transition:color .2s;position:relative}
+.tab-btn .tab-icon{font-size:20px;line-height:1}
+.tab-btn.active{color:var(--primary)}
+.tab-btn.active::after{content:'';position:absolute;top:2px;left:50%;transform:translateX(-50%);width:4px;height:4px;border-radius:50%;background:var(--primary)}
 
 /* ============================================================
-   SUMMARY VIEW
+   REVIEW / SUMMARY (Unchanged but styled with glass)
 ============================================================ */
-.summary-view{flex:1;overflow-y:auto;padding:12px 16px 20px}
+.review-view,.summary-view{flex:1;overflow-y:auto;padding:12px 16px;background:var(--bg)}
+.review-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.review-count{font-size:var(--sm);font-weight:700}
+.review-sub{font-size:var(--xs);color:var(--text-muted)}
+.review-item{display:flex;align-items:center;gap:10px;background:var(--surface);backdrop-filter:blur(10px);border:1px solid var(--divider);border-radius:var(--r-lg);padding:12px 14px;margin-bottom:8px}
+.review-item-icon{width:36px;height:36px;border-radius:var(--r-full);color:#fff;font-weight:800;font-size:15px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.review-item-info{flex:1;min-width:0}
+.review-item-name{font-size:var(--sm);font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.review-item-cat{font-size:var(--xs);color:var(--text-muted)}
+.review-item-val{display:flex;flex-direction:column;align-items:flex-end;gap:2px}
+.review-val-close{font-size:var(--base);font-weight:800;font-variant-numeric:tabular-nums}
+.review-val-add{font-size:var(--xs);color:var(--text-muted)}
+.btn-edit-review{padding:5px 12px;background:var(--surface-2);border:1px solid var(--divider);border-radius:var(--r-full);font-size:var(--xs);font-weight:600;transition:background .15s}
+.btn-edit-review:active{transform:scale(.92)}
+.review-empty{text-align:center;padding:40px 20px;color:var(--text-muted)}
+
+/* Summary */
 .summary-kpi-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
-.kpi-card{background:var(--surface);border:1px solid var(--divider);border-radius:var(--r-lg);padding:14px;text-align:center}
-.kpi-label{font-size:var(--xs);font-weight:600;color:var(--text-muted);margin-bottom:4px}
-.kpi-value{font-size:var(--xl);font-weight:800;color:var(--text);font-variant-numeric:tabular-nums}
+.kpi-card{background:var(--surface);backdrop-filter:blur(10px);border:1px solid var(--divider);border-radius:var(--r-lg);padding:14px;text-align:center}
+.kpi-label{font-size:var(--xs);font-weight:600;color:var(--text-muted)}
+.kpi-value{font-size:var(--xl);font-weight:800;font-variant-numeric:tabular-nums}
 .kpi-value.green{color:var(--primary)}
-.summary-section-label{font-size:var(--xs);font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-muted);margin-bottom:8px;margin-top:14px}
+.summary-section-label{font-size:var(--xs);font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-muted);margin:14px 0 8px}
 .summary-item{display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--divider);border-radius:var(--r-md);padding:10px 12px;margin-bottom:6px}
-.summary-item-name{flex:1;font-size:var(--sm);font-weight:600;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.summary-item-name{flex:1;font-size:var(--sm);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .summary-item-val{font-size:var(--sm);font-weight:800;font-variant-numeric:tabular-nums;color:var(--primary)}
-.btn-generate-summary{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:15px;background:var(--text);color:var(--bg);border-radius:var(--r-full);font-size:var(--base);font-weight:700;margin-top:16px;transition:opacity .15s}
-.btn-generate-summary:hover:not(:disabled){opacity:.85}
+.btn-generate-summary{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:15px;background:var(--text);color:var(--bg);border-radius:var(--r-full);font-size:var(--base);font-weight:700;margin-top:16px;transition:opacity .15s,transform .1s var(--ease-spring)}
+.btn-generate-summary:active:not(:disabled){transform:scale(.96)}
 .btn-generate-summary:disabled{opacity:.35;cursor:not-allowed}
 .result-banner{margin-top:10px;padding:10px 14px;border-radius:var(--r-md);font-size:var(--sm);font-weight:500;text-align:center;display:none}
 .result-banner.success{display:block;background:var(--primary-lt);color:var(--primary)}
 .result-banner.error{display:block;background:var(--danger-lt);color:var(--danger)}
 .result-banner a{color:inherit;font-weight:700;text-decoration:underline}
 
+/* Modal */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);backdrop-filter:blur(4px);z-index:500;display:flex;align-items:flex-end;justify-content:center}
+.modal-overlay.hidden{display:none}
+.modal-sheet{background:var(--surface);border-radius:var(--r-xl) var(--r-xl) 0 0;padding:24px 20px 32px;width:100%;max-width:480px;box-shadow:var(--shadow-lg)}
+.modal-handle{width:40px;height:4px;background:var(--divider);border-radius:var(--r-full);margin:0 auto 20px}
+.modal-title{font-size:var(--lg);font-weight:800}
+.modal-sub{font-size:var(--sm);color:var(--text-muted);margin-bottom:20px}
+.modal-inp-group{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.modal-inp-label{width:72px;font-size:var(--sm);font-weight:600;color:var(--text-muted)}
+.modal-inp{flex:1;padding:12px 14px;background:var(--surface-2);border:2px solid var(--border);border-radius:var(--r-md);font-size:var(--lg);font-weight:700;outline:none}
+.modal-inp:focus{border-color:var(--primary)}
+.modal-btns{display:flex;gap:8px;margin-top:16px}
+.btn-modal-cancel{flex:1;padding:13px;background:var(--surface-off);border:1px solid var(--divider);border-radius:var(--r-full);font-weight:700;color:var(--text-muted)}
+.btn-modal-save{flex:2;padding:13px;background:var(--primary);border-radius:var(--r-full);font-weight:700;color:#fff}
+.btn-modal-save:active{transform:scale(.94)}
+
 /* Resume banner */
-.resume-banner{display:flex;align-items:center;gap:10px;background:var(--warn-lt);border:1px solid var(--warn);border-radius:var(--r-md);padding:10px 14px;margin:10px 16px 0;font-size:var(--sm)}
+.resume-banner{display:flex;align-items:center;gap:10px;background:var(--warn-lt);border:1px solid var(--warn);border-radius:var(--r-md);padding:10px 14px;margin:8px 16px 0;font-size:var(--sm)}
 .resume-banner.hidden{display:none}
 .resume-text{flex:1;color:var(--warn);font-weight:600}
 .btn-resume{padding:6px 14px;background:var(--warn);color:#fff;border-radius:var(--r-full);font-size:var(--xs);font-weight:700}
+.btn-resume:active{transform:scale(.92)}
 .btn-resume-dismiss{font-size:18px;color:var(--warn);padding:0 4px}
 
-/* Undo toast */
+/* Undo bar */
 .undo-bar{position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--text);color:var(--bg);padding:10px 16px;border-radius:var(--r-full);font-size:var(--sm);font-weight:600;display:flex;align-items:center;gap:12px;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:400;white-space:nowrap;box-shadow:var(--shadow-md)}
 .undo-bar.show{opacity:1;transform:translateX(-50%) translateY(0);pointer-events:auto}
-.btn-undo{color:var(--primary);font-weight:800;font-size:var(--sm)}
+.btn-undo{color:var(--primary);font-weight:800}
 [data-theme="dark"] .btn-undo{color:#4caf6e}
 
 /* Toast */
@@ -315,22 +310,12 @@ input,select{font:inherit;color:inherit}
 .confetti-piece{position:fixed;pointer-events:none;z-index:900;animation:cfall 1.5s ease-in forwards;border-radius:2px}
 @keyframes cfall{0%{opacity:1;transform:translateY(0) rotate(0deg)}100%{opacity:0;transform:translateY(80vh) rotate(720deg)}}
 
-/* ============================================================
-   RESPONSIVE
-============================================================ */
-@media(max-width:360px){
-  .inv-card{padding:16px 14px}
-  .card-prod-name{font-size:var(--lg)}
-  .stepper-btn{width:32px}
-}
-@media(min-width:500px){
-  .swipe-zone{padding:16px 20px 10px}
-}
+/* Responsive */
+@media(max-width:360px){.inv-card{padding:16px 14px}.stepper-btn{width:32px}}
+@media(min-width:500px){.swipe-zone{padding:20px}}
 
 /* PWA safe area */
-@supports(padding:env(safe-area-inset-bottom)){
-  .tab-bar{padding-bottom:calc(4px + env(safe-area-inset-bottom))}
-}
+@supports(padding:env(safe-area-inset-bottom)){.tab-bar{padding-bottom:calc(4px + env(safe-area-inset-bottom))}}
   </style>
 </head>
 <body>
@@ -338,10 +323,7 @@ input,select{font:inherit;color:inherit}
 
   <!-- LOADING -->
   <div class="loading-overlay hidden" id="loading-overlay">
-    <div class="loading-box">
-      <div class="spinner"></div>
-      <div class="loading-text" id="loading-text">Loading…</div>
-    </div>
+    <div class="loading-box"><div class="spinner"></div><div class="loading-text" id="loading-text">Loading…</div></div>
   </div>
 
   <!-- TOAST -->
@@ -359,26 +341,15 @@ input,select{font:inherit;color:inherit}
       <div class="modal-handle"></div>
       <div class="modal-title" id="modal-title">Edit Item</div>
       <div class="modal-sub" id="modal-sub">Update closing count</div>
-      <div class="modal-inp-group">
-        <label class="modal-inp-label">📥 Add</label>
-        <input class="modal-inp" type="number" id="modal-add" inputmode="numeric" min="0" />
-      </div>
-      <div class="modal-inp-group">
-        <label class="modal-inp-label">📦 Close</label>
-        <input class="modal-inp" type="number" id="modal-close" inputmode="numeric" min="0" />
-      </div>
-      <div class="modal-btns">
-        <button class="btn-modal-cancel" id="modal-cancel">Cancel</button>
-        <button class="btn-modal-save" id="modal-save">Save Changes</button>
-      </div>
+      <div class="modal-inp-group"><label class="modal-inp-label">📥 Add</label><input class="modal-inp" type="number" id="modal-add" inputmode="numeric" min="0" /></div>
+      <div class="modal-inp-group"><label class="modal-inp-label">📦 Close</label><input class="modal-inp" type="number" id="modal-close" inputmode="numeric" min="0" /></div>
+      <div class="modal-btns"><button class="btn-modal-cancel" id="modal-cancel">Cancel</button><button class="btn-modal-save" id="modal-save">Save Changes</button></div>
     </div>
   </div>
 
   <!-- ===================== LOGIN ===================== -->
   <div id="login-screen" class="screen active">
-    <div style="position:fixed;top:16px;right:16px;z-index:10">
-      <button class="btn-icon" data-theme-toggle aria-label="Toggle theme">🌙</button>
-    </div>
+    <div style="position:fixed;top:16px;right:16px;z-index:10"><button class="btn-icon" data-theme-toggle>🌙</button></div>
     <div class="login-card">
       <div class="login-logo">🧸</div>
       <h1 class="login-title">Inventory Manager</h1>
@@ -394,15 +365,28 @@ input,select{font:inherit;color:inherit}
   <!-- ===================== MAIN APP ===================== -->
   <div id="app-screen" class="screen">
 
-    <!-- HEADER -->
+    <!-- HEADER (Upgraded) -->
     <header class="app-header">
       <div class="header-brand">🧸 GiftShop</div>
+      <div class="header-file" id="header-file" title="Change file">
+        <span id="file-status-text">Select File</span>
+        <span class="arrow">▾</span>
+      </div>
       <div class="header-actions">
+        <span class="search-toggle" id="search-toggle" title="Search">🔍</span>
         <img id="user-avatar" class="header-avatar" src="" alt="" style="display:none" />
-        <button class="btn-icon" data-theme-toggle aria-label="Toggle theme">🌙</button>
+        <button class="btn-icon" data-theme-toggle>🌙</button>
         <button class="btn-icon" id="logout-btn" title="Sign out">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
         </button>
+      </div>
+
+      <!-- Hidden file dropdown that appears when clicking header-file -->
+      <div class="file-dropdown" id="file-dropdown">
+        <select id="file-list" class="file-select">
+          <option value="">— Choose from Google Drive —</option>
+        </select>
+        <button id="load-btn" class="btn-load" disabled>Load File</button>
       </div>
     </header>
 
@@ -413,115 +397,70 @@ input,select{font:inherit;color:inherit}
       <button class="btn-resume-dismiss" id="resume-dismiss">✕</button>
     </div>
 
+    <!-- CATEGORY FILTER (Compact) -->
+    <div class="cat-filter-wrap" id="cat-filter-bar" style="display:none"></div>
+
+    <!-- SEARCH BAR (Collapsible) -->
+    <div class="search-bar-wrap" id="search-bar-wrap">
+      <div class="search-input-wrap">
+        <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input class="search-input" id="search-input" type="text" placeholder="Search product…" autocomplete="off" />
+        <button class="search-clear" id="search-clear">✕</button>
+      </div>
+    </div>
+
     <!-- VIEWS -->
-
-    <!-- === VIEW: SWIPE === -->
     <div class="view active" id="view-swipe">
-      <!-- File selector -->
-      <div class="file-section">
-        <div class="file-section-label">Excel File</div>
-        <div class="file-select-row">
-          <select id="file-list" class="file-select">
-            <option value="">— Choose from Google Drive —</option>
-          </select>
-          <button id="load-btn" class="btn-load" disabled>Load</button>
-        </div>
-      </div>
-
-      <!-- Category filter -->
-      <div class="cat-filter-bar" id="cat-filter-bar" style="display:none"></div>
-
-      <!-- Search bar -->
-      <div class="search-bar-wrap" id="search-bar-wrap" style="display:none">
-        <div class="search-input-wrap">
-          <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-          <input class="search-input" id="search-input" type="text" placeholder="Search product…" autocomplete="off" />
-          <button class="search-clear" id="search-clear">✕</button>
-        </div>
-      </div>
-
-      <!-- Swipe zone -->
       <div class="swipe-zone" id="swipe-zone">
         <div class="empty-state" id="empty-state">
           <div class="empty-icon">📂</div>
           <h3>No file loaded</h3>
-          <p>Select an Excel file above and tap Load.</p>
+          <p>Select a file from the dropdown in the header.</p>
         </div>
       </div>
-
-      <!-- Progress -->
       <div class="progress-section">
         <div class="progress-track"><div class="progress-fill" id="progress-fill"></div></div>
         <span class="progress-label" id="progress-label">0 / 0</span>
       </div>
-
-      <!-- Action bar -->
       <div class="action-bar">
         <button id="generate-btn" class="btn-generate" disabled>
-          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
           Generate Next Month Report
         </button>
         <div class="report-result" id="report-result"></div>
       </div>
-    </div><!-- /view-swipe -->
+    </div>
 
-    <!-- === VIEW: REVIEW === -->
     <div class="view" id="view-review">
       <div class="review-view">
-        <div class="review-header">
-          <div>
-            <div class="review-count" id="review-count">0 items saved</div>
-            <div class="review-sub">Tap any item to edit</div>
-          </div>
-        </div>
+        <div class="review-header"><div><div class="review-count" id="review-count">0 items saved</div><div class="review-sub">Tap any item to edit</div></div></div>
         <div id="review-list"></div>
       </div>
     </div>
 
-    <!-- === VIEW: SUMMARY === -->
     <div class="view" id="view-summary">
       <div class="summary-view">
         <div class="summary-kpi-row">
-          <div class="kpi-card">
-            <div class="kpi-label">Items Saved</div>
-            <div class="kpi-value green" id="kpi-saved">0</div>
-          </div>
-          <div class="kpi-card">
-            <div class="kpi-label">Total Inventory Value</div>
-            <div class="kpi-value" id="kpi-value">$0</div>
-          </div>
-          <div class="kpi-card">
-            <div class="kpi-label">Total Items</div>
-            <div class="kpi-value" id="kpi-total">0</div>
-          </div>
-          <div class="kpi-card">
-            <div class="kpi-label">Progress</div>
-            <div class="kpi-value" id="kpi-progress">0%</div>
-          </div>
+          <div class="kpi-card"><div class="kpi-label">Items Saved</div><div class="kpi-value green" id="kpi-saved">0</div></div>
+          <div class="kpi-card"><div class="kpi-label">Total Value</div><div class="kpi-value" id="kpi-value">$0</div></div>
+          <div class="kpi-card"><div class="kpi-label">Total Items</div><div class="kpi-value" id="kpi-total">0</div></div>
+          <div class="kpi-card"><div class="kpi-label">Progress</div><div class="kpi-value" id="kpi-progress">0%</div></div>
         </div>
-
         <div class="summary-section-label">Top Saved by Value</div>
         <div id="summary-top-list"></div>
-
         <button class="btn-generate-summary" id="generate-btn-2" disabled>
-          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
           Generate Report
         </button>
         <div class="result-banner" id="result-banner-2"></div>
       </div>
     </div>
 
-    <!-- TAB BAR -->
+    <!-- TAB BAR (iOS style) -->
     <nav class="tab-bar">
-      <button class="tab-btn active" data-tab="swipe">
-        <span class="tab-icon">🃏</span>Swipe
-      </button>
-      <button class="tab-btn" data-tab="review">
-        <span class="tab-icon">📋</span>Review
-      </button>
-      <button class="tab-btn" data-tab="summary">
-        <span class="tab-icon">📊</span>Summary
-      </button>
+      <button class="tab-btn active" data-tab="swipe"><span class="tab-icon">🃏</span>Swipe</button>
+      <button class="tab-btn" data-tab="review"><span class="tab-icon">📋</span>Review</button>
+      <button class="tab-btn" data-tab="summary"><span class="tab-icon">📊</span>Summary</button>
     </nav>
 
   </div><!-- /app-screen -->
@@ -529,7 +468,7 @@ input,select{font:inherit;color:inherit}
 
 <script>
 /* ============================================================
-   CONFIG
+   CONFIG & STATE
 ============================================================ */
 const GOOGLE_CLIENT_ID = '397533113348-geurcc1e124egnn2ttf20epub2ero4vo.apps.googleusercontent.com';
 const SCOPES = 'https://www.googleapis.com/auth/drive.readonly https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email';
@@ -537,94 +476,59 @@ const AUTOSAVE_KEY  = 'giftshop_autosave';
 const HISTORY_KEY   = 'giftshop_history';
 const THEME_KEY     = 'giftshop_theme';
 
-/* ============================================================
-   STATE
-============================================================ */
 let tokenClient = null, accessToken = null, userInfo = null;
 let driveFiles = [], items = [], filteredItems = [];
 let currentIndex = 0, results = {}, currentFileId = null;
-let isProcessing = false;
-let undoStack = [];
-let activeCategory = 'All';
-let searchQuery = '';
+let isProcessing = false, undoStack = [];
+let activeCategory = 'All', searchQuery = '';
 let editingProductName = null;
 
 /* ============================================================
    DOM REFS
 ============================================================ */
-const loginScreen   = document.getElementById('login-screen');
-const appScreen     = document.getElementById('app-screen');
-const loginBtn      = document.getElementById('login-btn');
-const logoutBtn     = document.getElementById('logout-btn');
-const userAvatar    = document.getElementById('user-avatar');
-const fileListEl    = document.getElementById('file-list');
-const loadBtn       = document.getElementById('load-btn');
-const swipeZone     = document.getElementById('swipe-zone');
-const progressFill  = document.getElementById('progress-fill');
-const progressLabel = document.getElementById('progress-label');
-const generateBtn   = document.getElementById('generate-btn');
-const generateBtn2  = document.getElementById('generate-btn-2');
-const reportResult  = document.getElementById('report-result');
-const resultBanner2 = document.getElementById('result-banner-2');
-const loadingOverlay= document.getElementById('loading-overlay');
-const loadingText   = document.getElementById('loading-text');
-const toastEl       = document.getElementById('toast');
-const undoBar       = document.getElementById('undo-bar');
-const undoMsg       = document.getElementById('undo-msg');
-const undoBtn       = document.getElementById('undo-btn');
-const editModal     = document.getElementById('edit-modal');
-const modalTitle    = document.getElementById('modal-title');
-const modalSub      = document.getElementById('modal-sub');
-const modalAdd      = document.getElementById('modal-add');
-const modalClose    = document.getElementById('modal-close');
-const modalCancel   = document.getElementById('modal-cancel');
-const modalSave     = document.getElementById('modal-save');
-const resumeBanner  = document.getElementById('resume-banner');
-const resumeText    = document.getElementById('resume-text');
-const resumeBtn     = document.getElementById('resume-btn');
-const resumeDismiss = document.getElementById('resume-dismiss');
-const catFilterBar  = document.getElementById('cat-filter-bar');
-const searchBarWrap = document.getElementById('search-bar-wrap');
-const searchInput   = document.getElementById('search-input');
-const searchClear   = document.getElementById('search-clear');
+const $ = id => document.getElementById(id);
+const loginScreen   = $('login-screen'), appScreen = $('app-screen');
+const loginBtn      = $('login-btn'), logoutBtn = $('logout-btn');
+const userAvatar    = $('user-avatar'), fileListEl = $('file-list'), loadBtn = $('load-btn');
+const swipeZone     = $('swipe-zone'), progressFill = $('progress-fill'), progressLabel = $('progress-label');
+const generateBtn   = $('generate-btn'), generateBtn2 = $('generate-btn-2');
+const reportResult  = $('report-result'), resultBanner2 = $('result-banner-2');
+const loadingOverlay= $('loading-overlay'), loadingText = $('loading-text');
+const toastEl       = $('toast'), undoBar = $('undo-bar'), undoMsg = $('undo-msg'), undoBtn = $('undo-btn');
+const editModal     = $('edit-modal'), modalAdd = $('modal-add'), modalClose = $('modal-close');
+const modalCancel   = $('modal-cancel'), modalSave = $('modal-save'), modalTitle = $('modal-title'), modalSub = $('modal-sub');
+const resumeBanner  = $('resume-banner'), resumeText = $('resume-text'), resumeBtn = $('resume-btn'), resumeDismiss = $('resume-dismiss');
+const catFilterBar  = $('cat-filter-bar'), searchBarWrap = $('search-bar-wrap'), searchInput = $('search-input'), searchClear = $('search-clear');
+const headerFile    = $('header-file'), fileDropdown = $('file-dropdown'), fileStatusText = $('file-status-text');
+const searchToggle  = $('search-toggle');
 
 /* ============================================================
-   THEME (persisted)
+   THEME
 ============================================================ */
 (function(){
   const html = document.documentElement;
   let theme = 'light';
   try { theme = localStorage.getItem(THEME_KEY) || (window.matchMedia('(prefers-color-scheme:dark)').matches ? 'dark' : 'light'); } catch(e){}
   html.setAttribute('data-theme', theme);
-  updateThemeIcons();
+  function updateIcons(){ document.querySelectorAll('[data-theme-toggle]').forEach(b => b.textContent = theme === 'dark' ? '☀️' : '🌙'); }
+  updateIcons();
   document.addEventListener('click', e => {
     if (e.target.closest('[data-theme-toggle]')) {
       theme = theme === 'dark' ? 'light' : 'dark';
       html.setAttribute('data-theme', theme);
       try { localStorage.setItem(THEME_KEY, theme); } catch(e){}
-      updateThemeIcons();
+      updateIcons();
     }
   });
-  function updateThemeIcons(){
-    document.querySelectorAll('[data-theme-toggle]').forEach(b => {
-      b.textContent = theme === 'dark' ? '☀️' : '🌙';
-    });
-  }
 })();
 
 /* ============================================================
-   LOADING / TOAST
+   TOAST / LOADING
 ============================================================ */
 function showLoading(t='Loading…'){ loadingText.textContent=t; loadingOverlay.classList.remove('hidden'); }
 function hideLoading(){ loadingOverlay.classList.add('hidden'); }
-
 let toastTimer;
-function showToast(msg){
-  clearTimeout(toastTimer);
-  toastEl.textContent = msg;
-  toastEl.classList.add('show');
-  toastTimer = setTimeout(() => toastEl.classList.remove('show'), 2500);
-}
+function showToast(msg){ clearTimeout(toastTimer); toastEl.textContent=msg; toastEl.classList.add('show'); toastTimer=setTimeout(()=>toastEl.classList.remove('show'),2500); }
 
 /* ============================================================
    TAB NAVIGATION
@@ -638,6 +542,8 @@ document.querySelectorAll('[data-tab]').forEach(btn => {
     document.getElementById('view-' + tab).classList.add('active');
     if (tab === 'review') renderReview();
     if (tab === 'summary') renderSummary();
+    // Close dropdown if open
+    fileDropdown.classList.remove('open');
   });
 });
 
@@ -651,29 +557,17 @@ async function handleTokenResponse(tr){
   await loadDriveFiles();
   showApp();
 }
-
 window.addEventListener('load', () => {
   tokenClient = google.accounts.oauth2.initTokenClient({
-    client_id: GOOGLE_CLIENT_ID,
-    scope: SCOPES,
-    callback: handleTokenResponse
+    client_id: GOOGLE_CLIENT_ID, scope: SCOPES, callback: handleTokenResponse
   });
 });
-
-loginBtn.addEventListener('click', () => {
-  showLoading('Connecting to Google…');
-  tokenClient.requestAccessToken({ prompt: 'select_account consent' });
-});
-
+loginBtn.addEventListener('click', () => { showLoading('Connecting…'); tokenClient.requestAccessToken({ prompt: 'select_account consent' }); });
 logoutBtn.addEventListener('click', () => {
   if (accessToken) google.accounts.oauth2.revoke(accessToken, ()=>{});
   accessToken = null; userInfo = null; items = []; results = {}; driveFiles = [];
   tokenClient = null;
-  setTimeout(() => {
-    tokenClient = google.accounts.oauth2.initTokenClient({
-      client_id: GOOGLE_CLIENT_ID, scope: SCOPES, callback: handleTokenResponse
-    });
-  }, 100);
+  setTimeout(() => { tokenClient = google.accounts.oauth2.initTokenClient({ client_id: GOOGLE_CLIENT_ID, scope: SCOPES, callback: handleTokenResponse }); }, 100);
   showLogin();
 });
 
@@ -687,68 +581,64 @@ function showApp(){
 }
 
 /* ============================================================
-   GOOGLE API
+   DRIVE API
 ============================================================ */
-async function apiGet(url){
-  const r = await fetch(url, { headers: { Authorization: `Bearer ${accessToken}` } });
-  if (!r.ok) throw new Error(`API ${r.status}`);
-  return r.json();
-}
-async function loadUserInfo(){
-  try { userInfo = await apiGet('https://www.googleapis.com/oauth2/v2/userinfo'); } catch(e){}
-}
+async function apiGet(url){ const r = await fetch(url, { headers: { Authorization: `Bearer ${accessToken}` } }); if (!r.ok) throw new Error(`API ${r.status}`); return r.json(); }
+async function loadUserInfo(){ try { userInfo = await apiGet('https://www.googleapis.com/oauth2/v2/userinfo'); } catch(e){} }
 async function loadDriveFiles(){
-  showLoading('Loading Drive files…');
+  showLoading('Loading Drive…');
   try {
     const q = encodeURIComponent("mimeType='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' and trashed=false");
     const fields = encodeURIComponent('files(id,name,modifiedTime)');
     const data = await apiGet(`https://www.googleapis.com/drive/v3/files?q=${q}&fields=${fields}&orderBy=modifiedTime+desc&includeItemsFromAllDrives=true&supportsAllDrives=true&corpora=user`);
     driveFiles = data.files || [];
     fileListEl.innerHTML = '<option value="">— Choose from Google Drive —</option>';
-    if (!driveFiles.length){
-      fileListEl.innerHTML = `<option value="">No .xlsx files found in Drive</option>`;
-    } else {
-      driveFiles.forEach(f => {
-        const o = document.createElement('option');
-        o.value = f.id;
-        o.textContent = `${f.name} (${new Date(f.modifiedTime).toLocaleDateString()})`;
-        fileListEl.appendChild(o);
-      });
-      loadBtn.disabled = false;
-    }
-  } catch(e){
-    fileListEl.innerHTML = `<option value="">Error: ${e.message}</option>`;
-    showToast('Drive error: ' + e.message);
-  }
+    if (!driveFiles.length){ fileListEl.innerHTML = `<option value="">No .xlsx files found</option>`; }
+    else { driveFiles.forEach(f => { const o = document.createElement('option'); o.value=f.id; o.textContent=`${f.name} (${new Date(f.modifiedTime).toLocaleDateString()})`; fileListEl.appendChild(o); }); loadBtn.disabled = false; }
+  } catch(e){ fileListEl.innerHTML = `<option value="">Error: ${e.message}</option>`; showToast('Drive error: ' + e.message); }
   hideLoading();
 }
-
 fileListEl.addEventListener('change', () => { loadBtn.disabled = !fileListEl.value; });
+
+// Header click toggles dropdown
+headerFile.addEventListener('click', (e) => {
+  e.stopPropagation();
+  fileDropdown.classList.toggle('open');
+  // Refresh file list if open
+  if (fileDropdown.classList.contains('open')) loadDriveFiles();
+});
+document.addEventListener('click', (e) => { if (!fileDropdown.contains(e.target) && e.target !== headerFile) fileDropdown.classList.remove('open'); });
+
 loadBtn.addEventListener('click', async () => {
   const fid = fileListEl.value; if (!fid) return;
-  currentFileId = fid; await loadExcelFile(fid);
+  currentFileId = fid;
+  fileDropdown.classList.remove('open');
+  await loadExcelFile(fid);
 });
 
+/* ============================================================
+   EXCEL PARSE
+============================================================ */
 async function loadExcelFile(fileId){
-  showLoading('Downloading Excel file…');
+  showLoading('Downloading…');
   try {
-    const r = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, {
-      headers: { Authorization: `Bearer ${accessToken}` }
-    });
+    const r = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, { headers: { Authorization: `Bearer ${accessToken}` } });
     if (!r.ok) throw new Error('Download failed');
     const buf = await r.arrayBuffer();
     const wb = XLSX.read(buf, { type: 'array' });
     parseWorkbook(wb);
+    // Update header
+    const fname = driveFiles.find(f => f.id === fileId)?.name || 'File';
+    fileStatusText.textContent = fname;
+    // Hide the bulky file section (it's now in the header dropdown)
     buildCategoryFilter();
     buildSearchBar();
     startSwipe();
+    showToast(`✅ Loaded ${items.length} items`);
   } catch(e){ showToast('Error: ' + e.message); console.error(e); }
   hideLoading();
 }
 
-/* ============================================================
-   PARSE EXCEL
-============================================================ */
 function parseWorkbook(wb){
   items = []; results = {};
   const SKIP = ['TOTAL','GIFT SHOP','INVENTORY','OPENING','CLOSING','PRODUCT','ITEM','NAME','DESCRIPTION'];
@@ -772,7 +662,7 @@ function parseWorkbook(wb){
 }
 
 /* ============================================================
-   CATEGORY FILTER
+   CATEGORY FILTER & SEARCH
 ============================================================ */
 function buildCategoryFilter(){
   const cats = ['All', ...new Set(items.map(i => i.category))];
@@ -792,15 +682,15 @@ function buildCategoryFilter(){
   catFilterBar.style.display = cats.length > 2 ? 'flex' : 'none';
 }
 
-/* ============================================================
-   SEARCH
-============================================================ */
 function buildSearchBar(){
-  searchBarWrap.style.display = 'block';
+  searchBarWrap.classList.remove('open');
   searchInput.value = '';
   searchQuery = '';
 }
-
+searchToggle.addEventListener('click', () => {
+  searchBarWrap.classList.toggle('open');
+  if (searchBarWrap.classList.contains('open')) searchInput.focus();
+});
 searchInput.addEventListener('input', () => {
   searchQuery = searchInput.value.trim().toLowerCase();
   searchClear.classList.toggle('show', !!searchQuery);
@@ -813,21 +703,15 @@ searchClear.addEventListener('click', () => {
 });
 
 function applyFilter(){
-  // Re-map filteredItems to unprocessed items based on filter
-  const remaining = items.filter((item, idx) => {
+  if (items.length === 0) return;
+  const remaining = items.filter((item) => {
     const catOk = activeCategory === 'All' || item.category === activeCategory;
     const searchOk = !searchQuery || item.name.toLowerCase().includes(searchQuery) || item.category.toLowerCase().includes(searchQuery);
     return catOk && searchOk;
   });
-
   if (searchQuery && remaining.length > 0){
-    // Jump to first match
     const firstMatch = items.findIndex(i => remaining[0].name === i.name);
-    if (firstMatch !== -1 && firstMatch !== currentIndex){
-      currentIndex = firstMatch;
-      renderCard();
-      return;
-    }
+    if (firstMatch !== -1 && firstMatch !== currentIndex){ currentIndex = firstMatch; renderCard(); return; }
   }
   filteredItems = remaining;
   renderCard();
@@ -838,40 +722,30 @@ function applyFilter(){
 ============================================================ */
 function autosave(){
   if (!currentFileId || items.length === 0) return;
-  try {
-    localStorage.setItem(AUTOSAVE_KEY, JSON.stringify({
-      fileId: currentFileId, fileName: fileListEl.options[fileListEl.selectedIndex]?.textContent || '',
-      currentIndex, results, timestamp: Date.now()
-    }));
-  } catch(e){}
+  try { localStorage.setItem(AUTOSAVE_KEY, JSON.stringify({ fileId: currentFileId, fileName: fileStatusText.textContent, currentIndex, results, timestamp: Date.now() })); } catch(e){}
 }
-
 function checkAutosave(){
   try {
     const saved = JSON.parse(localStorage.getItem(AUTOSAVE_KEY)||'null');
     if (!saved || !saved.results || Object.keys(saved.results).length === 0) return;
     const mins = Math.round((Date.now() - saved.timestamp) / 60000);
     const timeStr = mins < 60 ? `${mins}m ago` : `${Math.round(mins/60)}h ago`;
-    const count = Object.keys(saved.results).length;
-    resumeText.textContent = `Resume session from ${timeStr} — ${count} items saved`;
+    resumeText.textContent = `Resume session from ${timeStr} — ${Object.keys(saved.results).length} items saved`;
     resumeBanner.classList.remove('hidden');
   } catch(e){}
 }
-
 resumeBtn.addEventListener('click', async () => {
   try {
     const saved = JSON.parse(localStorage.getItem(AUTOSAVE_KEY));
     if (!saved) return;
     resumeBanner.classList.add('hidden');
-    // Select file in dropdown
+    // Find and select file
     for (let i = 0; i < fileListEl.options.length; i++){
-      if (fileListEl.options[i].value === saved.fileId){
-        fileListEl.selectedIndex = i; break;
-      }
+      if (fileListEl.options[i].value === saved.fileId){ fileListEl.selectedIndex = i; break; }
     }
     currentFileId = saved.fileId;
+    fileStatusText.textContent = saved.fileName || 'File';
     await loadExcelFile(saved.fileId);
-    // Restore state
     results = saved.results;
     currentIndex = Math.min(saved.currentIndex, items.length);
     updateProgress();
@@ -879,11 +753,7 @@ resumeBtn.addEventListener('click', async () => {
     showToast(`✅ Resumed — ${Object.keys(results).length} items restored`);
   } catch(e){ showToast('Could not resume session'); }
 });
-
-resumeDismiss.addEventListener('click', () => {
-  resumeBanner.classList.add('hidden');
-  try { localStorage.removeItem(AUTOSAVE_KEY); } catch(e){}
-});
+resumeDismiss.addEventListener('click', () => { resumeBanner.classList.add('hidden'); try { localStorage.removeItem(AUTOSAVE_KEY); } catch(e){} });
 
 /* ============================================================
    SWIPE LOGIC
@@ -898,10 +768,7 @@ function startSwipe(){
 
 function renderCard(){
   updateProgress();
-  if (items.length === 0){
-    swipeZone.innerHTML = `<div class="empty-state"><div class="empty-icon">⚠️</div><h3>No items found</h3><p>Check your Excel format.</p></div>`;
-    return;
-  }
+  if (items.length === 0){ swipeZone.innerHTML = `<div class="empty-state"><div class="empty-icon">⚠️</div><h3>No items found</h3><p>Check your Excel format.</p></div>`; return; }
   if (currentIndex >= items.length){
     swipeZone.innerHTML = `
       <div class="done-card">
@@ -920,37 +787,17 @@ function renderCard(){
         <span class="swipe-ind save" id="ind-save">✅ Save</span>
         <span class="swipe-ind skip" id="ind-skip">⏭ Skip</span>
         <div class="card-cat-pill">📁 ${esc(item.category)}</div>
-        <div class="card-name-row">
-          ${prodIcon(item.name)}
-          <div class="card-prod-name">${esc(item.name)}</div>
-        </div>
+        <div class="card-name-row">${prodIcon(item.name)}<div class="card-prod-name">${esc(item.name)}</div></div>
         ${historyHtml(item.name)}
         <div class="card-stats">
           <div class="stat-chip"><div class="stat-label">Opening</div><div class="stat-val">${item.open}</div></div>
           <div class="stat-chip"><div class="stat-label">Last Close</div><div class="stat-val">${item.close||'—'}</div></div>
           <div class="stat-chip"><div class="stat-label">Price</div><div class="stat-val">$${item.price.toFixed(2)}</div></div>
         </div>
-        <div class="inp-group">
-          <label class="inp-label">📥 Add</label>
-          <div class="inp-wrap">
-            <button class="stepper-btn" data-target="inp-add" data-delta="-1">−</button>
-            <input class="card-input" type="number" id="inp-add" value="0" min="0" inputmode="numeric" pattern="[0-9]*" />
-            <button class="stepper-btn" data-target="inp-add" data-delta="1">+</button>
-          </div>
-        </div>
-        <div class="inp-group">
-          <label class="inp-label">📦 Close</label>
-          <div class="inp-wrap">
-            <button class="stepper-btn" data-target="inp-close" data-delta="-1">−</button>
-            <input class="card-input" type="number" id="inp-close" value="${item.close}" min="0" inputmode="numeric" pattern="[0-9]*" />
-            <button class="stepper-btn" data-target="inp-close" data-delta="1">+</button>
-          </div>
-        </div>
+        <div class="inp-group"><label class="inp-label">📥 Add</label><div class="inp-wrap"><button class="stepper-btn" data-target="inp-add" data-delta="-1">−</button><input class="card-input" type="number" id="inp-add" value="0" min="0" inputmode="numeric" /><button class="stepper-btn" data-target="inp-add" data-delta="1">+</button></div></div>
+        <div class="inp-group"><label class="inp-label">📦 Close</label><div class="inp-wrap"><button class="stepper-btn" data-target="inp-close" data-delta="-1">−</button><input class="card-input" type="number" id="inp-close" value="${item.close}" min="0" inputmode="numeric" /><button class="stepper-btn" data-target="inp-close" data-delta="1">+</button></div></div>
         <div class="cost-preview" id="cost-preview">—</div>
-        <div class="card-btns">
-          <button class="btn-skip-c" id="btn-skip">⬅ Skip</button>
-          <button class="btn-save-c" id="btn-save">Save ➡</button>
-        </div>
+        <div class="card-btns"><button class="btn-skip-c" id="btn-skip">⬅ Skip</button><button class="btn-save-c" id="btn-save">Save ➡</button></div>
       </div>
     </div>
     <div class="swipe-hint"><span>⬅ Skip</span><span>Save ➡</span></div>`;
@@ -964,25 +811,18 @@ function renderCard(){
 
   function updateCost(){
     const c = parseFloat(closeInp.value)||0, a = parseFloat(addInp.value)||0;
-    const used = Math.max(0, item.open + a - c);
-    costPrev.textContent = `Usage: ${used} units · Close value: $${(c * item.price).toFixed(2)}`;
+    costPrev.textContent = `Usage: ${Math.max(0, item.open + a - c)} units · Close value: $${(c * item.price).toFixed(2)}`;
   }
   addInp.addEventListener('input', updateCost);
   closeInp.addEventListener('input', updateCost);
   updateCost();
 
-  // Stepper buttons (+1/-1)
+  // Steppers
   card.querySelectorAll('.stepper-btn').forEach(btn => {
-    // Long-press for +5
     let pressTimer;
     const target = () => document.getElementById(btn.dataset.target);
     const delta = () => parseInt(btn.dataset.delta);
-    const step = (mult=1) => {
-      const inp = target();
-      const v = (parseFloat(inp.value)||0) + delta() * mult;
-      inp.value = Math.max(0, v);
-      updateCost();
-    };
+    const step = (mult=1) => { const inp = target(); const v = (parseFloat(inp.value)||0) + delta() * mult; inp.value = Math.max(0, v); updateCost(); };
     btn.addEventListener('click', () => step(1));
     btn.addEventListener('mousedown', () => { pressTimer = setTimeout(() => step(5), 500); });
     btn.addEventListener('touchstart', () => { pressTimer = setTimeout(() => step(5), 500); }, {passive:true});
@@ -990,14 +830,11 @@ function renderCard(){
     btn.addEventListener('touchend', () => clearTimeout(pressTimer));
   });
 
-  // Enter key
   closeInp.addEventListener('keydown', e => { if (e.key === 'Enter') swipeCard('right'); });
-
-  // Buttons
   document.getElementById('btn-save').addEventListener('click', () => swipeCard('right'));
   document.getElementById('btn-skip').addEventListener('click', () => swipeCard('left'));
 
-  // Drag / swipe
+  // Drag
   let startX=0, isDragging=false;
   const dragStart = x => { if(isProcessing) return; isDragging=true; startX=x; card.classList.add('dragging'); };
   const dragMove  = x => {
@@ -1023,7 +860,6 @@ function renderCard(){
   card.addEventListener('touchmove', e => dragMove(e.touches[0].clientX), {passive:true});
   card.addEventListener('touchend', e => dragEnd(e.changedTouches[0].clientX));
 
-  // Mobile scroll into view on focus
   [closeInp, addInp].forEach(inp => {
     inp.addEventListener('focus', () => setTimeout(() => inp.scrollIntoView({behavior:'smooth',block:'center'}), 350));
   });
@@ -1036,8 +872,6 @@ function swipeCard(direction){
   if (!card) return;
   isProcessing = true;
   const item = items[currentIndex];
-
-  // Push to undo stack
   undoStack.push({ index: currentIndex, item, savedData: results[item.name]||null, direction });
 
   if (direction === 'right'){
@@ -1047,33 +881,22 @@ function swipeCard(direction){
     card.style.transition = 'transform .28s cubic-bezier(.2,.8,.2,1),opacity .28s ease';
     card.style.transform = 'translateX(120%) rotate(12deg)';
     card.style.opacity = '0';
+    if (navigator.vibrate) navigator.vibrate(8);
   } else {
     card.style.transition = 'transform .28s cubic-bezier(.2,.8,.2,1),opacity .28s ease';
     card.style.transform = 'translateX(-120%) rotate(-12deg)';
     card.style.opacity = '0';
   }
-
   showUndoBar(direction === 'right' ? `✅ "${item.name}" saved` : `⏭ "${item.name}" skipped`);
   autosave();
-
-  setTimeout(() => {
-    currentIndex++;
-    isProcessing = false;
-    renderCard();
-  }, 290);
+  setTimeout(() => { currentIndex++; isProcessing = false; renderCard(); }, 290);
 }
 
 /* ============================================================
    UNDO
 ============================================================ */
 let undoTimer;
-function showUndoBar(msg){
-  clearTimeout(undoTimer);
-  undoMsg.textContent = msg;
-  undoBar.classList.add('show');
-  undoTimer = setTimeout(() => undoBar.classList.remove('show'), 3000);
-}
-
+function showUndoBar(msg){ clearTimeout(undoTimer); undoMsg.textContent=msg; undoBar.classList.add('show'); undoTimer=setTimeout(()=>undoBar.classList.remove('show'),3000); }
 undoBtn.addEventListener('click', () => {
   if (!undoStack.length) return;
   undoBar.classList.remove('show');
@@ -1088,7 +911,7 @@ undoBtn.addEventListener('click', () => {
 });
 
 /* ============================================================
-   PROGRESS + GENERATE BUTTON STATE
+   PROGRESS & GENERATE STATE
 ============================================================ */
 function updateProgress(){
   const total = items.length, done = Math.min(currentIndex, total);
@@ -1098,108 +921,71 @@ function updateProgress(){
   const savedCount = Object.keys(results).length;
   const isDone = currentIndex >= items.length;
   if (savedCount > 0){
-    generateBtn.disabled = false;
-    generateBtn2.disabled = false;
+    generateBtn.disabled = false; generateBtn2.disabled = false;
     generateBtn.innerHTML = isDone
-      ? `<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg> Generate Full Report (${savedCount} items)`
-      : `<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg> Generate Partial Report (${savedCount}/${total})`;
+      ? `<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg> Generate Full Report (${savedCount} items)`
+      : `<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg> Generate Partial Report (${savedCount}/${total})`;
   } else {
-    generateBtn.disabled = true;
-    generateBtn2.disabled = true;
-    generateBtn.innerHTML = `<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg> Generate Next Month Report`;
+    generateBtn.disabled = true; generateBtn2.disabled = true;
+    generateBtn.innerHTML = `<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg> Generate Next Month Report`;
   }
 }
 
 /* ============================================================
-   REVIEW VIEW
+   REVIEW
 ============================================================ */
 function renderReview(){
-  const reviewList = document.getElementById('review-list');
-  const reviewCount = document.getElementById('review-count');
+  const list = document.getElementById('review-list');
+  const count = document.getElementById('review-count');
   const saved = Object.keys(results);
-  reviewCount.textContent = `${saved.length} item${saved.length!==1?'s':''} saved`;
-  if (!saved.length){
-    reviewList.innerHTML = `<div class="review-empty">No items saved yet.<br>Go to Swipe tab to start.</div>`;
-    return;
-  }
-  reviewList.innerHTML = saved.map(name => {
+  count.textContent = `${saved.length} item${saved.length!==1?'s':''} saved`;
+  if (!saved.length){ list.innerHTML = `<div class="review-empty">No items saved yet.<br>Go to Swipe tab.</div>`; return; }
+  list.innerHTML = saved.map(name => {
     const item = items.find(i => i.name === name);
     const data = results[name];
     if (!item) return '';
-    return `
-      <div class="review-item">
-        <div class="review-item-icon" style="background:${iconColor(name)}">${name.charAt(0).toUpperCase()}</div>
-        <div class="review-item-info">
-          <div class="review-item-name">${esc(name)}</div>
-          <div class="review-item-cat">${esc(item.category)}</div>
-        </div>
-        <div class="review-item-val">
-          <div class="review-val-close">Close: ${data.close}</div>
-          <div class="review-val-add">Add: ${data.add}</div>
-        </div>
-        <button class="btn-edit-review" data-name="${esc(name)}">Edit</button>
-      </div>`;
+    return `<div class="review-item"><div class="review-item-icon" style="background:${iconColor(name)}">${name.charAt(0).toUpperCase()}</div><div class="review-item-info"><div class="review-item-name">${esc(name)}</div><div class="review-item-cat">${esc(item.category)}</div></div><div class="review-item-val"><div class="review-val-close">Close: ${data.close}</div><div class="review-val-add">Add: ${data.add}</div></div><button class="btn-edit-review" data-name="${esc(name)}">Edit</button></div>`;
   }).join('');
-
-  reviewList.querySelectorAll('.btn-edit-review').forEach(btn => {
-    btn.addEventListener('click', () => openEditModal(btn.dataset.name));
-  });
+  list.querySelectorAll('.btn-edit-review').forEach(btn => btn.addEventListener('click', () => openEditModal(btn.dataset.name)));
 }
-
-/* ============================================================
-   EDIT MODAL
-============================================================ */
 function openEditModal(name){
-  const item = items.find(i => i.name === name);
-  const data = results[name];
+  const item = items.find(i => i.name === name); const data = results[name];
   if (!item || !data) return;
   editingProductName = name;
-  modalTitle.textContent = name;
-  modalSub.textContent = `${item.category} · $${item.price.toFixed(2)}`;
-  modalAdd.value = data.add;
-  modalClose.value = data.close;
+  modalTitle.textContent = name; modalSub.textContent = `${item.category} · $${item.price.toFixed(2)}`;
+  modalAdd.value = data.add; modalClose.value = data.close;
   editModal.classList.remove('hidden');
   setTimeout(() => modalClose.focus(), 200);
 }
-function closeEditModal(){ editModal.classList.add('hidden'); editingProductName = null; }
-modalCancel.addEventListener('click', closeEditModal);
-editModal.addEventListener('click', e => { if (e.target === editModal) closeEditModal(); });
+modalCancel.addEventListener('click', () => editModal.classList.add('hidden'));
+editModal.addEventListener('click', e => { if (e.target === editModal) editModal.classList.add('hidden'); });
 modalSave.addEventListener('click', () => {
   if (!editingProductName) return;
   results[editingProductName].close = parseFloat(modalClose.value)||0;
   results[editingProductName].add   = parseFloat(modalAdd.value)||0;
-  closeEditModal();
-  renderReview();
-  autosave();
-  showToast('✅ Updated');
+  editModal.classList.add('hidden');
+  renderReview(); autosave(); showToast('✅ Updated');
 });
 
 /* ============================================================
-   SUMMARY VIEW
+   SUMMARY
 ============================================================ */
 function renderSummary(){
   const saved = Object.keys(results);
   const total = items.length;
   let totalValue = 0;
-  saved.forEach(name => {
-    const item = items.find(i => i.name === name);
-    if (item) totalValue += (results[name].close * item.price);
-  });
+  saved.forEach(name => { const item = items.find(i => i.name === name); if (item) totalValue += (results[name].close * item.price); });
   document.getElementById('kpi-saved').textContent = saved.length;
   document.getElementById('kpi-total').textContent = total;
   document.getElementById('kpi-value').textContent = `$${totalValue.toFixed(0)}`;
   document.getElementById('kpi-progress').textContent = total > 0 ? `${Math.round((Math.min(currentIndex,total)/total)*100)}%` : '0%';
-
-  // Top items by value
   const topList = document.getElementById('summary-top-list');
   const sorted = saved.map(name => {
     const item = items.find(i => i.name === name);
     return { name, value: item ? results[name].close * item.price : 0 };
   }).sort((a,b) => b.value - a.value).slice(0, 8);
-
-  if (!sorted.length){
-    topList.innerHTML = '<div style="color:var(--text-muted);font-size:var(--sm);text-align:center;padding:20px">No saved items yet</div>';
-  } else {
+  if (!sorted.length){ topList.innerHTML = '<div style="color:var(--text-muted);text-align:center;padding:20px">No saved items yet</div>'; }
+  else {
     topList.innerHTML = sorted.map(({name, value}) => `
       <div class="summary-item">
         <div class="review-item-icon" style="background:${iconColor(name)};width:28px;height:28px;font-size:12px;flex-shrink:0;display:flex;align-items:center;justify-content:center;border-radius:50%;color:#fff;font-weight:800">${name.charAt(0).toUpperCase()}</div>
@@ -1207,13 +993,11 @@ function renderSummary(){
         <div class="summary-item-val">$${value.toFixed(2)}</div>
       </div>`).join('');
   }
-
-  // Sync generate button 2
   generateBtn2.disabled = saved.length === 0;
 }
 
 /* ============================================================
-   GENERATE REPORT (shared logic)
+   GENERATE REPORT
 ============================================================ */
 async function doGenerate(resultEl, btn){
   if (!Object.keys(results).length){ showToast('No data saved yet!'); return; }
@@ -1222,11 +1006,9 @@ async function doGenerate(resultEl, btn){
   btn.innerHTML = `<span>⏳ Generating…</span>`;
   resultEl.className = 'report-result';
   resultEl.style.display = 'none';
-  showLoading('Generating report…');
+  showLoading('Generating…');
   try {
-    const r = await fetch(`https://www.googleapis.com/drive/v3/files/${currentFileId}?alt=media`, {
-      headers: { Authorization: `Bearer ${accessToken}` }
-    });
+    const r = await fetch(`https://www.googleapis.com/drive/v3/files/${currentFileId}?alt=media`, { headers: { Authorization: `Bearer ${accessToken}` } });
     const buf = await r.arrayBuffer();
     const wb = XLSX.read(buf, { type: 'array' });
     wb.SheetNames.forEach(sn => {
@@ -1237,16 +1019,11 @@ async function doGenerate(resultEl, btn){
         if (!name || !results[name]) return;
         const saved = results[name];
         const openVal = parseFloat(row[1])||0;
-        const addVal = saved.add, closeVal = saved.close;
         const price = parseFloat(row[5])||0;
-        const usage = openVal + addVal - closeVal;
-        const setCell = (col, val) => {
-          const addr = XLSX.utils.encode_cell({r:ri,c:col});
-          if (!sheet[addr]) sheet[addr] = {};
-          sheet[addr].v = val; sheet[addr].t = 'n';
-        };
-        setCell(2, addVal); setCell(3, closeVal); setCell(4, usage);
-        setCell(6, usage * price); setCell(7, closeVal * price);
+        const usage = openVal + saved.add - saved.close;
+        const setCell = (col, val) => { const addr = XLSX.utils.encode_cell({r:ri,c:col}); if (!sheet[addr]) sheet[addr] = {}; sheet[addr].v = val; sheet[addr].t = 'n'; };
+        setCell(2, saved.add); setCell(3, saved.close); setCell(4, usage);
+        setCell(6, usage * price); setCell(7, saved.close * price);
       });
     });
     const now = new Date();
@@ -1263,7 +1040,6 @@ async function doGenerate(resultEl, btn){
     });
     if (!up.ok) throw new Error(`Upload failed: ${up.status}`);
     const upData = await up.json();
-
     // Save history
     try {
       let hist = JSON.parse(localStorage.getItem(HISTORY_KEY)||'{}');
@@ -1274,10 +1050,7 @@ async function doGenerate(resultEl, btn){
       });
       localStorage.setItem(HISTORY_KEY, JSON.stringify(hist));
     } catch(e){}
-
-    // Clear autosave
     try { localStorage.removeItem(AUTOSAVE_KEY); } catch(e){}
-
     resultEl.className = 'report-result success'; resultEl.style.display = 'block';
     resultEl.innerHTML = `✅ <strong>${upData.name}</strong> saved! <a href="${upData.webViewLink}" target="_blank" rel="noopener noreferrer">📂 Open in Drive</a>`;
     await loadDriveFiles();
@@ -1289,13 +1062,23 @@ async function doGenerate(resultEl, btn){
   hideLoading();
   updateProgress();
 }
-
 generateBtn.addEventListener('click', () => doGenerate(reportResult, generateBtn));
 generateBtn2.addEventListener('click', () => doGenerate(resultBanner2, generateBtn2));
 
 /* ============================================================
-   CONFETTI
+   HELPERS
 ============================================================ */
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+const ICON_COLORS = ['#2d7d46','#c62828','#1565c0','#f57c00','#6a1b9a','#00838f','#d81b60','#2e7d32','#4527a0','#bf360c'];
+function iconColor(name){ const h = name.split('').reduce((a,c) => a + c.charCodeAt(0), 0); return ICON_COLORS[h % ICON_COLORS.length]; }
+function prodIcon(name){ return `<span class="prod-icon" style="background:${iconColor(name)}">${name.charAt(0).toUpperCase()}</span>`; }
+function historyHtml(name){
+  let hist = {};
+  try { hist = JSON.parse(localStorage.getItem(HISTORY_KEY)||'{}'); } catch(e){}
+  const h = hist[name] || [];
+  if (!h.length) return `<div class="history-box">📊 <span style="color:var(--text-faint);font-size:var(--xs)">No history yet</span></div>`;
+  return `<div class="history-box">📊 ${h.slice(-4).map(x => `<span class="hist-tag">${x.month}: <strong>${x.close}</strong></span>`).join('')}</div>`;
+}
 function launchConfetti(){
   const colors = ['#2d7d46','#4caf6e','#ffd700','#ff6b6b','#4fc3f7','#ce93d8'];
   for (let i=0; i<60; i++){
@@ -1305,27 +1088,6 @@ function launchConfetti(){
     document.body.appendChild(p);
     setTimeout(() => p.remove(), 2500);
   }
-}
-
-/* ============================================================
-   HELPERS
-============================================================ */
-function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
-
-const ICON_COLORS = ['#2d7d46','#c62828','#1565c0','#f57c00','#6a1b9a','#00838f','#d81b60','#2e7d32','#4527a0','#bf360c','#00695c','#558b2f'];
-function iconColor(name){
-  const h = name.split('').reduce((a,c) => a + c.charCodeAt(0), 0);
-  return ICON_COLORS[h % ICON_COLORS.length];
-}
-function prodIcon(name){
-  return `<span class="prod-icon" style="background:${iconColor(name)}">${name.charAt(0).toUpperCase()}</span>`;
-}
-function historyHtml(name){
-  let hist = {};
-  try { hist = JSON.parse(localStorage.getItem(HISTORY_KEY)||'{}'); } catch(e){}
-  const h = hist[name] || [];
-  if (!h.length) return `<div class="history-box">📊 <span style="color:var(--text-faint);font-size:var(--xs)">No history yet</span></div>`;
-  return `<div class="history-box">📊 ${h.slice(-4).map(x => `<span class="hist-tag">${x.month}: <strong>${x.close}</strong></span>`).join('')}</div>`;
 }
 </script>
 </body>
