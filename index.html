@@ -763,8 +763,8 @@ input, select { font: inherit; color: inherit; }
 /* ==========================
    CONFIG — FILL THESE IN
 ========================== */
-const GOOGLE_CLIENT_ID = '397533113348-geurcc1e124egnn2ttf20epub2ero4vo.apps.googleusercontent.com';
-const SCOPES = 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email';
+const GOOGLE_CLIENT_ID = '997533113348-geurcc1e124egnn2ttf20epub2ero4vo.apps.googleusercontent.com';
+const SCOPES = 'https://www.googleapis.com/auth/drive.readonly https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email';
 
 /* ==========================
    STATE
@@ -917,7 +917,7 @@ async function loadUserInfo() {
 async function loadDriveFiles() {
   showLoading('Loading your Drive files…');
   try {
-    const q = encodeURIComponent("mimeType='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' and trashed=false");
+    const q = encodeURIComponent("mimeType='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' and trashed=false and 'me' in owners");
     const fields = encodeURIComponent('files(id,name,modifiedTime)');
     const data = await apiGet(`https://www.googleapis.com/drive/v3/files?q=${q}&fields=${fields}&orderBy=modifiedTime+desc`);
     driveFiles = data.files || [];
