@@ -763,7 +763,7 @@ input, select { font: inherit; color: inherit; }
 /* ==========================
    CONFIG — FILL THESE IN
 ========================== */
-const GOOGLE_CLIENT_ID = '997533113348-geurcc1e124egnn2ttf20epub2ero4vo.apps.googleusercontent.com';// ← Replace this
+const GOOGLE_CLIENT_ID = '997533113348-geurcc1e124egnn2ttf20epub2ero4vo.apps.googleusercontent.com';
 const SCOPES = 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email';
 
 /* ==========================
@@ -844,12 +844,6 @@ function showToast(msg) {
    GOOGLE IDENTITY SERVICES
 ========================== */
 window.addEventListener('load', () => {
-  if (GOOGLE_CLIENT_ID === 'YOUR_GOOGLE_CLIENT_ID_HERE') {
-    // Demo mode — show setup instructions
-    showSetupInstructions();
-    return;
-  }
-
   tokenClient = google.accounts.oauth2.initTokenClient({
     client_id: GOOGLE_CLIENT_ID,
     scope: SCOPES,
@@ -868,7 +862,6 @@ window.addEventListener('load', () => {
 });
 
 loginBtn.addEventListener('click', () => {
-  if (GOOGLE_CLIENT_ID === 'YOUR_GOOGLE_CLIENT_ID_HERE') { return; }
   showLoading('Connecting to Google…');
   tokenClient.requestAccessToken({ prompt: 'consent' });
 });
@@ -1336,24 +1329,6 @@ function launchConfetti() {
 /* ==========================
    SETUP INSTRUCTIONS (DEMO MODE)
 ========================== */
-function showSetupInstructions() {
-  const loginCard = document.querySelector('.login-card');
-  loginCard.innerHTML = `
-    <div class="login-logo">⚙️</div>
-    <h1 class="login-title" style="font-size:var(--text-lg)">Setup Required</h1>
-    <p class="login-subtitle" style="text-align:left; font-size:var(--text-xs); line-height:1.7">
-      To use this app, replace <code style="background:var(--color-surface-offset);padding:2px 6px;border-radius:4px;font-size:11px">YOUR_GOOGLE_CLIENT_ID_HERE</code> in the JS with your OAuth Client ID.<br><br>
-      <strong>Quick Steps:</strong><br>
-      1. Go to <a href="https://console.cloud.google.com" target="_blank" rel="noopener noreferrer" style="color:var(--color-primary)">console.cloud.google.com</a><br>
-      2. Create project → Enable <em>Google Drive API</em><br>
-      3. OAuth consent screen → External → add your email<br>
-      4. Credentials → OAuth Client ID → <em>Web application</em><br>
-      5. Add your hosting URL to Authorized Origins<br>
-      6. Copy Client ID → paste in app.js<br><br>
-      <em style="color:var(--color-text-faint)">No server needed — runs 100% in the browser!</em>
-    </p>
-  `;
-}
 
 /* ==========================
    UTIL
