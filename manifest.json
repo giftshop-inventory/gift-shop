@@ -1,0 +1,25 @@
+{
+  "name": "GiftShop Inventory",
+  "short_name": "GiftShop",
+  "description": "Gift shop inventory manager with Google Drive sync",
+  "start_url": "/gift-shop/",
+  "scope": "/gift-shop/",
+  "display": "standalone",
+  "background_color": "#f7f6f2",
+  "theme_color": "#2d7d46",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

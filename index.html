@@ -3,728 +3,340 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>GiftShop Inventory</title>
+  <meta name="theme-color" content="#2d7d46" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="GiftShop" />
+  <link rel="manifest" href="manifest.json" />
+  <title>🧸 GiftShop Inventory</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <script src="https://apis.google.com/js/api.js"></script>
   <script src="https://accounts.google.com/gsi/client"></script>
-
-  <!-- ===== XLSX via CDN (read/write Excel without a server) ===== -->
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-
   <style>
-/* ===========================
+/* ============================================================
    DESIGN TOKENS
-=========================== */
-:root, [data-theme="light"] {
-  --color-bg:             #f7f6f2;
-  --color-surface:        #ffffff;
-  --color-surface-2:      #f9f8f5;
-  --color-surface-offset: #f0ede8;
-  --color-divider:        #e0dbd5;
-  --color-border:         #d4d0c9;
-  --color-text:           #1f1c18;
-  --color-text-muted:     #6b6258;
-  --color-text-faint:     #b0a89e;
-  --color-primary:        #2d7d46;
-  --color-primary-hover:  #1f5f34;
-  --color-primary-light:  #e6f4ea;
-  --color-danger:         #c62828;
-  --color-danger-light:   #fce8e6;
-  --color-shadow-sm: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
-  --color-shadow-md: 0 4px 16px rgba(0,0,0,0.08), 0 2px 6px rgba(0,0,0,0.04);
-  --color-shadow-lg: 0 12px 40px rgba(0,0,0,0.12), 0 4px 12px rgba(0,0,0,0.06);
-  --radius-sm: 8px;
-  --radius-md: 14px;
-  --radius-lg: 20px;
-  --radius-xl: 28px;
-  --radius-full: 9999px;
-  --font-body: 'Inter', system-ui, sans-serif;
-  --text-xs:   clamp(0.75rem, 0.7rem + 0.25vw, 0.875rem);
-  --text-sm:   clamp(0.875rem, 0.8rem + 0.35vw, 1rem);
-  --text-base: clamp(1rem, 0.95rem + 0.25vw, 1.125rem);
-  --text-lg:   clamp(1.125rem, 1rem + 0.6vw, 1.375rem);
-  --text-xl:   clamp(1.375rem, 1.1rem + 1vw, 1.75rem);
+============================================================ */
+:root,[data-theme="light"]{
+  --bg:#f7f6f2; --surface:#fff; --surface-2:#f9f8f5; --surface-off:#f0ede8;
+  --divider:#e0dbd5; --border:#d4d0c9;
+  --text:#1f1c18; --text-muted:#6b6258; --text-faint:#b0a89e;
+  --primary:#2d7d46; --primary-h:#1f5f34; --primary-lt:#e6f4ea;
+  --danger:#c62828; --danger-lt:#fce8e6;
+  --warn:#e65100; --warn-lt:#fff3e0;
+  --shadow-sm:0 1px 3px rgba(0,0,0,.06),0 1px 2px rgba(0,0,0,.04);
+  --shadow-md:0 4px 16px rgba(0,0,0,.08),0 2px 6px rgba(0,0,0,.04);
+  --shadow-lg:0 12px 40px rgba(0,0,0,.12),0 4px 12px rgba(0,0,0,.06);
+  --r-sm:8px;--r-md:14px;--r-lg:20px;--r-xl:28px;--r-full:9999px;
+  --font:'Inter',system-ui,sans-serif;
+  --xs:clamp(.75rem,.7rem + .25vw,.875rem);
+  --sm:clamp(.875rem,.8rem + .35vw,1rem);
+  --base:clamp(1rem,.95rem + .25vw,1.125rem);
+  --lg:clamp(1.125rem,1rem + .6vw,1.375rem);
+  --xl:clamp(1.375rem,1.1rem + 1vw,1.75rem);
 }
-[data-theme="dark"] {
-  --color-bg:             #13120f;
-  --color-surface:        #1c1b18;
-  --color-surface-2:      #232118;
-  --color-surface-offset: #2a2823;
-  --color-divider:        #2d2b26;
-  --color-border:         #363330;
-  --color-text:           #e8e5df;
-  --color-text-muted:     #8a8278;
-  --color-text-faint:     #5a5650;
-  --color-primary:        #4caf6e;
-  --color-primary-hover:  #3a9458;
-  --color-primary-light:  #1a2f1e;
-  --color-danger:         #ef5350;
-  --color-danger-light:   #2a1a1a;
-  --color-shadow-sm: 0 1px 3px rgba(0,0,0,0.3);
-  --color-shadow-md: 0 4px 16px rgba(0,0,0,0.4);
-  --color-shadow-lg: 0 12px 40px rgba(0,0,0,0.5);
+[data-theme="dark"]{
+  --bg:#13120f;--surface:#1c1b18;--surface-2:#232118;--surface-off:#2a2823;
+  --divider:#2d2b26;--border:#363330;
+  --text:#e8e5df;--text-muted:#8a8278;--text-faint:#5a5650;
+  --primary:#4caf6e;--primary-h:#3a9458;--primary-lt:#1a2f1e;
+  --danger:#ef5350;--danger-lt:#2a1a1a;
+  --warn:#ffb74d;--warn-lt:#2a1e0a;
+  --shadow-sm:0 1px 3px rgba(0,0,0,.3);
+  --shadow-md:0 4px 16px rgba(0,0,0,.4);
+  --shadow-lg:0 12px 40px rgba(0,0,0,.5);
 }
 
-/* ===========================
-   BASE RESET
-=========================== */
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-html { -webkit-text-size-adjust: none; text-size-adjust: none; -webkit-font-smoothing: antialiased; }
-body {
-  font-family: var(--font-body);
-  font-size: var(--text-base);
-  background: var(--color-bg);
-  color: var(--color-text);
-  min-height: 100dvh;
-  display: flex;
-  justify-content: center;
-  transition: background 0.3s ease, color 0.3s ease;
-}
-img, svg { display: block; }
-button { cursor: pointer; font: inherit; color: inherit; background: none; border: none; }
-input, select { font: inherit; color: inherit; }
-::selection { background: rgba(45,125,70,0.2); }
-@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; } }
+/* ============================================================
+   BASE
+============================================================ */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:none;text-size-adjust:none;-webkit-font-smoothing:antialiased}
+body{font-family:var(--font);font-size:var(--base);background:var(--bg);color:var(--text);min-height:100dvh;display:flex;justify-content:center;transition:background .3s,color .3s}
+button{cursor:pointer;font:inherit;color:inherit;background:none;border:none}
+input,select{font:inherit;color:inherit}
+::selection{background:rgba(45,125,70,.2)}
 
-/* ===========================
-   APP SHELL
-=========================== */
-#app-shell {
-  width: 100%;
-  max-width: 480px;
-  min-height: 100dvh;
-  display: flex;
-  flex-direction: column;
-  background: var(--color-bg);
-  position: relative;
-}
+/* ============================================================
+   SHELL
+============================================================ */
+#shell{width:100%;max-width:480px;min-height:100dvh;display:flex;flex-direction:column;background:var(--bg);position:relative}
+.screen{display:none;flex-direction:column;flex:1}
+.screen.active{display:flex}
 
-/* ===========================
-   SCREENS
-=========================== */
-.screen { display: none; flex-direction: column; flex: 1; }
-.screen.active { display: flex; }
+/* ============================================================
+   LOGIN
+============================================================ */
+#login-screen{align-items:center;justify-content:center;min-height:100dvh;padding:24px;background:var(--bg)}
+.login-card{background:var(--surface);border-radius:var(--r-xl);padding:44px 32px;text-align:center;width:100%;max-width:380px;box-shadow:var(--shadow-lg);border:1px solid var(--divider)}
+.login-logo{font-size:56px;margin-bottom:8px;line-height:1}
+.login-title{font-size:var(--xl);font-weight:800;margin-bottom:6px}
+.login-sub{font-size:var(--sm);color:var(--text-muted);margin-bottom:32px;line-height:1.5}
+.btn-google{display:flex;align-items:center;justify-content:center;gap:10px;background:var(--text);color:var(--bg);border-radius:var(--r-full);width:100%;padding:16px 24px;font-size:var(--base);font-weight:700;transition:opacity .15s,transform .15s}
+.btn-google:hover{opacity:.85;transform:scale(1.02)}
+.btn-google:active{transform:scale(.98)}
+.login-note{margin-top:20px;font-size:var(--xs);color:var(--text-faint)}
 
-/* ===========================
-   LOGIN SCREEN
-=========================== */
-#login-screen {
-  background: var(--color-bg);
-  align-items: center;
-  justify-content: center;
-  min-height: 100dvh;
-  padding: 24px;
-}
+/* ============================================================
+   HEADER
+============================================================ */
+.app-header{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:var(--surface);border-bottom:1px solid var(--divider);position:sticky;top:0;z-index:100}
+.header-brand{font-size:var(--lg);font-weight:800}
+.header-actions{display:flex;align-items:center;gap:6px}
+.header-avatar{width:32px;height:32px;border-radius:var(--r-full);object-fit:cover;border:2px solid var(--divider)}
+.btn-icon{width:34px;height:34px;border-radius:var(--r-full);display:flex;align-items:center;justify-content:center;background:var(--surface-2);border:1px solid var(--divider);font-size:15px;transition:background .15s}
+.btn-icon:hover{background:var(--surface-off)}
 
-.login-card {
-  background: var(--color-surface);
-  border-radius: var(--radius-xl);
-  padding: 44px 32px;
-  text-align: center;
-  width: 100%;
-  max-width: 380px;
-  box-shadow: var(--color-shadow-lg);
-  border: 1px solid var(--color-divider);
-}
+/* ============================================================
+   TAB BAR (bottom navigation)
+============================================================ */
+.tab-bar{display:flex;background:var(--surface);border-top:1px solid var(--divider);padding:0 4px 4px}
+.tab-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 4px;border-radius:var(--r-md);font-size:10px;font-weight:600;color:var(--text-faint);transition:color .15s,background .15s}
+.tab-btn.active{color:var(--primary)}
+.tab-btn svg,.tab-btn .tab-icon{font-size:20px;line-height:1}
+.tab-btn:hover{background:var(--surface-2)}
 
-.login-logo {
-  font-size: 56px;
-  margin-bottom: 8px;
-  line-height: 1;
-}
-.login-title {
-  font-size: var(--text-xl);
-  font-weight: 800;
-  color: var(--color-text);
-  margin-bottom: 6px;
-}
-.login-subtitle {
-  font-size: var(--text-sm);
-  color: var(--color-text-muted);
-  margin-bottom: 32px;
-  line-height: 1.5;
-}
+/* ============================================================
+   VIEWS (inside app screen)
+============================================================ */
+.view{display:none;flex:1;flex-direction:column;overflow:hidden}
+.view.active{display:flex}
 
-.btn-google {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  background: var(--color-text);
-  color: var(--color-bg);
-  border: none;
-  padding: 16px 24px;
-  border-radius: var(--radius-full);
-  width: 100%;
-  font-size: var(--text-base);
-  font-weight: 700;
-  cursor: pointer;
-  transition: opacity 0.15s ease, transform 0.15s ease;
-}
-.btn-google:hover { opacity: 0.85; transform: scale(1.02); }
-.btn-google:active { transform: scale(0.98); opacity: 0.9; }
+/* ============================================================
+   FILE SECTION
+============================================================ */
+.file-section{padding:12px 16px;background:var(--surface);border-bottom:1px solid var(--divider)}
+.file-section-label{font-size:var(--xs);font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px}
+.file-select-row{display:flex;gap:8px}
+.file-select{flex:1;padding:10px 32px 10px 12px;background:var(--surface-2);border:1px solid var(--border);border-radius:var(--r-md);font-size:var(--sm);outline:none;transition:border-color .15s;appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236b6258' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center}
+.file-select:focus{border-color:var(--primary)}
+.btn-load{padding:10px 16px;background:var(--primary);color:#fff;border-radius:var(--r-md);font-size:var(--sm);font-weight:700;white-space:nowrap;transition:background .15s,transform .1s}
+.btn-load:hover{background:var(--primary-h)}
+.btn-load:active{transform:scale(.97)}
+.btn-load:disabled{opacity:.5;cursor:not-allowed;transform:none}
 
-.login-note {
-  margin-top: 20px;
-  font-size: var(--text-xs);
-  color: var(--color-text-faint);
-}
+/* ============================================================
+   CATEGORY FILTER BAR
+============================================================ */
+.cat-filter-bar{display:flex;gap:6px;padding:10px 16px;background:var(--surface);border-bottom:1px solid var(--divider);overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.cat-filter-bar::-webkit-scrollbar{display:none}
+.cat-chip{display:flex;align-items:center;gap:4px;padding:6px 12px;background:var(--surface-2);border:1px solid var(--border);border-radius:var(--r-full);font-size:var(--xs);font-weight:600;white-space:nowrap;color:var(--text-muted);transition:all .15s;cursor:pointer;flex-shrink:0}
+.cat-chip.active{background:var(--primary-lt);border-color:var(--primary);color:var(--primary)}
 
-/* ===========================
-   APP SCREEN
-=========================== */
-#app-screen { background: var(--color-bg); }
+/* ============================================================
+   SEARCH BAR
+============================================================ */
+.search-bar-wrap{padding:10px 16px;background:var(--surface);border-bottom:1px solid var(--divider)}
+.search-input-wrap{position:relative;display:flex;align-items:center}
+.search-icon{position:absolute;left:12px;color:var(--text-faint);pointer-events:none}
+.search-input{width:100%;padding:10px 12px 10px 36px;background:var(--surface-2);border:1px solid var(--border);border-radius:var(--r-full);font-size:var(--sm);outline:none;transition:border-color .15s}
+.search-input:focus{border-color:var(--primary)}
+.search-clear{position:absolute;right:10px;background:var(--surface-off);border:none;border-radius:var(--r-full);width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--text-muted);cursor:pointer;display:none}
+.search-clear.show{display:flex}
 
-/* Header */
-.app-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 14px 20px;
-  background: var(--color-surface);
-  border-bottom: 1px solid var(--color-divider);
-  position: sticky;
-  top: 0;
-  z-index: 100;
-}
-
-.header-brand {
-  font-size: var(--text-lg);
-  font-weight: 800;
-  color: var(--color-text);
-}
-.brand-emoji { margin-right: 4px; }
-
-.header-actions { display: flex; align-items: center; gap: 8px; }
-
-.header-avatar {
-  width: 34px; height: 34px;
-  border-radius: var(--radius-full);
-  object-fit: cover;
-  border: 2px solid var(--color-divider);
-}
-
-.btn-icon {
-  width: 36px; height: 36px;
-  border-radius: var(--radius-full);
-  display: flex; align-items: center; justify-content: center;
-  background: var(--color-surface-2);
-  border: 1px solid var(--color-divider);
-  transition: background 0.15s ease;
-  font-size: 16px;
-}
-.btn-icon:hover { background: var(--color-surface-offset); }
-.btn-icon:active { background: var(--color-divider); }
-
-/* ===========================
-   FILE SELECTOR SECTION
-=========================== */
-.file-section {
-  padding: 16px 20px;
-  background: var(--color-surface);
-  border-bottom: 1px solid var(--color-divider);
-}
-
-.file-section-label {
-  font-size: var(--text-xs);
-  font-weight: 600;
-  color: var(--color-text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  margin-bottom: 10px;
-}
-
-.file-select-row { display: flex; gap: 10px; align-items: center; }
-
-.file-select {
-  flex: 1;
-  padding: 11px 14px;
-  background: var(--color-surface-2);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  font-size: var(--text-sm);
-  color: var(--color-text);
-  outline: none;
-  transition: border-color 0.15s ease;
-  appearance: none;
-  -webkit-appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236b6258' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 12px center;
-  padding-right: 36px;
-}
-.file-select:focus { border-color: var(--color-primary); }
-
-.btn-load {
-  padding: 11px 18px;
-  background: var(--color-primary);
-  color: white;
-  border-radius: var(--radius-md);
-  font-size: var(--text-sm);
-  font-weight: 700;
-  white-space: nowrap;
-  transition: background 0.15s ease, transform 0.1s ease;
-}
-.btn-load:hover { background: var(--color-primary-hover); }
-.btn-load:active { transform: scale(0.97); }
-.btn-load:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
-
-/* ===========================
-   CARD AREA (SWIPE ZONE)
-=========================== */
-
-/* Empty / Welcome state */
-.empty-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-  padding: 32px 20px;
-  color: var(--color-text-muted);
-}
-.empty-state-icon { font-size: 48px; margin-bottom: 16px; }
-.empty-state h3 { font-size: var(--text-lg); font-weight: 700; color: var(--color-text); margin-bottom: 8px; }
-.empty-state p { font-size: var(--text-sm); line-height: 1.6; max-width: 28ch; }
+/* ============================================================
+   SWIPE ZONE
+============================================================ */
+.swipe-zone{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:12px 16px 8px;overflow-y:auto;min-height:0}
+.empty-state{display:flex;flex-direction:column;align-items:center;text-align:center;padding:40px 20px;color:var(--text-muted)}
+.empty-icon{font-size:48px;margin-bottom:16px}
+.empty-state h3{font-size:var(--lg);font-weight:700;color:var(--text);margin-bottom:8px}
+.empty-state p{font-size:var(--sm);line-height:1.6;max-width:28ch}
 
 /* Card stack */
-.card-stack {
-  position: relative;
-  width: 100%;
-  max-width: 400px;
-}
+.card-stack{position:relative;width:100%;max-width:400px;flex-shrink:0}
+.card-stack::before,.card-stack::after{content:'';position:absolute;inset:0;background:var(--surface);border-radius:var(--r-xl);border:1px solid var(--divider)}
+.card-stack::before{transform:rotate(-3deg) translateY(6px);z-index:0;opacity:.5}
+.card-stack::after{transform:rotate(2deg) translateY(3px);z-index:1;opacity:.75}
 
-/* Background stacked cards */
-.card-stack::before,
-.card-stack::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: var(--color-surface);
-  border-radius: var(--radius-xl);
-  border: 1px solid var(--color-divider);
-}
-.card-stack::before { transform: rotate(-3deg) translateY(6px); z-index: 0; opacity: 0.6; }
-.card-stack::after  { transform: rotate(2deg)  translateY(3px); z-index: 1; opacity: 0.8; }
+/* Inventory card */
+.inv-card{position:relative;z-index:10;background:var(--surface);border-radius:var(--r-xl);padding:20px 18px;width:100%;box-shadow:var(--shadow-lg);border:1px solid var(--divider);user-select:none;touch-action:pan-y;will-change:transform;max-height:72vh;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.inv-card.dragging{transition:none}
 
-/* The actual card */
-.inventory-card {
-  position: relative;
-  z-index: 10;
-  background: var(--color-surface);
-  border-radius: var(--radius-xl);
-  padding: 28px 24px;
-  width: 100%;
-  box-shadow: var(--color-shadow-lg);
-  border: 1px solid var(--color-divider);
-  user-select: none;
-  touch-action: pan-y;
-  will-change: transform;
-  transition: box-shadow 0.2s ease;
-}
-.inventory-card.dragging { transition: none; box-shadow: var(--color-shadow-lg); }
+/* Swipe indicators */
+.swipe-ind{position:absolute;top:16px;padding:5px 14px;border-radius:var(--r-full);font-size:var(--sm);font-weight:700;opacity:0;pointer-events:none;z-index:20;transition:opacity .1s}
+.swipe-ind.save{right:14px;background:var(--primary-lt);color:var(--primary)}
+.swipe-ind.skip{left:14px;background:var(--danger-lt);color:var(--danger)}
 
-/* Swipe indicator overlays */
-.swipe-indicator {
-  position: absolute;
-  top: 20px;
-  padding: 6px 16px;
-  border-radius: var(--radius-full);
-  font-size: var(--text-sm);
-  font-weight: 700;
-  opacity: 0;
-  transition: opacity 0.1s ease;
-  pointer-events: none;
-  z-index: 20;
-}
-.swipe-indicator.save { right: 16px; background: var(--color-primary-light); color: var(--color-primary); }
-.swipe-indicator.skip { left:  16px; background: var(--color-danger-light);  color: var(--color-danger); }
+/* Card parts */
+.card-cat-pill{display:inline-flex;align-items:center;gap:4px;background:var(--surface-2);border:1px solid var(--divider);border-radius:var(--r-full);padding:3px 10px;font-size:var(--xs);font-weight:600;color:var(--text-muted);margin-bottom:8px}
+.card-name-row{display:flex;align-items:center;margin-bottom:12px}
+.prod-icon{display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:var(--r-full);color:#fff;font-weight:800;font-size:16px;margin-right:10px;flex-shrink:0;box-shadow:var(--shadow-sm)}
+.card-prod-name{font-size:var(--xl);font-weight:800;line-height:1.2}
+.history-box{background:var(--surface-2);border:1px solid var(--divider);border-radius:var(--r-md);padding:8px 12px;font-size:var(--xs);color:var(--text-muted);margin-bottom:12px;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.history-box strong{color:var(--text)}
+.hist-tag{background:var(--surface);border:1px solid var(--divider);border-radius:var(--r-full);padding:2px 10px;font-size:var(--xs);color:var(--text-muted);white-space:nowrap}
 
-.card-category-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  background: var(--color-surface-2);
-  border: 1px solid var(--color-divider);
-  border-radius: var(--radius-full);
-  padding: 3px 12px;
-  font-size: var(--text-xs);
-  font-weight: 600;
-  color: var(--color-text-muted);
-  margin-bottom: 10px;
-}
+/* Stats */
+.card-stats{display:flex;gap:6px;margin-bottom:12px}
+.stat-chip{flex:1;background:var(--surface-2);border:1px solid var(--divider);border-radius:var(--r-md);padding:8px 10px;text-align:center}
+.stat-label{font-size:10px;color:var(--text-muted);margin-bottom:2px;font-weight:600}
+.stat-val{font-size:var(--base);font-weight:700;font-variant-numeric:tabular-nums}
 
-.card-product-name {
-  font-size: var(--text-xl);
-  font-weight: 800;
-  color: var(--color-text);
-  line-height: 1.2;
-  margin-bottom: 14px;
-}
+/* Inputs */
+.inp-group{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.inp-label{width:68px;font-size:var(--sm);font-weight:600;color:var(--text-muted);flex-shrink:0}
+.inp-wrap{flex:1;display:flex;align-items:center;gap:0}
+.stepper-btn{width:38px;height:44px;background:var(--surface-2);border:2px solid var(--border);font-size:18px;font-weight:700;color:var(--text-muted);flex-shrink:0;transition:background .1s,color .1s;display:flex;align-items:center;justify-content:center}
+.stepper-btn:first-child{border-radius:var(--r-md) 0 0 var(--r-md);border-right:none}
+.stepper-btn:last-child{border-radius:0 var(--r-md) var(--r-md) 0;border-left:none}
+.stepper-btn:hover{background:var(--surface-off);color:var(--text)}
+.stepper-btn:active{background:var(--divider)}
+.card-input{flex:1;padding:10px 8px;background:var(--surface-2);border:2px solid var(--border);border-top:2px solid var(--border);border-bottom:2px solid var(--border);border-left:none;border-right:none;font-size:var(--lg);font-weight:700;text-align:center;outline:none;transition:border-color .15s,background .15s;font-variant-numeric:tabular-nums;-moz-appearance:textfield;min-width:0}
+.card-input::-webkit-outer-spin-button,.card-input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.card-input:focus{border-color:var(--primary);background:var(--surface);border-top-color:var(--primary);border-bottom-color:var(--primary)}
+.cost-preview{font-size:var(--xs);color:var(--text-faint);text-align:right;margin-bottom:14px}
 
-.card-stats-row {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 16px;
-}
-.stat-chip {
-  flex: 1;
-  background: var(--color-surface-2);
-  border: 1px solid var(--color-divider);
-  border-radius: var(--radius-md);
-  padding: 10px 12px;
-  text-align: center;
-}
-.stat-chip-label { font-size: var(--text-xs); color: var(--color-text-muted); margin-bottom: 2px; }
-.stat-chip-value { font-size: var(--text-base); font-weight: 700; color: var(--color-text); font-variant-numeric: tabular-nums; }
-
-.card-input-group {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 10px;
-}
-.card-input-label {
-  width: 72px;
-  font-size: var(--text-sm);
-  font-weight: 600;
-  color: var(--color-text-muted);
-  flex-shrink: 0;
-}
-.card-input {
-  flex: 1;
-  padding: 12px 16px;
-  background: var(--color-surface-2);
-  border: 2px solid var(--color-border);
-  border-radius: var(--radius-md);
-  font-size: var(--text-lg);
-  font-weight: 700;
-  color: var(--color-text);
-  outline: none;
-  transition: border-color 0.15s ease, background 0.15s ease;
-  font-variant-numeric: tabular-nums;
-  -moz-appearance: textfield;
-}
-.card-input::-webkit-outer-spin-button,
-.card-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
-.card-input:focus {
-  border-color: var(--color-primary);
-  background: var(--color-surface);
-}
-
-.card-price-note {
-  font-size: var(--text-xs);
-  color: var(--color-text-faint);
-  text-align: right;
-  margin-bottom: 16px;
-}
-
-.card-action-row {
-  display: flex;
-  gap: 10px;
-  margin-top: 4px;
-}
-
-.btn-skip-card {
-  flex: 1;
-  padding: 14px 0;
-  background: var(--color-surface-offset);
-  border: 1px solid var(--color-divider);
-  border-radius: var(--radius-full);
-  font-size: var(--text-sm);
-  font-weight: 700;
-  color: var(--color-text-muted);
-  transition: background 0.15s ease;
-}
-.btn-skip-card:hover { background: var(--color-divider); }
-.btn-skip-card:active { transform: scale(0.97); }
-
-.btn-save-card {
-  flex: 2;
-  padding: 14px 0;
-  background: var(--color-primary);
-  border-radius: var(--radius-full);
-  font-size: var(--text-sm);
-  font-weight: 700;
-  color: white;
-  transition: background 0.15s ease;
-}
-.btn-save-card:hover { background: var(--color-primary-hover); }
-.btn-save-card:active { transform: scale(0.97); }
+/* Card actions */
+.card-btns{display:flex;gap:8px;margin-top:4px}
+.btn-skip-c{flex:1;padding:13px 0;background:var(--surface-off);border:1px solid var(--divider);border-radius:var(--r-full);font-size:var(--sm);font-weight:700;color:var(--text-muted);transition:background .15s}
+.btn-skip-c:hover{background:var(--divider)}
+.btn-save-c{flex:2;padding:13px 0;background:var(--primary);border-radius:var(--r-full);font-size:var(--sm);font-weight:700;color:#fff;transition:background .15s}
+.btn-save-c:hover{background:var(--primary-h)}
+.btn-save-c:active,.btn-skip-c:active{transform:scale(.97)}
 
 /* Swipe hint */
-.swipe-hint-row {
-  display: flex;
-  justify-content: space-between;
-  width: 100%;
-  max-width: 400px;
-  padding: 10px 8px 0;
-  font-size: var(--text-xs);
-  color: var(--color-text-faint);
-  font-weight: 500;
+.swipe-hint{display:flex;justify-content:space-between;width:100%;max-width:400px;padding:8px 6px 0;font-size:var(--xs);color:var(--text-faint);font-weight:500}
+
+/* Done card */
+.done-card{background:var(--surface);border-radius:var(--r-xl);padding:36px 24px;text-align:center;width:100%;max-width:400px;box-shadow:var(--shadow-md);border:1px solid var(--divider)}
+.done-emoji{font-size:52px;margin-bottom:10px}
+.done-title{font-size:var(--xl);font-weight:800;margin-bottom:6px}
+.done-sub{font-size:var(--sm);color:var(--text-muted);margin-bottom:20px}
+.btn-restart{padding:12px 24px;background:var(--surface-off);border:1px solid var(--divider);border-radius:var(--r-full);font-size:var(--sm);font-weight:700;transition:background .15s}
+.btn-restart:hover{background:var(--divider)}
+
+/* ============================================================
+   PROGRESS
+============================================================ */
+.progress-section{padding:8px 16px 6px;background:var(--surface);border-top:1px solid var(--divider)}
+.progress-track{height:6px;background:var(--surface-off);border-radius:var(--r-full);overflow:hidden}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--primary),#4caf6e);border-radius:var(--r-full);transition:width .5s cubic-bezier(.25,.46,.45,.94);width:0%}
+.progress-label{display:block;text-align:center;font-size:var(--xs);font-weight:600;color:var(--text-muted);margin-top:4px}
+
+/* ============================================================
+   ACTION BAR
+============================================================ */
+.action-bar{padding:10px 16px 14px;background:var(--surface);border-top:1px solid var(--divider)}
+.btn-generate{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:15px;background:var(--text);color:var(--bg);border-radius:var(--r-full);font-size:var(--base);font-weight:700;transition:opacity .15s,transform .1s}
+.btn-generate:hover:not(:disabled){opacity:.85}
+.btn-generate:active:not(:disabled){transform:scale(.98)}
+.btn-generate:disabled{opacity:.35;cursor:not-allowed}
+.report-result{margin-top:8px;padding:10px 14px;border-radius:var(--r-md);font-size:var(--sm);font-weight:500;text-align:center;display:none}
+.report-result.success{display:block;background:var(--primary-lt);color:var(--primary)}
+.report-result.error{display:block;background:var(--danger-lt);color:var(--danger)}
+.report-result a{color:inherit;font-weight:700;text-decoration:underline}
+
+/* ============================================================
+   REVIEW VIEW
+============================================================ */
+.review-view{flex:1;overflow-y:auto;padding:12px 16px}
+.review-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;padding:0 2px}
+.review-count{font-size:var(--sm);font-weight:700;color:var(--text)}
+.review-sub{font-size:var(--xs);color:var(--text-muted)}
+.review-item{display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--divider);border-radius:var(--r-lg);padding:12px 14px;margin-bottom:8px;transition:border-color .15s}
+.review-item:hover{border-color:var(--border)}
+.review-item-icon{width:36px;height:36px;border-radius:var(--r-full);color:#fff;font-weight:800;font-size:15px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.review-item-info{flex:1;min-width:0}
+.review-item-name{font-size:var(--sm);font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.review-item-cat{font-size:var(--xs);color:var(--text-muted)}
+.review-item-val{display:flex;flex-direction:column;align-items:flex-end;gap:2px}
+.review-val-close{font-size:var(--base);font-weight:800;color:var(--text);font-variant-numeric:tabular-nums}
+.review-val-add{font-size:var(--xs);color:var(--text-muted)}
+.btn-edit-review{padding:5px 12px;background:var(--surface-2);border:1px solid var(--divider);border-radius:var(--r-full);font-size:var(--xs);font-weight:600;color:var(--text-muted);flex-shrink:0;transition:background .15s}
+.btn-edit-review:hover{background:var(--surface-off)}
+.review-empty{text-align:center;padding:40px 20px;color:var(--text-muted);font-size:var(--sm)}
+
+/* Edit modal */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);backdrop-filter:blur(4px);z-index:500;display:flex;align-items:flex-end;justify-content:center}
+.modal-overlay.hidden{display:none}
+.modal-sheet{background:var(--surface);border-radius:var(--r-xl) var(--r-xl) 0 0;padding:24px 20px 32px;width:100%;max-width:480px;box-shadow:var(--shadow-lg)}
+.modal-handle{width:40px;height:4px;background:var(--divider);border-radius:var(--r-full);margin:0 auto 20px}
+.modal-title{font-size:var(--lg);font-weight:800;margin-bottom:4px}
+.modal-sub{font-size:var(--sm);color:var(--text-muted);margin-bottom:20px}
+.modal-inp-group{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.modal-inp-label{width:72px;font-size:var(--sm);font-weight:600;color:var(--text-muted)}
+.modal-inp{flex:1;padding:12px 14px;background:var(--surface-2);border:2px solid var(--border);border-radius:var(--r-md);font-size:var(--lg);font-weight:700;outline:none;transition:border-color .15s;font-variant-numeric:tabular-nums}
+.modal-inp:focus{border-color:var(--primary)}
+.modal-btns{display:flex;gap:8px;margin-top:16px}
+.btn-modal-cancel{flex:1;padding:13px;background:var(--surface-off);border:1px solid var(--divider);border-radius:var(--r-full);font-size:var(--sm);font-weight:700;color:var(--text-muted)}
+.btn-modal-save{flex:2;padding:13px;background:var(--primary);border-radius:var(--r-full);font-size:var(--sm);font-weight:700;color:#fff;transition:background .15s}
+.btn-modal-save:hover{background:var(--primary-h)}
+
+/* ============================================================
+   SUMMARY VIEW
+============================================================ */
+.summary-view{flex:1;overflow-y:auto;padding:12px 16px 20px}
+.summary-kpi-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
+.kpi-card{background:var(--surface);border:1px solid var(--divider);border-radius:var(--r-lg);padding:14px;text-align:center}
+.kpi-label{font-size:var(--xs);font-weight:600;color:var(--text-muted);margin-bottom:4px}
+.kpi-value{font-size:var(--xl);font-weight:800;color:var(--text);font-variant-numeric:tabular-nums}
+.kpi-value.green{color:var(--primary)}
+.summary-section-label{font-size:var(--xs);font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-muted);margin-bottom:8px;margin-top:14px}
+.summary-item{display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--divider);border-radius:var(--r-md);padding:10px 12px;margin-bottom:6px}
+.summary-item-name{flex:1;font-size:var(--sm);font-weight:600;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.summary-item-val{font-size:var(--sm);font-weight:800;font-variant-numeric:tabular-nums;color:var(--primary)}
+.btn-generate-summary{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:15px;background:var(--text);color:var(--bg);border-radius:var(--r-full);font-size:var(--base);font-weight:700;margin-top:16px;transition:opacity .15s}
+.btn-generate-summary:hover:not(:disabled){opacity:.85}
+.btn-generate-summary:disabled{opacity:.35;cursor:not-allowed}
+.result-banner{margin-top:10px;padding:10px 14px;border-radius:var(--r-md);font-size:var(--sm);font-weight:500;text-align:center;display:none}
+.result-banner.success{display:block;background:var(--primary-lt);color:var(--primary)}
+.result-banner.error{display:block;background:var(--danger-lt);color:var(--danger)}
+.result-banner a{color:inherit;font-weight:700;text-decoration:underline}
+
+/* Resume banner */
+.resume-banner{display:flex;align-items:center;gap:10px;background:var(--warn-lt);border:1px solid var(--warn);border-radius:var(--r-md);padding:10px 14px;margin:10px 16px 0;font-size:var(--sm)}
+.resume-banner.hidden{display:none}
+.resume-text{flex:1;color:var(--warn);font-weight:600}
+.btn-resume{padding:6px 14px;background:var(--warn);color:#fff;border-radius:var(--r-full);font-size:var(--xs);font-weight:700}
+.btn-resume-dismiss{font-size:18px;color:var(--warn);padding:0 4px}
+
+/* Undo toast */
+.undo-bar{position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--text);color:var(--bg);padding:10px 16px;border-radius:var(--r-full);font-size:var(--sm);font-weight:600;display:flex;align-items:center;gap:12px;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:400;white-space:nowrap;box-shadow:var(--shadow-md)}
+.undo-bar.show{opacity:1;transform:translateX(-50%) translateY(0);pointer-events:auto}
+.btn-undo{color:var(--primary);font-weight:800;font-size:var(--sm)}
+[data-theme="dark"] .btn-undo{color:#4caf6e}
+
+/* Toast */
+.toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--text);color:var(--bg);padding:9px 18px;border-radius:var(--r-full);font-size:var(--sm);font-weight:600;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:500;white-space:nowrap;box-shadow:var(--shadow-sm)}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* Loading */
+.loading-overlay{position:fixed;inset:0;background:rgba(0,0,0,.35);display:flex;align-items:center;justify-content:center;z-index:1000;backdrop-filter:blur(4px)}
+.loading-overlay.hidden{display:none}
+.loading-box{background:var(--surface);border-radius:var(--r-xl);padding:28px 36px;text-align:center;box-shadow:var(--shadow-lg)}
+.spinner{width:36px;height:36px;border:3px solid var(--divider);border-top-color:var(--primary);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 14px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-text{font-size:var(--sm);font-weight:600;color:var(--text-muted)}
+
+/* Confetti */
+.confetti-piece{position:fixed;pointer-events:none;z-index:900;animation:cfall 1.5s ease-in forwards;border-radius:2px}
+@keyframes cfall{0%{opacity:1;transform:translateY(0) rotate(0deg)}100%{opacity:0;transform:translateY(80vh) rotate(720deg)}}
+
+/* ============================================================
+   RESPONSIVE
+============================================================ */
+@media(max-width:360px){
+  .inv-card{padding:16px 14px}
+  .card-prod-name{font-size:var(--lg)}
+  .stepper-btn{width:32px}
+}
+@media(min-width:500px){
+  .swipe-zone{padding:16px 20px 10px}
 }
 
-/* Done screen */
-.done-card {
-  background: var(--color-surface);
-  border-radius: var(--radius-xl);
-  padding: 40px 28px;
-  text-align: center;
-  width: 100%;
-  max-width: 400px;
-  box-shadow: var(--color-shadow-md);
-  border: 1px solid var(--color-divider);
-}
-.done-emoji { font-size: 56px; margin-bottom: 12px; }
-.done-title { font-size: var(--text-xl); font-weight: 800; color: var(--color-text); margin-bottom: 8px; }
-.done-sub { font-size: var(--text-sm); color: var(--color-text-muted); margin-bottom: 24px; }
-.btn-restart {
-  padding: 13px 28px;
-  background: var(--color-surface-offset);
-  border: 1px solid var(--color-divider);
-  border-radius: var(--radius-full);
-  font-size: var(--text-sm);
-  font-weight: 700;
-  color: var(--color-text);
-  transition: background 0.15s ease;
-}
-.btn-restart:hover { background: var(--color-divider); }
-
-/* ===========================
-   PROGRESS BAR
-=========================== */
-.progress-section {
-  padding: 10px 20px 8px;
-  background: var(--color-surface);
-  border-top: 1px solid var(--color-divider);
-}
-.progress-track {
-  height: 6px;
-  background: var(--color-surface-offset);
-  border-radius: var(--radius-full);
-  overflow: hidden;
-}
-.progress-fill {
-  height: 100%;
-  background: linear-gradient(90deg, var(--color-primary), #4caf6e);
-  border-radius: var(--radius-full);
-  transition: width 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-  width: 0%;
-}
-.progress-label {
-  display: block;
-  text-align: center;
-  font-size: var(--text-xs);
-  font-weight: 600;
-  color: var(--color-text-muted);
-  margin-top: 5px;
-}
-
-/* ===========================
-   BOTTOM ACTION BAR
-=========================== */
-.action-bar {
-  padding: 12px 20px 20px;
-  background: var(--color-surface);
-  border-top: 1px solid var(--color-divider);
-}
-
-.btn-generate {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  width: 100%;
-  padding: 16px;
-  background: var(--color-text);
-  color: var(--color-bg);
-  border-radius: var(--radius-full);
-  font-size: var(--text-base);
-  font-weight: 700;
-  transition: opacity 0.15s ease, transform 0.1s ease;
-}
-.btn-generate:hover:not(:disabled) { opacity: 0.85; }
-.btn-generate:active:not(:disabled) { transform: scale(0.98); }
-.btn-generate:disabled { opacity: 0.35; cursor: not-allowed; }
-
-.report-result {
-  margin-top: 10px;
-  padding: 12px 16px;
-  border-radius: var(--radius-md);
-  font-size: var(--text-sm);
-  font-weight: 500;
-  text-align: center;
-  display: none;
-}
-.report-result.success { display: block; background: var(--color-primary-light); color: var(--color-primary); }
-.report-result.error   { display: block; background: var(--color-danger-light); color: var(--color-danger); }
-.report-result a { color: inherit; font-weight: 700; text-decoration: underline; }
-
-/* ===========================
-   LOADING OVERLAY
-=========================== */
-.loading-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.35);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  backdrop-filter: blur(4px);
-}
-.loading-overlay.hidden { display: none; }
-.loading-box {
-  background: var(--color-surface);
-  border-radius: var(--radius-xl);
-  padding: 32px 40px;
-  text-align: center;
-  box-shadow: var(--color-shadow-lg);
-}
-.spinner {
-  width: 40px; height: 40px;
-  border: 3px solid var(--color-divider);
-  border-top-color: var(--color-primary);
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-  margin: 0 auto 16px;
-}
-@keyframes spin { to { transform: rotate(360deg); } }
-.loading-text { font-size: var(--text-sm); font-weight: 600; color: var(--color-text-muted); }
-
-/* ===========================
-   TOAST
-=========================== */
-.toast {
-  position: fixed;
-  bottom: 100px;
-  left: 50%;
-  transform: translateX(-50%) translateY(20px);
-  background: var(--color-text);
-  color: var(--color-bg);
-  padding: 10px 20px;
-  border-radius: var(--radius-full);
-  font-size: var(--text-sm);
-  font-weight: 600;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.2s ease, transform 0.2s ease;
-  z-index: 500;
-  white-space: nowrap;
-}
-.toast.show {
-  opacity: 1;
-  transform: translateX(-50%) translateY(0);
-}
-
-/* ===========================
-   CONFETTI
-=========================== */
-.confetti-piece {
-  position: fixed;
-  width: 8px; height: 8px;
-  border-radius: 2px;
-  pointer-events: none;
-  z-index: 900;
-  animation: confetti-fall 1.5s ease-in forwards;
-}
-@keyframes confetti-fall {
-  0%   { opacity: 1; transform: translateY(0) rotate(0deg); }
-  100% { opacity: 0; transform: translateY(80vh) rotate(720deg); }
-}
-
-/* ===========================
-   PRODUCT ICON
-=========================== */
-.product-icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 38px;
-  height: 38px;
-  border-radius: var(--radius-full);
-  color: white;
-  font-weight: 800;
-  font-size: 18px;
-  margin-right: 10px;
-  flex-shrink: 0;
-  box-shadow: var(--color-shadow-sm);
-}
-
-.card-product-name {
-  display: flex !important;
-  align-items: center;
-}
-
-/* ===========================
-   MOBILE KEYBOARD FIX
-=========================== */
-.swipe-zone {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-start;
-  padding: 12px 16px 8px;
-  overflow-y: auto;
-  min-height: 0;
-}
-
-.card-stack {
-  position: relative;
-  width: 100%;
-  max-width: 400px;
-  flex-shrink: 0;
-}
-
-.inventory-card {
-  max-height: 72vh;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-}
-
-/* ===========================
-   PRODUCT ICON
-=========================== */
-.product-icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 38px;
-  height: 38px;
-  border-radius: var(--radius-full);
-  color: white;
-  font-weight: 800;
-  font-size: 18px;
-  margin-right: 10px;
-  flex-shrink: 0;
-  box-shadow: var(--color-shadow-sm);
-}
-.card-product-name {
-  display: flex !important;
-  align-items: center;
-  margin-bottom: 14px;
-}
-
-/* ===========================
-   RESPONSIVE FINE-TUNING
-=========================== */
-@media (max-width: 360px) {
-  .inventory-card { padding: 22px 18px; }
-  .card-product-name { font-size: var(--text-lg); }
-  .login-card { padding: 36px 24px; }
-}
-@media (min-width: 500px) {
-  .swipe-zone { padding: 28px 24px 16px; }
+/* PWA safe area */
+@supports(padding:env(safe-area-inset-bottom)){
+  .tab-bar{padding-bottom:calc(4px + env(safe-area-inset-bottom))}
 }
   </style>
 </head>
 <body>
+<div id="shell">
 
-<div id="app-shell">
-
-  <!-- ========== LOADING OVERLAY ========== -->
+  <!-- LOADING -->
   <div class="loading-overlay hidden" id="loading-overlay">
     <div class="loading-box">
       <div class="spinner"></div>
@@ -732,187 +344,309 @@ input, select { font: inherit; color: inherit; }
     </div>
   </div>
 
-  <!-- ========== TOAST ========== -->
+  <!-- TOAST -->
   <div class="toast" id="toast"></div>
 
-  <!-- ==========================================
-       LOGIN SCREEN
-  =========================================== -->
-  <div id="login-screen" class="screen active">
+  <!-- UNDO BAR -->
+  <div class="undo-bar" id="undo-bar">
+    <span id="undo-msg">Item skipped</span>
+    <button class="btn-undo" id="undo-btn">↩ Undo</button>
+  </div>
 
+  <!-- EDIT MODAL -->
+  <div class="modal-overlay hidden" id="edit-modal">
+    <div class="modal-sheet">
+      <div class="modal-handle"></div>
+      <div class="modal-title" id="modal-title">Edit Item</div>
+      <div class="modal-sub" id="modal-sub">Update closing count</div>
+      <div class="modal-inp-group">
+        <label class="modal-inp-label">📥 Add</label>
+        <input class="modal-inp" type="number" id="modal-add" inputmode="numeric" min="0" />
+      </div>
+      <div class="modal-inp-group">
+        <label class="modal-inp-label">📦 Close</label>
+        <input class="modal-inp" type="number" id="modal-close" inputmode="numeric" min="0" />
+      </div>
+      <div class="modal-btns">
+        <button class="btn-modal-cancel" id="modal-cancel">Cancel</button>
+        <button class="btn-modal-save" id="modal-save">Save Changes</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== LOGIN ===================== -->
+  <div id="login-screen" class="screen active">
+    <div style="position:fixed;top:16px;right:16px;z-index:10">
+      <button class="btn-icon" data-theme-toggle aria-label="Toggle theme">🌙</button>
+    </div>
     <div class="login-card">
       <div class="login-logo">🧸</div>
       <h1 class="login-title">Inventory Manager</h1>
-      <p class="login-subtitle">Sign in with Google to access your<br>Drive inventory files.</p>
-
+      <p class="login-sub">Sign in with Google to access<br>your Drive inventory files.</p>
       <button class="btn-google" id="login-btn">
         <svg width="20" height="20" viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
         Sign in with Google
       </button>
-
-      <p class="login-note">Uses Google OAuth · Read/Write your Drive files</p>
-    </div>
-
-    <!-- Dark mode toggle (login) -->
-    <div style="position:fixed; top:16px; right:16px;">
-      <button class="btn-icon" data-theme-toggle aria-label="Toggle theme" id="login-theme-btn">🌙</button>
+      <p class="login-note">Uses Google OAuth · Read/Write Drive files</p>
     </div>
   </div>
 
-  <!-- ==========================================
-       MAIN APP SCREEN
-  =========================================== -->
+  <!-- ===================== MAIN APP ===================== -->
   <div id="app-screen" class="screen">
 
     <!-- HEADER -->
     <header class="app-header">
-      <div class="header-brand">
-        <span class="brand-emoji">🧸</span>GiftShop
-      </div>
+      <div class="header-brand">🧸 GiftShop</div>
       <div class="header-actions">
-        <img id="user-avatar" class="header-avatar" src="" alt="User" width="34" height="34" loading="lazy" style="display:none" />
-        <button class="btn-icon" data-theme-toggle aria-label="Toggle theme" id="app-theme-btn">🌙</button>
-        <button class="btn-icon" id="logout-btn" aria-label="Sign out" title="Sign out">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        <img id="user-avatar" class="header-avatar" src="" alt="" style="display:none" />
+        <button class="btn-icon" data-theme-toggle aria-label="Toggle theme">🌙</button>
+        <button class="btn-icon" id="logout-btn" title="Sign out">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
         </button>
       </div>
     </header>
 
-    <!-- FILE SELECTOR -->
-    <div class="file-section">
-      <div class="file-section-label">Select Excel File</div>
-      <div class="file-select-row">
-        <select id="file-list" class="file-select">
-          <option value="">— Choose from Google Drive —</option>
-        </select>
-        <button id="load-btn" class="btn-load" disabled>Load</button>
+    <!-- RESUME BANNER -->
+    <div class="resume-banner hidden" id="resume-banner">
+      <div class="resume-text" id="resume-text">You have an unfinished session.</div>
+      <button class="btn-resume" id="resume-btn">Resume</button>
+      <button class="btn-resume-dismiss" id="resume-dismiss">✕</button>
+    </div>
+
+    <!-- VIEWS -->
+
+    <!-- === VIEW: SWIPE === -->
+    <div class="view active" id="view-swipe">
+      <!-- File selector -->
+      <div class="file-section">
+        <div class="file-section-label">Excel File</div>
+        <div class="file-select-row">
+          <select id="file-list" class="file-select">
+            <option value="">— Choose from Google Drive —</option>
+          </select>
+          <button id="load-btn" class="btn-load" disabled>Load</button>
+        </div>
+      </div>
+
+      <!-- Category filter -->
+      <div class="cat-filter-bar" id="cat-filter-bar" style="display:none"></div>
+
+      <!-- Search bar -->
+      <div class="search-bar-wrap" id="search-bar-wrap" style="display:none">
+        <div class="search-input-wrap">
+          <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input class="search-input" id="search-input" type="text" placeholder="Search product…" autocomplete="off" />
+          <button class="search-clear" id="search-clear">✕</button>
+        </div>
+      </div>
+
+      <!-- Swipe zone -->
+      <div class="swipe-zone" id="swipe-zone">
+        <div class="empty-state" id="empty-state">
+          <div class="empty-icon">📂</div>
+          <h3>No file loaded</h3>
+          <p>Select an Excel file above and tap Load.</p>
+        </div>
+      </div>
+
+      <!-- Progress -->
+      <div class="progress-section">
+        <div class="progress-track"><div class="progress-fill" id="progress-fill"></div></div>
+        <span class="progress-label" id="progress-label">0 / 0</span>
+      </div>
+
+      <!-- Action bar -->
+      <div class="action-bar">
+        <button id="generate-btn" class="btn-generate" disabled>
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+          Generate Next Month Report
+        </button>
+        <div class="report-result" id="report-result"></div>
+      </div>
+    </div><!-- /view-swipe -->
+
+    <!-- === VIEW: REVIEW === -->
+    <div class="view" id="view-review">
+      <div class="review-view">
+        <div class="review-header">
+          <div>
+            <div class="review-count" id="review-count">0 items saved</div>
+            <div class="review-sub">Tap any item to edit</div>
+          </div>
+        </div>
+        <div id="review-list"></div>
       </div>
     </div>
 
-    <!-- SWIPE ZONE -->
-    <div class="swipe-zone" id="swipe-zone">
-      <!-- Content injected by JS -->
-      <div class="empty-state" id="empty-state">
-        <div class="empty-state-icon">📂</div>
-        <h3>No file loaded</h3>
-        <p>Select an Excel file above and tap Load to begin.</p>
+    <!-- === VIEW: SUMMARY === -->
+    <div class="view" id="view-summary">
+      <div class="summary-view">
+        <div class="summary-kpi-row">
+          <div class="kpi-card">
+            <div class="kpi-label">Items Saved</div>
+            <div class="kpi-value green" id="kpi-saved">0</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">Total Inventory Value</div>
+            <div class="kpi-value" id="kpi-value">$0</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">Total Items</div>
+            <div class="kpi-value" id="kpi-total">0</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">Progress</div>
+            <div class="kpi-value" id="kpi-progress">0%</div>
+          </div>
+        </div>
+
+        <div class="summary-section-label">Top Saved by Value</div>
+        <div id="summary-top-list"></div>
+
+        <button class="btn-generate-summary" id="generate-btn-2" disabled>
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+          Generate Report
+        </button>
+        <div class="result-banner" id="result-banner-2"></div>
       </div>
     </div>
 
-    <!-- PROGRESS -->
-    <div class="progress-section">
-      <div class="progress-track">
-        <div class="progress-fill" id="progress-fill"></div>
-      </div>
-      <span class="progress-label" id="progress-label">0 / 0</span>
-    </div>
-
-    <!-- ACTION BAR -->
-    <div class="action-bar">
-      <button id="generate-btn" class="btn-generate" disabled>
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
-        Generate Next Month Report
+    <!-- TAB BAR -->
+    <nav class="tab-bar">
+      <button class="tab-btn active" data-tab="swipe">
+        <span class="tab-icon">🃏</span>Swipe
       </button>
-      <div class="report-result" id="report-result"></div>
-    </div>
+      <button class="tab-btn" data-tab="review">
+        <span class="tab-icon">📋</span>Review
+      </button>
+      <button class="tab-btn" data-tab="summary">
+        <span class="tab-icon">📊</span>Summary
+      </button>
+    </nav>
 
   </div><!-- /app-screen -->
-</div><!-- /app-shell -->
+</div><!-- /shell -->
 
-<!-- ==========================================
-     JAVASCRIPT
-=========================================== -->
 <script>
-/* ==========================
-   CONFIG — FILL THESE IN
-========================== */
+/* ============================================================
+   CONFIG
+============================================================ */
 const GOOGLE_CLIENT_ID = '397533113348-geurcc1e124egnn2ttf20epub2ero4vo.apps.googleusercontent.com';
 const SCOPES = 'https://www.googleapis.com/auth/drive.readonly https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email';
+const AUTOSAVE_KEY  = 'giftshop_autosave';
+const HISTORY_KEY   = 'giftshop_history';
+const THEME_KEY     = 'giftshop_theme';
 
-/* ==========================
+/* ============================================================
    STATE
-========================== */
-let tokenClient = null;
-let accessToken = null;
-let userInfo = null;
-let driveFiles = [];
-let items = [];
-let currentIndex = 0;
-let results = {}; // { productName: { close, add } }
-let currentFileId = null;
+============================================================ */
+let tokenClient = null, accessToken = null, userInfo = null;
+let driveFiles = [], items = [], filteredItems = [];
+let currentIndex = 0, results = {}, currentFileId = null;
 let isProcessing = false;
+let undoStack = [];
+let activeCategory = 'All';
+let searchQuery = '';
+let editingProductName = null;
 
-/* ==========================
+/* ============================================================
    DOM REFS
-========================== */
-const loginScreen = document.getElementById('login-screen');
-const appScreen   = document.getElementById('app-screen');
-const loginBtn    = document.getElementById('login-btn');
-const logoutBtn   = document.getElementById('logout-btn');
-const userAvatar  = document.getElementById('user-avatar');
-const fileListEl  = document.getElementById('file-list');
-const loadBtn     = document.getElementById('load-btn');
-const swipeZone   = document.getElementById('swipe-zone');
-const progressFill = document.getElementById('progress-fill');
+============================================================ */
+const loginScreen   = document.getElementById('login-screen');
+const appScreen     = document.getElementById('app-screen');
+const loginBtn      = document.getElementById('login-btn');
+const logoutBtn     = document.getElementById('logout-btn');
+const userAvatar    = document.getElementById('user-avatar');
+const fileListEl    = document.getElementById('file-list');
+const loadBtn       = document.getElementById('load-btn');
+const swipeZone     = document.getElementById('swipe-zone');
+const progressFill  = document.getElementById('progress-fill');
 const progressLabel = document.getElementById('progress-label');
-const generateBtn = document.getElementById('generate-btn');
-const reportResult = document.getElementById('report-result');
-const loadingOverlay = document.getElementById('loading-overlay');
-const loadingText = document.getElementById('loading-text');
-const toastEl = document.getElementById('toast');
+const generateBtn   = document.getElementById('generate-btn');
+const generateBtn2  = document.getElementById('generate-btn-2');
+const reportResult  = document.getElementById('report-result');
+const resultBanner2 = document.getElementById('result-banner-2');
+const loadingOverlay= document.getElementById('loading-overlay');
+const loadingText   = document.getElementById('loading-text');
+const toastEl       = document.getElementById('toast');
+const undoBar       = document.getElementById('undo-bar');
+const undoMsg       = document.getElementById('undo-msg');
+const undoBtn       = document.getElementById('undo-btn');
+const editModal     = document.getElementById('edit-modal');
+const modalTitle    = document.getElementById('modal-title');
+const modalSub      = document.getElementById('modal-sub');
+const modalAdd      = document.getElementById('modal-add');
+const modalClose    = document.getElementById('modal-close');
+const modalCancel   = document.getElementById('modal-cancel');
+const modalSave     = document.getElementById('modal-save');
+const resumeBanner  = document.getElementById('resume-banner');
+const resumeText    = document.getElementById('resume-text');
+const resumeBtn     = document.getElementById('resume-btn');
+const resumeDismiss = document.getElementById('resume-dismiss');
+const catFilterBar  = document.getElementById('cat-filter-bar');
+const searchBarWrap = document.getElementById('search-bar-wrap');
+const searchInput   = document.getElementById('search-input');
+const searchClear   = document.getElementById('search-clear');
 
-/* ==========================
-   THEME TOGGLE
-========================== */
+/* ============================================================
+   THEME (persisted)
+============================================================ */
 (function(){
   const html = document.documentElement;
-  const stored = null; // no localStorage in sandbox
-  const preferDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-  let currentTheme = preferDark ? 'dark' : 'light';
-  html.setAttribute('data-theme', currentTheme);
+  let theme = 'light';
+  try { theme = localStorage.getItem(THEME_KEY) || (window.matchMedia('(prefers-color-scheme:dark)').matches ? 'dark' : 'light'); } catch(e){}
+  html.setAttribute('data-theme', theme);
   updateThemeIcons();
-
-  document.addEventListener('click', (e) => {
+  document.addEventListener('click', e => {
     if (e.target.closest('[data-theme-toggle]')) {
-      currentTheme = currentTheme === 'dark' ? 'light' : 'dark';
-      html.setAttribute('data-theme', currentTheme);
+      theme = theme === 'dark' ? 'light' : 'dark';
+      html.setAttribute('data-theme', theme);
+      try { localStorage.setItem(THEME_KEY, theme); } catch(e){}
       updateThemeIcons();
     }
   });
-
-  function updateThemeIcons() {
-    document.querySelectorAll('[data-theme-toggle]').forEach(btn => {
-      btn.textContent = currentTheme === 'dark' ? '☀️' : '🌙';
-      btn.setAttribute('aria-label', `Switch to ${currentTheme === 'dark' ? 'light' : 'dark'} mode`);
+  function updateThemeIcons(){
+    document.querySelectorAll('[data-theme-toggle]').forEach(b => {
+      b.textContent = theme === 'dark' ? '☀️' : '🌙';
     });
   }
 })();
 
-/* ==========================
-   LOADING HELPERS
-========================== */
-function showLoading(text = 'Loading…') {
-  loadingText.textContent = text;
-  loadingOverlay.classList.remove('hidden');
-}
-function hideLoading() { loadingOverlay.classList.add('hidden'); }
+/* ============================================================
+   LOADING / TOAST
+============================================================ */
+function showLoading(t='Loading…'){ loadingText.textContent=t; loadingOverlay.classList.remove('hidden'); }
+function hideLoading(){ loadingOverlay.classList.add('hidden'); }
 
-function showToast(msg) {
+let toastTimer;
+function showToast(msg){
+  clearTimeout(toastTimer);
   toastEl.textContent = msg;
   toastEl.classList.add('show');
-  setTimeout(() => toastEl.classList.remove('show'), 2500);
+  toastTimer = setTimeout(() => toastEl.classList.remove('show'), 2500);
 }
 
-/* ==========================
-   GOOGLE IDENTITY SERVICES
-========================== */
-async function handleTokenResponse(tokenResponse) {
-  if (tokenResponse.error) {
-    showToast('Login failed: ' + tokenResponse.error);
-    hideLoading();
-    return;
-  }
-  accessToken = tokenResponse.access_token;
+/* ============================================================
+   TAB NAVIGATION
+============================================================ */
+document.querySelectorAll('[data-tab]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const tab = btn.dataset.tab;
+    document.querySelectorAll('[data-tab]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    document.getElementById('view-' + tab).classList.add('active');
+    if (tab === 'review') renderReview();
+    if (tab === 'summary') renderSummary();
+  });
+});
+
+/* ============================================================
+   GOOGLE AUTH
+============================================================ */
+async function handleTokenResponse(tr){
+  if (tr.error){ showToast('Login failed: ' + tr.error); hideLoading(); return; }
+  accessToken = tr.access_token;
   await loadUserInfo();
   await loadDriveFiles();
   showApp();
@@ -932,376 +666,395 @@ loginBtn.addEventListener('click', () => {
 });
 
 logoutBtn.addEventListener('click', () => {
-  if (accessToken) {
-    google.accounts.oauth2.revoke(accessToken, () => {});
-  }
-  accessToken = null;
-  userInfo = null;
-  items = [];
-  results = {};
-  driveFiles = [];
-  // Reset token client to force fresh login
+  if (accessToken) google.accounts.oauth2.revoke(accessToken, ()=>{});
+  accessToken = null; userInfo = null; items = []; results = {}; driveFiles = [];
   tokenClient = null;
   setTimeout(() => {
     tokenClient = google.accounts.oauth2.initTokenClient({
-      client_id: GOOGLE_CLIENT_ID,
-      scope: SCOPES,
-      callback: handleTokenResponse
+      client_id: GOOGLE_CLIENT_ID, scope: SCOPES, callback: handleTokenResponse
     });
   }, 100);
   showLogin();
 });
 
-/* ==========================
-   SHOW LOGIN / APP
-========================== */
-function showLogin() {
-  loginScreen.classList.add('active');
-  appScreen.classList.remove('active');
-  loginScreen.style.display = 'flex';
-  appScreen.style.display = 'none';
-}
-function showApp() {
+function showLogin(){ loginScreen.classList.add('active'); appScreen.classList.remove('active'); loginScreen.style.display='flex'; appScreen.style.display='none'; }
+function showApp(){
   hideLoading();
-  loginScreen.classList.remove('active');
-  appScreen.classList.add('active');
-  loginScreen.style.display = 'none';
-  appScreen.style.display = 'flex';
-  if (userInfo) {
-    userAvatar.src = userInfo.picture || '';
-    userAvatar.style.display = userInfo.picture ? 'block' : 'none';
-  }
+  loginScreen.classList.remove('active'); appScreen.classList.add('active');
+  loginScreen.style.display='none'; appScreen.style.display='flex';
+  if (userInfo){ userAvatar.src = userInfo.picture||''; userAvatar.style.display = userInfo.picture?'block':'none'; }
+  checkAutosave();
 }
 
-/* ==========================
-   GOOGLE API CALLS (fetch-based, no gapi.client needed)
-========================== */
-async function apiGet(url) {
-  const r = await fetch(url, { headers: { 'Authorization': `Bearer ${accessToken}` } });
-  if (!r.ok) throw new Error(`API error: ${r.status}`);
+/* ============================================================
+   GOOGLE API
+============================================================ */
+async function apiGet(url){
+  const r = await fetch(url, { headers: { Authorization: `Bearer ${accessToken}` } });
+  if (!r.ok) throw new Error(`API ${r.status}`);
   return r.json();
 }
-
-async function loadUserInfo() {
-  try {
-    userInfo = await apiGet('https://www.googleapis.com/oauth2/v2/userinfo');
-  } catch(e) { console.warn('Could not load user info', e); }
+async function loadUserInfo(){
+  try { userInfo = await apiGet('https://www.googleapis.com/oauth2/v2/userinfo'); } catch(e){}
 }
-
-async function loadDriveFiles() {
-  showLoading('Loading your Drive files…');
+async function loadDriveFiles(){
+  showLoading('Loading Drive files…');
   try {
     const q = encodeURIComponent("mimeType='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' and trashed=false");
     const fields = encodeURIComponent('files(id,name,modifiedTime)');
     const data = await apiGet(`https://www.googleapis.com/drive/v3/files?q=${q}&fields=${fields}&orderBy=modifiedTime+desc&includeItemsFromAllDrives=true&supportsAllDrives=true&corpora=user`);
     driveFiles = data.files || [];
-
     fileListEl.innerHTML = '<option value="">— Choose from Google Drive —</option>';
-    if (driveFiles.length === 0) {
-      fileListEl.innerHTML = '<option value="">No .xlsx files found in Drive</option>';
+    if (!driveFiles.length){
+      fileListEl.innerHTML = `<option value="">No .xlsx files found in Drive</option>`;
     } else {
       driveFiles.forEach(f => {
-        const opt = document.createElement('option');
-        opt.value = f.id;
-        const date = new Date(f.modifiedTime).toLocaleDateString();
-        opt.textContent = `${f.name} (${date})`;
-        fileListEl.appendChild(opt);
+        const o = document.createElement('option');
+        o.value = f.id;
+        o.textContent = `${f.name} (${new Date(f.modifiedTime).toLocaleDateString()})`;
+        fileListEl.appendChild(o);
       });
       loadBtn.disabled = false;
     }
-  } catch(e) {
+  } catch(e){
     fileListEl.innerHTML = `<option value="">Error: ${e.message}</option>`;
     showToast('Drive error: ' + e.message);
-    console.error('Drive error:', e);
   }
   hideLoading();
 }
 
-fileListEl.addEventListener('change', () => {
-  loadBtn.disabled = !fileListEl.value;
-});
-
+fileListEl.addEventListener('change', () => { loadBtn.disabled = !fileListEl.value; });
 loadBtn.addEventListener('click', async () => {
-  const fid = fileListEl.value;
-  if (!fid) return;
-  currentFileId = fid;
-  await loadExcelFile(fid);
+  const fid = fileListEl.value; if (!fid) return;
+  currentFileId = fid; await loadExcelFile(fid);
 });
 
-/* ==========================
-   EXCEL DOWNLOAD + PARSE
-========================== */
-async function loadExcelFile(fileId) {
+async function loadExcelFile(fileId){
   showLoading('Downloading Excel file…');
   try {
     const r = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, {
-      headers: { 'Authorization': `Bearer ${accessToken}` }
+      headers: { Authorization: `Bearer ${accessToken}` }
     });
     if (!r.ok) throw new Error('Download failed');
-    const arrayBuffer = await r.arrayBuffer();
-    const wb = XLSX.read(arrayBuffer, { type: 'array' });
+    const buf = await r.arrayBuffer();
+    const wb = XLSX.read(buf, { type: 'array' });
     parseWorkbook(wb);
+    buildCategoryFilter();
+    buildSearchBar();
     startSwipe();
-  } catch(e) {
-    showToast('Error loading file: ' + e.message);
-    console.error(e);
-  }
+  } catch(e){ showToast('Error: ' + e.message); console.error(e); }
   hideLoading();
 }
 
-function parseWorkbook(wb) {
-  items = [];
-  results = {};
-
-  const SKIP_KEYWORDS = ['TOTAL','GIFT SHOP','INVENTORY','OPENING','CLOSING','PRODUCT','ITEM','NAME','DESCRIPTION'];
-  const CAT_KEYWORDS  = ['CANS','BOTTLES','ENERGY','CHIPS','ICE CREAM','GUM','ACCESSORIES','MEDICINES','TOYS','HATS','HOODIE','POOL','SMOKE','CANDY','SNACK','DRINK','BEVERAGE','CLOTHING'];
-
-  wb.SheetNames.forEach(sheetName => {
-    const sheet = wb.Sheets[sheetName];
-    const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
-    let category = sheetName;
-
-    rows.forEach((row) => {
+/* ============================================================
+   PARSE EXCEL
+============================================================ */
+function parseWorkbook(wb){
+  items = []; results = {};
+  const SKIP = ['TOTAL','GIFT SHOP','INVENTORY','OPENING','CLOSING','PRODUCT','ITEM','NAME','DESCRIPTION'];
+  const CATS = ['CANS','BOTTLES','ENERGY','CHIPS','ICE CREAM','GUM','ACCESSORIES','MEDICINES','TOYS','HATS','HOODIE','POOL','SMOKE','CANDY','SNACK','DRINK','BEVERAGE','CLOTHING'];
+  wb.SheetNames.forEach(sn => {
+    const sheet = wb.Sheets[sn];
+    const rows = XLSX.utils.sheet_to_json(sheet, { header:1, defval:'' });
+    let cat = sn;
+    rows.forEach(row => {
       if (!row || row.length < 2) return;
-      const name = String(row[0] || '').trim();
-      if (!name) return;
-
-      const nameUpper = name.toUpperCase();
-      if (SKIP_KEYWORDS.some(k => nameUpper.includes(k))) return;
-      if (CAT_KEYWORDS.some(k => nameUpper.includes(k))) { category = name; return; }
-
-      const open  = parseFloat(row[1]) || 0;
-      const add   = parseFloat(row[2]) || 0;
-      const close = parseFloat(row[3]) || 0;
-      const price = parseFloat(row[5]) || 0;
-
-      if (open === 0 && price === 0) return; // likely blank/header row
-
-      items.push({ name, category, open, add, close, price, sheet: sheetName });
+      const name = String(row[0]||'').trim(); if (!name) return;
+      const up = name.toUpperCase();
+      if (SKIP.some(k => up.includes(k))) return;
+      if (CATS.some(k => up.includes(k))){ cat = name; return; }
+      const open = parseFloat(row[1])||0, add = parseFloat(row[2])||0;
+      const close = parseFloat(row[3])||0, price = parseFloat(row[5])||0;
+      if (open===0 && price===0) return;
+      items.push({ name, category:cat, open, add, close, price, sheet:sn });
     });
   });
-
-  console.log(`✅ Parsed ${items.length} items`);
 }
 
-
-/* ==========================
-   PRODUCT ICON HELPER
-========================== */
-function getProductIcon(name) {
-  const colors = ['#2d7d46','#c62828','#1565c0','#f57c00','#6a1b9a','#00838f','#d81b60','#2e7d32','#4527a0','#bf360c'];
-  const hash = name.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-  const color = colors[hash % colors.length];
-  const letter = name.charAt(0).toUpperCase();
-  return `<span class="product-icon" style="background:${color}">${letter}</span>`;
+/* ============================================================
+   CATEGORY FILTER
+============================================================ */
+function buildCategoryFilter(){
+  const cats = ['All', ...new Set(items.map(i => i.category))];
+  catFilterBar.innerHTML = '';
+  cats.forEach(cat => {
+    const ch = document.createElement('button');
+    ch.className = 'cat-chip' + (cat === 'All' ? ' active' : '');
+    ch.textContent = cat === 'All' ? `🗂 All (${items.length})` : cat;
+    ch.addEventListener('click', () => {
+      activeCategory = cat;
+      document.querySelectorAll('.cat-chip').forEach(c => c.classList.remove('active'));
+      ch.classList.add('active');
+      applyFilter();
+    });
+    catFilterBar.appendChild(ch);
+  });
+  catFilterBar.style.display = cats.length > 2 ? 'flex' : 'none';
 }
 
-function getHistoryHtml(itemName) {
-  let history = {};
-  try { history = JSON.parse(localStorage.getItem('inventory_history') || '{}'); } catch(e) {}
-  const itemHistory = history[itemName] || [];
-  if (itemHistory.length === 0) {
-    return '<div class="history-box">📊 <span style="color:var(--color-text-faint)">No history yet — will track after first report</span></div>';
+/* ============================================================
+   SEARCH
+============================================================ */
+function buildSearchBar(){
+  searchBarWrap.style.display = 'block';
+  searchInput.value = '';
+  searchQuery = '';
+}
+
+searchInput.addEventListener('input', () => {
+  searchQuery = searchInput.value.trim().toLowerCase();
+  searchClear.classList.toggle('show', !!searchQuery);
+  applyFilter();
+});
+searchClear.addEventListener('click', () => {
+  searchInput.value = ''; searchQuery = '';
+  searchClear.classList.remove('show');
+  applyFilter();
+});
+
+function applyFilter(){
+  // Re-map filteredItems to unprocessed items based on filter
+  const remaining = items.filter((item, idx) => {
+    const catOk = activeCategory === 'All' || item.category === activeCategory;
+    const searchOk = !searchQuery || item.name.toLowerCase().includes(searchQuery) || item.category.toLowerCase().includes(searchQuery);
+    return catOk && searchOk;
+  });
+
+  if (searchQuery && remaining.length > 0){
+    // Jump to first match
+    const firstMatch = items.findIndex(i => remaining[0].name === i.name);
+    if (firstMatch !== -1 && firstMatch !== currentIndex){
+      currentIndex = firstMatch;
+      renderCard();
+      return;
+    }
   }
-  const last4 = itemHistory.slice(-4);
-  const spans = last4.map(h => `<span>${h.month}: <strong>${h.close}</strong></span>`).join('');
-  return `<div class="history-box">📊 ${spans}</div>`;
-}
-
-/* ==========================
-   SWIPE LOGIC
-========================== */
-function startSwipe() {
-  currentIndex = 0;
-  results = {};
-  generateBtn.disabled = true;
-  reportResult.className = 'report-result';
+  filteredItems = remaining;
   renderCard();
 }
 
-function renderCard() {
-  updateProgress();
+/* ============================================================
+   AUTOSAVE / RESUME
+============================================================ */
+function autosave(){
+  if (!currentFileId || items.length === 0) return;
+  try {
+    localStorage.setItem(AUTOSAVE_KEY, JSON.stringify({
+      fileId: currentFileId, fileName: fileListEl.options[fileListEl.selectedIndex]?.textContent || '',
+      currentIndex, results, timestamp: Date.now()
+    }));
+  } catch(e){}
+}
 
-  if (items.length === 0) {
-    swipeZone.innerHTML = `
-      <div class="empty-state">
-        <div class="empty-state-icon">⚠️</div>
-        <h3>No items found</h3>
-        <p>The selected file has no recognized product rows. Check your Excel format.</p>
-      </div>`;
+function checkAutosave(){
+  try {
+    const saved = JSON.parse(localStorage.getItem(AUTOSAVE_KEY)||'null');
+    if (!saved || !saved.results || Object.keys(saved.results).length === 0) return;
+    const mins = Math.round((Date.now() - saved.timestamp) / 60000);
+    const timeStr = mins < 60 ? `${mins}m ago` : `${Math.round(mins/60)}h ago`;
+    const count = Object.keys(saved.results).length;
+    resumeText.textContent = `Resume session from ${timeStr} — ${count} items saved`;
+    resumeBanner.classList.remove('hidden');
+  } catch(e){}
+}
+
+resumeBtn.addEventListener('click', async () => {
+  try {
+    const saved = JSON.parse(localStorage.getItem(AUTOSAVE_KEY));
+    if (!saved) return;
+    resumeBanner.classList.add('hidden');
+    // Select file in dropdown
+    for (let i = 0; i < fileListEl.options.length; i++){
+      if (fileListEl.options[i].value === saved.fileId){
+        fileListEl.selectedIndex = i; break;
+      }
+    }
+    currentFileId = saved.fileId;
+    await loadExcelFile(saved.fileId);
+    // Restore state
+    results = saved.results;
+    currentIndex = Math.min(saved.currentIndex, items.length);
+    updateProgress();
+    renderCard();
+    showToast(`✅ Resumed — ${Object.keys(results).length} items restored`);
+  } catch(e){ showToast('Could not resume session'); }
+});
+
+resumeDismiss.addEventListener('click', () => {
+  resumeBanner.classList.add('hidden');
+  try { localStorage.removeItem(AUTOSAVE_KEY); } catch(e){}
+});
+
+/* ============================================================
+   SWIPE LOGIC
+============================================================ */
+function startSwipe(){
+  currentIndex = 0; results = {}; undoStack = [];
+  generateBtn.disabled = true;
+  reportResult.className = 'report-result';
+  renderCard();
+  try { localStorage.removeItem(AUTOSAVE_KEY); } catch(e){}
+}
+
+function renderCard(){
+  updateProgress();
+  if (items.length === 0){
+    swipeZone.innerHTML = `<div class="empty-state"><div class="empty-icon">⚠️</div><h3>No items found</h3><p>Check your Excel format.</p></div>`;
     return;
   }
-
-  if (currentIndex >= items.length) {
-    // DONE!
+  if (currentIndex >= items.length){
     swipeZone.innerHTML = `
       <div class="done-card">
         <div class="done-emoji">🎉</div>
         <div class="done-title">All Done!</div>
-        <div class="done-sub">Processed ${Object.keys(results).length} of ${items.length} items saved.</div>
+        <div class="done-sub">Saved ${Object.keys(results).length} of ${items.length} items.</div>
         <button class="btn-restart" onclick="startSwipe()">↺ Start Over</button>
       </div>`;
-    generateBtn.disabled = false;
     launchConfetti();
     return;
   }
-
   const item = items[currentIndex];
-
   swipeZone.innerHTML = `
     <div class="card-stack">
-      <div class="inventory-card" id="current-card">
-        <span class="swipe-indicator save" id="ind-save">✅ Save</span>
-        <span class="swipe-indicator skip" id="ind-skip">⏭ Skip</span>
-
-        <div class="card-category-pill">📁 ${escHtml(item.category)}</div>
-        <div class="card-product-name">
-          ${getProductIcon(item.name)}
-          <span>${escHtml(item.name)}</span>
+      <div class="inv-card" id="cur-card">
+        <span class="swipe-ind save" id="ind-save">✅ Save</span>
+        <span class="swipe-ind skip" id="ind-skip">⏭ Skip</span>
+        <div class="card-cat-pill">📁 ${esc(item.category)}</div>
+        <div class="card-name-row">
+          ${prodIcon(item.name)}
+          <div class="card-prod-name">${esc(item.name)}</div>
         </div>
-
-        ${getHistoryHtml(item.name)}
-
-        <div class="card-stats-row">
-          <div class="stat-chip">
-            <div class="stat-chip-label">Opening</div>
-            <div class="stat-chip-value">${item.open}</div>
-          </div>
-          <div class="stat-chip">
-            <div class="stat-chip-label">Last Close</div>
-            <div class="stat-chip-value">${item.close || '—'}</div>
-          </div>
-          <div class="stat-chip">
-            <div class="stat-chip-label">Price</div>
-            <div class="stat-chip-value">$${item.price.toFixed(2)}</div>
+        ${historyHtml(item.name)}
+        <div class="card-stats">
+          <div class="stat-chip"><div class="stat-label">Opening</div><div class="stat-val">${item.open}</div></div>
+          <div class="stat-chip"><div class="stat-label">Last Close</div><div class="stat-val">${item.close||'—'}</div></div>
+          <div class="stat-chip"><div class="stat-label">Price</div><div class="stat-val">$${item.price.toFixed(2)}</div></div>
+        </div>
+        <div class="inp-group">
+          <label class="inp-label">📥 Add</label>
+          <div class="inp-wrap">
+            <button class="stepper-btn" data-target="inp-add" data-delta="-1">−</button>
+            <input class="card-input" type="number" id="inp-add" value="0" min="0" inputmode="numeric" pattern="[0-9]*" />
+            <button class="stepper-btn" data-target="inp-add" data-delta="1">+</button>
           </div>
         </div>
-
-        <div class="card-input-group">
-          <label class="card-input-label" for="inp-add">📥 Add</label>
-          <input class="card-input" type="number" id="inp-add" value="0" min="0" inputmode="numeric" pattern="[0-9]*" />
+        <div class="inp-group">
+          <label class="inp-label">📦 Close</label>
+          <div class="inp-wrap">
+            <button class="stepper-btn" data-target="inp-close" data-delta="-1">−</button>
+            <input class="card-input" type="number" id="inp-close" value="${item.close}" min="0" inputmode="numeric" pattern="[0-9]*" />
+            <button class="stepper-btn" data-target="inp-close" data-delta="1">+</button>
+          </div>
         </div>
-        <div class="card-input-group">
-          <label class="card-input-label" for="inp-close">📦 Close</label>
-          <input class="card-input" type="number" id="inp-close" value="${item.close}" min="0" inputmode="numeric" pattern="[0-9]*" />
-        </div>
-        <div class="card-price-note" id="cost-preview">Tap a number to edit</div>
-
-        <div class="card-action-row">
-          <button class="btn-skip-card" id="btn-skip">⬅ Skip</button>
-          <button class="btn-save-card" id="btn-save">Save ➡</button>
+        <div class="cost-preview" id="cost-preview">—</div>
+        <div class="card-btns">
+          <button class="btn-skip-c" id="btn-skip">⬅ Skip</button>
+          <button class="btn-save-c" id="btn-save">Save ➡</button>
         </div>
       </div>
     </div>
-    <div class="swipe-hint-row">
-      <span>⬅ Skip item</span>
-      <span>Save item ➡</span>
-    </div>
-  `;
+    <div class="swipe-hint"><span>⬅ Skip</span><span>Save ➡</span></div>`;
 
-  // Wire up inputs & buttons
-  const card     = document.getElementById('current-card');
-  const addInput = document.getElementById('inp-add');
-  const closeInput = document.getElementById('inp-close');
-  const costPreview = document.getElementById('cost-preview');
-  const indSave  = document.getElementById('ind-save');
-  const indSkip  = document.getElementById('ind-skip');
+  const card = document.getElementById('cur-card');
+  const addInp = document.getElementById('inp-add');
+  const closeInp = document.getElementById('inp-close');
+  const costPrev = document.getElementById('cost-preview');
+  const indSave = document.getElementById('ind-save');
+  const indSkip = document.getElementById('ind-skip');
 
-  function updateCostPreview() {
-    const c = parseFloat(closeInput.value) || 0;
-    const a = parseFloat(addInput.value) || 0;
-    const used = item.open + a - c;
-    const cost = c * item.price;
-    costPreview.textContent = `Usage: ${Math.max(0,used)} units · Close value: $${cost.toFixed(2)}`;
+  function updateCost(){
+    const c = parseFloat(closeInp.value)||0, a = parseFloat(addInp.value)||0;
+    const used = Math.max(0, item.open + a - c);
+    costPrev.textContent = `Usage: ${used} units · Close value: $${(c * item.price).toFixed(2)}`;
   }
-  addInput.addEventListener('input', updateCostPreview);
-  closeInput.addEventListener('input', updateCostPreview);
-  updateCostPreview();
+  addInp.addEventListener('input', updateCost);
+  closeInp.addEventListener('input', updateCost);
+  updateCost();
 
-  // Enter key on close → save
-  closeInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') swipeCard('right'); });
+  // Stepper buttons (+1/-1)
+  card.querySelectorAll('.stepper-btn').forEach(btn => {
+    // Long-press for +5
+    let pressTimer;
+    const target = () => document.getElementById(btn.dataset.target);
+    const delta = () => parseInt(btn.dataset.delta);
+    const step = (mult=1) => {
+      const inp = target();
+      const v = (parseFloat(inp.value)||0) + delta() * mult;
+      inp.value = Math.max(0, v);
+      updateCost();
+    };
+    btn.addEventListener('click', () => step(1));
+    btn.addEventListener('mousedown', () => { pressTimer = setTimeout(() => step(5), 500); });
+    btn.addEventListener('touchstart', () => { pressTimer = setTimeout(() => step(5), 500); }, {passive:true});
+    btn.addEventListener('mouseup', () => clearTimeout(pressTimer));
+    btn.addEventListener('touchend', () => clearTimeout(pressTimer));
+  });
 
-  // Button clicks
+  // Enter key
+  closeInp.addEventListener('keydown', e => { if (e.key === 'Enter') swipeCard('right'); });
+
+  // Buttons
   document.getElementById('btn-save').addEventListener('click', () => swipeCard('right'));
   document.getElementById('btn-skip').addEventListener('click', () => swipeCard('left'));
 
   // Drag / swipe
-  let startX = 0, isDragging = false;
-
-  function onDragStart(x) {
-    if (isProcessing) return;
-    isDragging = true;
-    startX = x;
-    card.classList.add('dragging');
-  }
-  function onDragMove(x) {
+  let startX=0, isDragging=false;
+  const dragStart = x => { if(isProcessing) return; isDragging=true; startX=x; card.classList.add('dragging'); };
+  const dragMove  = x => {
     if (!isDragging) return;
-    const diff = x - startX;
-    card.style.transform = `translateX(${diff}px) rotate(${diff * 0.04}deg)`;
-    card.style.opacity = String(1 - Math.abs(diff) / 350);
-    indSave.style.opacity = diff > 30 ? String(Math.min(1, (diff-30)/60)) : '0';
-    indSkip.style.opacity = diff < -30 ? String(Math.min(1, (-diff-30)/60)) : '0';
-  }
-  function onDragEnd(x) {
+    const d = x - startX;
+    card.style.transform = `translateX(${d}px) rotate(${d*.04}deg)`;
+    card.style.opacity = String(1 - Math.abs(d)/350);
+    indSave.style.opacity = d > 30 ? String(Math.min(1,(d-30)/60)) : '0';
+    indSkip.style.opacity = d < -30 ? String(Math.min(1,(-d-30)/60)) : '0';
+  };
+  const dragEnd = x => {
     if (!isDragging) return;
-    isDragging = false;
-    card.classList.remove('dragging');
-    const diff = x - startX;
-    if (diff > 80)       swipeCard('right');
-    else if (diff < -80) swipeCard('left');
-    else {
-      card.style.transform = '';
-      card.style.opacity = '1';
-      indSave.style.opacity = '0';
-      indSkip.style.opacity = '0';
-    }
-  }
+    isDragging = false; card.classList.remove('dragging');
+    const d = x - startX;
+    if (d > 80) swipeCard('right');
+    else if (d < -80) swipeCard('left');
+    else { card.style.transform=''; card.style.opacity='1'; indSave.style.opacity='0'; indSkip.style.opacity='0'; }
+  };
+  card.addEventListener('mousedown', e => dragStart(e.clientX));
+  document.addEventListener('mousemove', e => { if(isDragging) dragMove(e.clientX); });
+  document.addEventListener('mouseup', e => dragEnd(e.clientX));
+  card.addEventListener('touchstart', e => dragStart(e.touches[0].clientX), {passive:true});
+  card.addEventListener('touchmove', e => dragMove(e.touches[0].clientX), {passive:true});
+  card.addEventListener('touchend', e => dragEnd(e.changedTouches[0].clientX));
 
-  // Mouse
-  card.addEventListener('mousedown', (e) => onDragStart(e.clientX));
-  document.addEventListener('mousemove', (e) => { if (isDragging) onDragMove(e.clientX); });
-  document.addEventListener('mouseup', (e) => onDragEnd(e.clientX));
-
-  // Touch
-  card.addEventListener('touchstart', (e) => onDragStart(e.touches[0].clientX), { passive: true });
-  card.addEventListener('touchmove', (e) => onDragMove(e.touches[0].clientX), { passive: true });
-  card.addEventListener('touchend', (e) => onDragEnd(e.changedTouches[0].clientX));
-
-  // Auto-focus close input (desktop)
-  if (!('ontouchstart' in window)) closeInput.focus();
-
-  // Mobile: scroll focused input into view when keyboard opens
-  [closeInput, addInput].forEach(inp => {
-    if (inp) {
-      inp.addEventListener('focus', () => {
-        setTimeout(() => {
-          inp.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }, 350);
-      });
-    }
+  // Mobile scroll into view on focus
+  [closeInp, addInp].forEach(inp => {
+    inp.addEventListener('focus', () => setTimeout(() => inp.scrollIntoView({behavior:'smooth',block:'center'}), 350));
   });
+  if (!('ontouchstart' in window)) closeInp.focus();
 }
 
-function swipeCard(direction) {
+function swipeCard(direction){
   if (isProcessing) return;
-  const card = document.getElementById('current-card');
+  const card = document.getElementById('cur-card');
   if (!card) return;
   isProcessing = true;
+  const item = items[currentIndex];
 
-  if (direction === 'right') {
-    const closeVal = parseFloat(document.getElementById('inp-close')?.value) || 0;
-    const addVal   = parseFloat(document.getElementById('inp-add')?.value)   || 0;
-    const item = items[currentIndex];
+  // Push to undo stack
+  undoStack.push({ index: currentIndex, item, savedData: results[item.name]||null, direction });
+
+  if (direction === 'right'){
+    const closeVal = parseFloat(document.getElementById('inp-close')?.value)||0;
+    const addVal   = parseFloat(document.getElementById('inp-add')?.value)||0;
     results[item.name] = { close: closeVal, add: addVal, sheet: item.sheet };
-    card.style.transition = 'transform 0.28s cubic-bezier(0.2,0.8,0.2,1), opacity 0.28s ease';
+    card.style.transition = 'transform .28s cubic-bezier(.2,.8,.2,1),opacity .28s ease';
     card.style.transform = 'translateX(120%) rotate(12deg)';
     card.style.opacity = '0';
-    showToast('✅ Saved');
   } else {
-    card.style.transition = 'transform 0.28s cubic-bezier(0.2,0.8,0.2,1), opacity 0.28s ease';
+    card.style.transition = 'transform .28s cubic-bezier(.2,.8,.2,1),opacity .28s ease';
     card.style.transform = 'translateX(-120%) rotate(-12deg)';
     card.style.opacity = '0';
   }
+
+  showUndoBar(direction === 'right' ? `✅ "${item.name}" saved` : `⏭ "${item.name}" skipped`);
+  autosave();
 
   setTimeout(() => {
     currentIndex++;
@@ -1310,170 +1063,269 @@ function swipeCard(direction) {
   }, 290);
 }
 
-function updateProgress() {
-  const total = items.length;
-  const done  = Math.min(currentIndex, total);
-  const pct   = total > 0 ? (done / total) * 100 : 0;
-  progressFill.style.width = `${pct}%`;
-  progressLabel.textContent = `${done} / ${total}`;
-
-  // Enable generate button as soon as 1 item is saved
-  const savedCount = Object.keys(results).length;
-  if (savedCount > 0) {
-    generateBtn.disabled = false;
-    const isDone = currentIndex >= items.length;
-    generateBtn.innerHTML = isDone
-      ? `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg> Generate Full Report (${savedCount} items)`
-      : `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg> Generate Partial Report (${savedCount}/${total})`;
-  } else {
-    generateBtn.disabled = true;
-    generateBtn.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg> Generate Next Month Report`;
-  }
+/* ============================================================
+   UNDO
+============================================================ */
+let undoTimer;
+function showUndoBar(msg){
+  clearTimeout(undoTimer);
+  undoMsg.textContent = msg;
+  undoBar.classList.add('show');
+  undoTimer = setTimeout(() => undoBar.classList.remove('show'), 3000);
 }
 
-/* ==========================
-   GENERATE REPORT
-========================== */
-generateBtn.addEventListener('click', async () => {
-  if (Object.keys(results).length === 0) { showToast('No data saved yet!'); return; }
-  if (!currentFileId) { showToast('No source file selected'); return; }
-
-  generateBtn.disabled = true;
-  generateBtn.innerHTML = `<span>⏳ Generating…</span>`;
-  reportResult.className = 'report-result';
-
-  showLoading('Generating report…');
-
-  try {
-    // 1. Download original file again
-    const r = await fetch(`https://www.googleapis.com/drive/v3/files/${currentFileId}?alt=media`, {
-      headers: { 'Authorization': `Bearer ${accessToken}` }
-    });
-    const arrayBuffer = await r.arrayBuffer();
-    const wb = XLSX.read(arrayBuffer, { type: 'array' });
-
-    // 2. Update cells with saved results
-    wb.SheetNames.forEach(sheetName => {
-      const sheet = wb.Sheets[sheetName];
-      const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
-
-      rows.forEach((row, ri) => {
-        const name = String(row[0] || '').trim();
-        if (!name || !results[name]) return;
-
-        const saved = results[name];
-        const openVal  = parseFloat(row[1]) || 0;
-        const addVal   = saved.add;
-        const closeVal = saved.close;
-        const price    = parseFloat(row[5]) || 0;
-        const usage    = openVal + addVal - closeVal;
-        const extended = usage * price;
-        const cost     = closeVal * price;
-
-        // Use XLSX cell address helpers
-        const cellAddr = (col, rowIdx) => XLSX.utils.encode_cell({ r: rowIdx, c: col });
-        const setCell = (col, val) => {
-          const addr = cellAddr(col, ri);
-          if (!sheet[addr]) sheet[addr] = {};
-          sheet[addr].v = val;
-          sheet[addr].t = 'n';
-        };
-
-        setCell(2, addVal);   // col C: ADD
-        setCell(3, closeVal); // col D: CLOSE
-        setCell(4, usage);    // col E: USAGE
-        setCell(6, extended); // col G: EXTENDED
-        setCell(7, cost);     // col H: COST
-      });
-    });
-
-    // 3. Generate next month name
-    const now = new Date();
-    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-    const nextMonth = months[(now.getMonth() + 1) % 12];
-    const year = now.getFullYear() + (now.getMonth() === 11 ? 1 : 0);
-    const newName = `${nextMonth} ${year}`;
-
-    // 4. Write to buffer
-    const wbOut = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
-    const blob  = new Blob([wbOut], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-
-    // 5. Upload to Google Drive
-    const metadata = JSON.stringify({ name: `${newName}.xlsx`, mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-    const formData = new FormData();
-    formData.append('metadata', new Blob([metadata], { type: 'application/json' }));
-    formData.append('file', blob);
-
-    const uploadRes = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,name,webViewLink', {
-      method: 'POST',
-      headers: { 'Authorization': `Bearer ${accessToken}` },
-      body: formData
-    });
-
-    if (!uploadRes.ok) throw new Error(`Upload failed: ${uploadRes.status}`);
-    const uploadData = await uploadRes.json();
-
-    reportResult.className = 'report-result success';
-    reportResult.innerHTML = `✅ <strong>${uploadData.name}</strong> saved to Drive! <a href="${uploadData.webViewLink}" target="_blank" rel="noopener noreferrer">📂 Open in Drive</a>`;
-
-    // Save history to localStorage
-    try {
-      let history = JSON.parse(localStorage.getItem('inventory_history') || '{}');
-      Object.entries(results).forEach(([productName, data]) => {
-        if (!history[productName]) history[productName] = [];
-        history[productName].push({ month: newName, close: data.close });
-        if (history[productName].length > 6) history[productName].shift();
-      });
-      localStorage.setItem('inventory_history', JSON.stringify(history));
-    } catch(e) { console.warn('History save failed (localStorage may be blocked):', e); }
-
-    // Reload file list so new file appears
-    await loadDriveFiles();
-    launchConfetti();
-
-  } catch(e) {
-    reportResult.className = 'report-result error';
-    reportResult.textContent = `❌ Error: ${e.message}`;
-    console.error(e);
-  }
-
-  hideLoading();
-  generateBtn.disabled = false;
-  generateBtn.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg> Generate Next Month Report`;
+undoBtn.addEventListener('click', () => {
+  if (!undoStack.length) return;
+  undoBar.classList.remove('show');
+  const last = undoStack.pop();
+  currentIndex = last.index;
+  if (last.savedData) results[last.item.name] = last.savedData;
+  else delete results[last.item.name];
+  isProcessing = false;
+  renderCard();
+  showToast('↩ Undone');
+  autosave();
 });
 
-/* ==========================
-   CONFETTI
-========================== */
-function launchConfetti() {
-  const colors = ['#2d7d46','#4caf6e','#ffd700','#ff6b6b','#4fc3f7','#ce93d8'];
-  for (let i = 0; i < 60; i++) {
-    const piece = document.createElement('div');
-    piece.className = 'confetti-piece';
-    piece.style.cssText = `
-      left: ${Math.random() * 100}vw;
-      top: -10px;
-      background: ${colors[Math.floor(Math.random() * colors.length)]};
-      animation-delay: ${Math.random() * 0.6}s;
-      animation-duration: ${1.2 + Math.random() * 1}s;
-      width: ${6 + Math.random() * 8}px;
-      height: ${6 + Math.random() * 8}px;
-      border-radius: ${Math.random() > 0.5 ? '50%' : '2px'};
-    `;
-    document.body.appendChild(piece);
-    setTimeout(() => piece.remove(), 2500);
+/* ============================================================
+   PROGRESS + GENERATE BUTTON STATE
+============================================================ */
+function updateProgress(){
+  const total = items.length, done = Math.min(currentIndex, total);
+  const pct = total > 0 ? (done/total)*100 : 0;
+  progressFill.style.width = `${pct}%`;
+  progressLabel.textContent = `${done} / ${total}`;
+  const savedCount = Object.keys(results).length;
+  const isDone = currentIndex >= items.length;
+  if (savedCount > 0){
+    generateBtn.disabled = false;
+    generateBtn2.disabled = false;
+    generateBtn.innerHTML = isDone
+      ? `<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg> Generate Full Report (${savedCount} items)`
+      : `<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg> Generate Partial Report (${savedCount}/${total})`;
+  } else {
+    generateBtn.disabled = true;
+    generateBtn2.disabled = true;
+    generateBtn.innerHTML = `<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg> Generate Next Month Report`;
   }
 }
 
-/* ==========================
-   SETUP INSTRUCTIONS (DEMO MODE)
-========================== */
+/* ============================================================
+   REVIEW VIEW
+============================================================ */
+function renderReview(){
+  const reviewList = document.getElementById('review-list');
+  const reviewCount = document.getElementById('review-count');
+  const saved = Object.keys(results);
+  reviewCount.textContent = `${saved.length} item${saved.length!==1?'s':''} saved`;
+  if (!saved.length){
+    reviewList.innerHTML = `<div class="review-empty">No items saved yet.<br>Go to Swipe tab to start.</div>`;
+    return;
+  }
+  reviewList.innerHTML = saved.map(name => {
+    const item = items.find(i => i.name === name);
+    const data = results[name];
+    if (!item) return '';
+    return `
+      <div class="review-item">
+        <div class="review-item-icon" style="background:${iconColor(name)}">${name.charAt(0).toUpperCase()}</div>
+        <div class="review-item-info">
+          <div class="review-item-name">${esc(name)}</div>
+          <div class="review-item-cat">${esc(item.category)}</div>
+        </div>
+        <div class="review-item-val">
+          <div class="review-val-close">Close: ${data.close}</div>
+          <div class="review-val-add">Add: ${data.add}</div>
+        </div>
+        <button class="btn-edit-review" data-name="${esc(name)}">Edit</button>
+      </div>`;
+  }).join('');
 
-/* ==========================
-   UTIL
-========================== */
-function escHtml(s) {
-  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  reviewList.querySelectorAll('.btn-edit-review').forEach(btn => {
+    btn.addEventListener('click', () => openEditModal(btn.dataset.name));
+  });
+}
+
+/* ============================================================
+   EDIT MODAL
+============================================================ */
+function openEditModal(name){
+  const item = items.find(i => i.name === name);
+  const data = results[name];
+  if (!item || !data) return;
+  editingProductName = name;
+  modalTitle.textContent = name;
+  modalSub.textContent = `${item.category} · $${item.price.toFixed(2)}`;
+  modalAdd.value = data.add;
+  modalClose.value = data.close;
+  editModal.classList.remove('hidden');
+  setTimeout(() => modalClose.focus(), 200);
+}
+function closeEditModal(){ editModal.classList.add('hidden'); editingProductName = null; }
+modalCancel.addEventListener('click', closeEditModal);
+editModal.addEventListener('click', e => { if (e.target === editModal) closeEditModal(); });
+modalSave.addEventListener('click', () => {
+  if (!editingProductName) return;
+  results[editingProductName].close = parseFloat(modalClose.value)||0;
+  results[editingProductName].add   = parseFloat(modalAdd.value)||0;
+  closeEditModal();
+  renderReview();
+  autosave();
+  showToast('✅ Updated');
+});
+
+/* ============================================================
+   SUMMARY VIEW
+============================================================ */
+function renderSummary(){
+  const saved = Object.keys(results);
+  const total = items.length;
+  let totalValue = 0;
+  saved.forEach(name => {
+    const item = items.find(i => i.name === name);
+    if (item) totalValue += (results[name].close * item.price);
+  });
+  document.getElementById('kpi-saved').textContent = saved.length;
+  document.getElementById('kpi-total').textContent = total;
+  document.getElementById('kpi-value').textContent = `$${totalValue.toFixed(0)}`;
+  document.getElementById('kpi-progress').textContent = total > 0 ? `${Math.round((Math.min(currentIndex,total)/total)*100)}%` : '0%';
+
+  // Top items by value
+  const topList = document.getElementById('summary-top-list');
+  const sorted = saved.map(name => {
+    const item = items.find(i => i.name === name);
+    return { name, value: item ? results[name].close * item.price : 0 };
+  }).sort((a,b) => b.value - a.value).slice(0, 8);
+
+  if (!sorted.length){
+    topList.innerHTML = '<div style="color:var(--text-muted);font-size:var(--sm);text-align:center;padding:20px">No saved items yet</div>';
+  } else {
+    topList.innerHTML = sorted.map(({name, value}) => `
+      <div class="summary-item">
+        <div class="review-item-icon" style="background:${iconColor(name)};width:28px;height:28px;font-size:12px;flex-shrink:0;display:flex;align-items:center;justify-content:center;border-radius:50%;color:#fff;font-weight:800">${name.charAt(0).toUpperCase()}</div>
+        <div class="summary-item-name">${esc(name)}</div>
+        <div class="summary-item-val">$${value.toFixed(2)}</div>
+      </div>`).join('');
+  }
+
+  // Sync generate button 2
+  generateBtn2.disabled = saved.length === 0;
+}
+
+/* ============================================================
+   GENERATE REPORT (shared logic)
+============================================================ */
+async function doGenerate(resultEl, btn){
+  if (!Object.keys(results).length){ showToast('No data saved yet!'); return; }
+  if (!currentFileId){ showToast('No source file selected'); return; }
+  btn.disabled = true;
+  btn.innerHTML = `<span>⏳ Generating…</span>`;
+  resultEl.className = 'report-result';
+  resultEl.style.display = 'none';
+  showLoading('Generating report…');
+  try {
+    const r = await fetch(`https://www.googleapis.com/drive/v3/files/${currentFileId}?alt=media`, {
+      headers: { Authorization: `Bearer ${accessToken}` }
+    });
+    const buf = await r.arrayBuffer();
+    const wb = XLSX.read(buf, { type: 'array' });
+    wb.SheetNames.forEach(sn => {
+      const sheet = wb.Sheets[sn];
+      const rows = XLSX.utils.sheet_to_json(sheet, { header:1, defval:'' });
+      rows.forEach((row, ri) => {
+        const name = String(row[0]||'').trim();
+        if (!name || !results[name]) return;
+        const saved = results[name];
+        const openVal = parseFloat(row[1])||0;
+        const addVal = saved.add, closeVal = saved.close;
+        const price = parseFloat(row[5])||0;
+        const usage = openVal + addVal - closeVal;
+        const setCell = (col, val) => {
+          const addr = XLSX.utils.encode_cell({r:ri,c:col});
+          if (!sheet[addr]) sheet[addr] = {};
+          sheet[addr].v = val; sheet[addr].t = 'n';
+        };
+        setCell(2, addVal); setCell(3, closeVal); setCell(4, usage);
+        setCell(6, usage * price); setCell(7, closeVal * price);
+      });
+    });
+    const now = new Date();
+    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    const newName = `${months[(now.getMonth()+1)%12]} ${now.getFullYear()+(now.getMonth()===11?1:0)}`;
+    const wbOut = XLSX.write(wb, { bookType:'xlsx', type:'array' });
+    const blob = new Blob([wbOut], { type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    const meta = JSON.stringify({ name: `${newName}.xlsx`, mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    const fd = new FormData();
+    fd.append('metadata', new Blob([meta], {type:'application/json'}));
+    fd.append('file', blob);
+    const up = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,name,webViewLink', {
+      method: 'POST', headers: { Authorization: `Bearer ${accessToken}` }, body: fd
+    });
+    if (!up.ok) throw new Error(`Upload failed: ${up.status}`);
+    const upData = await up.json();
+
+    // Save history
+    try {
+      let hist = JSON.parse(localStorage.getItem(HISTORY_KEY)||'{}');
+      Object.entries(results).forEach(([pname, data]) => {
+        if (!hist[pname]) hist[pname] = [];
+        hist[pname].push({ month: newName, close: data.close });
+        if (hist[pname].length > 6) hist[pname].shift();
+      });
+      localStorage.setItem(HISTORY_KEY, JSON.stringify(hist));
+    } catch(e){}
+
+    // Clear autosave
+    try { localStorage.removeItem(AUTOSAVE_KEY); } catch(e){}
+
+    resultEl.className = 'report-result success'; resultEl.style.display = 'block';
+    resultEl.innerHTML = `✅ <strong>${upData.name}</strong> saved! <a href="${upData.webViewLink}" target="_blank" rel="noopener noreferrer">📂 Open in Drive</a>`;
+    await loadDriveFiles();
+    launchConfetti();
+  } catch(e){
+    resultEl.className = 'report-result error'; resultEl.style.display = 'block';
+    resultEl.textContent = `❌ Error: ${e.message}`;
+  }
+  hideLoading();
+  updateProgress();
+}
+
+generateBtn.addEventListener('click', () => doGenerate(reportResult, generateBtn));
+generateBtn2.addEventListener('click', () => doGenerate(resultBanner2, generateBtn2));
+
+/* ============================================================
+   CONFETTI
+============================================================ */
+function launchConfetti(){
+  const colors = ['#2d7d46','#4caf6e','#ffd700','#ff6b6b','#4fc3f7','#ce93d8'];
+  for (let i=0; i<60; i++){
+    const p = document.createElement('div');
+    p.className = 'confetti-piece';
+    p.style.cssText = `left:${Math.random()*100}vw;top:-10px;background:${colors[Math.floor(Math.random()*colors.length)]};animation-delay:${Math.random()*.6}s;animation-duration:${1.2+Math.random()}s;width:${6+Math.random()*8}px;height:${6+Math.random()*8}px;border-radius:${Math.random()>.5?'50%':'2px'}`;
+    document.body.appendChild(p);
+    setTimeout(() => p.remove(), 2500);
+  }
+}
+
+/* ============================================================
+   HELPERS
+============================================================ */
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+const ICON_COLORS = ['#2d7d46','#c62828','#1565c0','#f57c00','#6a1b9a','#00838f','#d81b60','#2e7d32','#4527a0','#bf360c','#00695c','#558b2f'];
+function iconColor(name){
+  const h = name.split('').reduce((a,c) => a + c.charCodeAt(0), 0);
+  return ICON_COLORS[h % ICON_COLORS.length];
+}
+function prodIcon(name){
+  return `<span class="prod-icon" style="background:${iconColor(name)}">${name.charAt(0).toUpperCase()}</span>`;
+}
+function historyHtml(name){
+  let hist = {};
+  try { hist = JSON.parse(localStorage.getItem(HISTORY_KEY)||'{}'); } catch(e){}
+  const h = hist[name] || [];
+  if (!h.length) return `<div class="history-box">📊 <span style="color:var(--text-faint);font-size:var(--xs)">No history yet</span></div>`;
+  return `<div class="history-box">📊 ${h.slice(-4).map(x => `<span class="hist-tag">${x.month}: <strong>${x.close}</strong></span>`).join('')}</div>`;
 }
 </script>
 </body>
