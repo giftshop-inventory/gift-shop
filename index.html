@@ -763,7 +763,7 @@ input, select { font: inherit; color: inherit; }
 /* ==========================
    CONFIG — FILL THESE IN
 ========================== */
-const GOOGLE_CLIENT_ID = '997533113348-geurcc1e124egnn2ttf20epub2ero4vo.apps.googleusercontent.com';
+const GOOGLE_CLIENT_ID = '397533113348-geurcc1e124egnn2ttf20epub2ero4vo.apps.googleusercontent.com';
 const SCOPES = 'https://www.googleapis.com/auth/drive.readonly https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email';
 
 /* ==========================
@@ -843,27 +843,29 @@ function showToast(msg) {
 /* ==========================
    GOOGLE IDENTITY SERVICES
 ========================== */
+async function handleTokenResponse(tokenResponse) {
+  if (tokenResponse.error) {
+    showToast('Login failed: ' + tokenResponse.error);
+    hideLoading();
+    return;
+  }
+  accessToken = tokenResponse.access_token;
+  await loadUserInfo();
+  await loadDriveFiles();
+  showApp();
+}
+
 window.addEventListener('load', () => {
   tokenClient = google.accounts.oauth2.initTokenClient({
     client_id: GOOGLE_CLIENT_ID,
     scope: SCOPES,
-    callback: async (tokenResponse) => {
-      if (tokenResponse.error) {
-        showToast('Login failed: ' + tokenResponse.error);
-        hideLoading();
-        return;
-      }
-      accessToken = tokenResponse.access_token;
-      await loadUserInfo();
-      await loadDriveFiles();
-      showApp();
-    }
+    callback: handleTokenResponse
   });
 });
 
 loginBtn.addEventListener('click', () => {
   showLoading('Connecting to Google…');
-  tokenClient.requestAccessToken({ prompt: 'consent' });
+  tokenClient.requestAccessToken({ prompt: 'select_account consent' });
 });
 
 logoutBtn.addEventListener('click', () => {
@@ -875,6 +877,15 @@ logoutBtn.addEventListener('click', () => {
   items = [];
   results = {};
   driveFiles = [];
+  // Reset token client to force fresh login
+  tokenClient = null;
+  setTimeout(() => {
+    tokenClient = google.accounts.oauth2.initTokenClient({
+      client_id: GOOGLE_CLIENT_ID,
+      scope: SCOPES,
+      callback: handleTokenResponse
+    });
+  }, 100);
   showLogin();
 });
 
