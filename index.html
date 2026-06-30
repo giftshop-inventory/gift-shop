@@ -616,7 +616,11 @@ function doLogout(){
 logoutBtn.addEventListener('click', () => { confirmOverlay.classList.add('visible'); });
 confirmCancel.addEventListener('click', () => { confirmOverlay.classList.remove('visible'); });
 confirmExit.addEventListener('click', () => { confirmOverlay.classList.remove('visible'); doLogout(); });
-confirmOverlay.addEventListener('click', e => { if (e.target === confirmOverlay) confirmOverlay.classList.remove('visible'); });
+confirmOverlay.addEventListener('click', e => { if (e.target === confirmOverlay) confirmOverlay.classList.remove('visible'); }); accessToken = null; userInfo = null; items = []; results = {}; driveFiles = [];
+  tokenClient = null;
+  setTimeout(() => { tokenClient = google.accounts.oauth2.initTokenClient({ client_id: GOOGLE_CLIENT_ID, scope: SCOPES, callback: handleTokenResponse }); }, 100);
+  showLogin();
+});
 
 function showLogin(){ loginScreen.classList.add('active'); appScreen.classList.remove('active'); loginScreen.style.display='flex'; appScreen.style.display='none'; }
 function showApp(){
