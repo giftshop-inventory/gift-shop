@@ -618,6 +618,13 @@ confirmCancel.addEventListener('click', () => { confirmOverlay.classList.remove(
 confirmExit.addEventListener('click', () => { confirmOverlay.classList.remove('visible'); doLogout(); });
 confirmOverlay.addEventListener('click', e => { if (e.target === confirmOverlay) confirmOverlay.classList.remove('visible'); });
 
+window.addEventListener('beforeunload', e => {
+  if (Object.keys(results).length > 0) {
+    e.preventDefault();
+    e.returnValue = 'You have unsaved inventory progress. Are you sure you want to leave?';
+  }
+});
+
 function showLogin(){ loginScreen.classList.add('active'); appScreen.classList.remove('active'); loginScreen.style.display='flex'; appScreen.style.display='none'; }
 function showApp(){
   hideLoading();
