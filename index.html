@@ -1,2636 +1,1191 @@
 <!DOCTYPE html>
 <html lang="en" data-theme="light">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-    <meta name="theme-color" content="#2d7d46" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-    <meta name="apple-mobile-web-app-title" content="GiftShop" />
-    <link rel="manifest" href="manifest.json" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="theme-color" content="#2d7d46" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="GiftShop" />
     <title>🧸 GiftShop Inventory</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <script src="https://apis.google.com/js/api.js">
-    </script>
-    <script src="https://accounts.google.com/gsi/client">
-    </script>
-    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js">
-    </script>
-    <style>
-        /* ============================================================
-           DESIGN TOKENS — refined, clean, glass
-        ============================================================ */
-        :root,
-        [data-theme="light"] {
-            --bg: #f7f6f2;
-            --surface: rgba(255, 255, 255, 0.72);
-            --surface-2: #f9f8f5;
-            --surface-off: #f0ede8;
-            --divider: #e0dbd5;
-            --border: #d4d0c9;
-            --text: #1f1c18;
-            --text-muted: #6b6258;
-            --text-faint: #b0a89e;
-            --primary: #2d7d46;
-            --primary-h: #1f5f34;
-            --primary-lt: #e6f4ea;
-            --danger: #c62828;
-            --danger-lt: #fce8e6;
-            --warn: #e65100;
-            --warn-lt: #fff3e0;
-            --shadow-sm: 0 2px 8px rgba(0, 0, 0, .04), 0 1px 3px rgba(0, 0, 0, .06);
-            --shadow-md: 0 8px 30px rgba(0, 0, 0, .08);
-            --shadow-lg: 0 20px 60px rgba(0, 0, 0, .10);
-            --r-sm: 8px;
-            --r-md: 14px;
-            --r-lg: 20px;
-            --r-xl: 28px;
-            --r-full: 9999px;
-            --font: 'Inter', system-ui, sans-serif;
-            --xs: clamp(.75rem, .7rem + .25vw, .875rem);
-            --sm: clamp(.875rem, .8rem + .35vw, 1rem);
-            --base: clamp(1rem, .95rem + .25vw, 1.125rem);
-            --lg: clamp(1.125rem, 1rem + .6vw, 1.375rem);
-            --xl: clamp(1.375rem, 1.1rem + 1vw, 1.75rem);
-            --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
-            --ease-smooth: cubic-bezier(0.25, 0.46, 0.45, 0.94);
-        }
-        [data-theme="dark"] {
-            --bg: #13120f;
-            --surface: rgba(28, 27, 24, 0.85);
-            --surface-2: #232118;
-            --surface-off: #2a2823;
-            --divider: #2d2b26;
-            --border: #363330;
-            --text: #e8e5df;
-            --text-muted: #8a8278;
-            --text-faint: #5a5650;
-            --primary: #4caf6e;
-            --primary-h: #3a9458;
-            --primary-lt: #1a2f1e;
-            --danger: #ef5350;
-            --danger-lt: #2a1a1a;
-            --warn: #ffb74d;
-            --warn-lt: #2a1e0a;
-            --shadow-sm: 0 2px 8px rgba(0, 0, 0, .3);
-            --shadow-md: 0 8px 30px rgba(0, 0, 0, .4);
-            --shadow-lg: 0 20px 60px rgba(0, 0, 0, .5);
-        }
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://apis.google.com/js/api.js">
+window.addEventListener('beforeunload', e => {
+  if (Object.keys(results).length > 0) {
+    e.preventDefault();
+    e.returnValue = 'You have unsaved inventory progress. Are you sure you want to leave?';
+  }
+});
 
-        /* ============================================================
-           BASE
-        ============================================================ */
-        *,
-        *::before,
-        *::after {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-        html {
-            -webkit-text-size-adjust: none;
-            text-size-adjust: none;
-            -webkit-font-smoothing: antialiased;
-            overscroll-behavior-y: none;
-        }
-        body {
-            font-family: var(--font);
-            font-size: var(--base);
-            background: var(--bg);
-            color: var(--text);
-            min-height: 100dvh;
-            display: flex;
-            justify-content: center;
-            background-image: radial-gradient(ellipse at 20% 50%, rgba(45, 125, 70, 0.06) 0%, transparent 60%), radial-gradient(ellipse at 80% 20%, rgba(255, 215, 0, 0.04) 0%, transparent 50%);
-            transition: background .3s, color .3s;
-            overscroll-behavior-y: none;
-        }
-        button {
-            cursor: pointer;
-            font: inherit;
-            color: inherit;
-            background: none;
-            border: none;
-        }
-        input,
-        select {
-            font: inherit;
-            color: inherit;
-        }
-        ::selection {
-            background: rgba(45, 125, 70, .2);
-        }
+</script>
+  <script src="https://accounts.google.com/gsi/client"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <style>
+/* ============================================================
+   DESIGN TOKENS (Upgraded with Spring & Glass)
+============================================================ */
+:root,[data-theme="light"]{
+  --bg:#f7f6f2; --surface:rgba(255,255,255,0.72); --surface-2:#f9f8f5; --surface-off:#f0ede8;
+  --divider:#e0dbd5; --border:#d4d0c9;
+  --text:#1f1c18; --text-muted:#6b6258; --text-faint:#b0a89e;
+  --primary:#2d7d46; --primary-h:#1f5f34; --primary-lt:#e6f4ea;
+  --danger:#c62828; --danger-lt:#fce8e6;
+  --warn:#e65100; --warn-lt:#fff3e0;
+  --shadow-sm:0 2px 8px rgba(0,0,0,.04),0 1px 3px rgba(0,0,0,.06);
+  --shadow-md:0 8px 30px rgba(0,0,0,.08);
+  --shadow-lg:0 20px 60px rgba(0,0,0,.10);
+  --r-sm:8px;--r-md:14px;--r-lg:20px;--r-xl:28px;--r-full:9999px;
+  --font:'Inter',system-ui,sans-serif;
+  --xs:clamp(.75rem,.7rem + .25vw,.875rem);
+  --sm:clamp(.875rem,.8rem + .35vw,1rem);
+  --base:clamp(1rem,.95rem + .25vw,1.125rem);
+  --lg:clamp(1.125rem,1rem + .6vw,1.375rem);
+  --xl:clamp(1.375rem,1.1rem + 1vw,1.75rem);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-smooth: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+[data-theme="dark"]{
+  --bg:#13120f; --surface:rgba(28,27,24,0.85); --surface-2:#232118; --surface-off:#2a2823;
+  --divider:#2d2b26; --border:#363330;
+  --text:#e8e5df; --text-muted:#8a8278; --text-faint:#5a5650;
+  --primary:#4caf6e; --primary-h:#3a9458; --primary-lt:#1a2f1e;
+  --danger:#ef5350; --danger-lt:#2a1a1a;
+  --warn:#ffb74d; --warn-lt:#2a1e0a;
+  --shadow-sm:0 2px 8px rgba(0,0,0,.3);
+  --shadow-md:0 8px 30px rgba(0,0,0,.4);
+  --shadow-lg:0 20px 60px rgba(0,0,0,.5);
+}
 
-        /* ============================================================
-           SHELL
-        ============================================================ */
-        #shell {
-            width: 100%;
-            max-width: 480px;
-            min-height: 100dvh;
-            display: flex;
-            flex-direction: column;
-            background: var(--bg);
-            position: relative;
-        }
-        .screen {
-            display: none;
-            flex-direction: column;
-            flex: 1;
-        }
-        .screen.active {
-            display: flex;
-        }
+/* ============================================================
+   BASE
+============================================================ */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:none;text-size-adjust:none;-webkit-font-smoothing:antialiased;overscroll-behavior-y:none}
+body{font-family:var(--font);font-size:var(--base);background:var(--bg);color:var(--text);min-height:100dvh;display:flex;justify-content:center;background-image:radial-gradient(ellipse at 20% 50%, rgba(45,125,70,0.06) 0%, transparent 60%), radial-gradient(ellipse at 80% 20%, rgba(255,215,0,0.04) 0%, transparent 50%);transition:background .3s,color .3s;overscroll-behavior-y:none}
+button{cursor:pointer;font:inherit;color:inherit;background:none;border:none}
+input,select{font:inherit;color:inherit}
+::selection{background:rgba(45,125,70,.2)}
 
-        /* ============================================================
-           LOGIN
-        ============================================================ */
-        #login-screen {
-            align-items: center;
-            justify-content: center;
-            min-height: 100dvh;
-            padding: 24px;
-            background: var(--bg);
-        }
-        .login-card {
-            background: var(--surface);
-            backdrop-filter: blur(20px) saturate(180%);
-            -webkit-backdrop-filter: blur(20px) saturate(180%);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            border-radius: var(--r-xl);
-            padding: 44px 32px;
-            text-align: center;
-            width: 100%;
-            max-width: 380px;
-            box-shadow: var(--shadow-lg);
-        }
-        [data-theme="dark"] .login-card {
-            border-color: rgba(255, 255, 255, 0.05);
-        }
-        .login-logo {
-            font-size: 56px;
-            margin-bottom: 8px;
-            line-height: 1;
-        }
-        .login-title {
-            font-size: var(--xl);
-            font-weight: 800;
-            margin-bottom: 6px;
-        }
-        .login-sub {
-            font-size: var(--sm);
-            color: var(--text-muted);
-            margin-bottom: 32px;
-            line-height: 1.5;
-        }
-        .btn-google {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            background: var(--text);
-            color: var(--bg);
-            border-radius: var(--r-full);
-            width: 100%;
-            padding: 16px 24px;
-            font-size: var(--base);
-            font-weight: 700;
-            transition: transform .15s var(--ease-spring), opacity .15s ease;
-        }
-        .btn-google:active {
-            transform: scale(.94);
-        }
-        .login-note {
-            margin-top: 20px;
-            font-size: var(--xs);
-            color: var(--text-faint);
-        }
+/* ============================================================
+   SHELL
+============================================================ */
+#shell{width:100%;max-width:480px;min-height:100dvh;display:flex;flex-direction:column;background:var(--bg);position:relative}
+.screen{display:none;flex-direction:column;flex:1}
+.screen.active{display:flex}
 
-        /* ============================================================
-           HEADER
-        ============================================================ */
-        .app-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 10px 16px;
-            background: var(--surface);
-            backdrop-filter: blur(20px) saturate(180%);
-            -webkit-backdrop-filter: blur(20px) saturate(180%);
-            border-bottom: 1px solid var(--divider);
-            position: sticky;
-            top: 0;
-            z-index: 100;
-        }
-        [data-theme="dark"] .app-header {
-            background: rgba(28, 27, 24, 0.85);
-        }
-        .header-brand {
-            font-size: var(--lg);
-            font-weight: 800;
-            flex-shrink: 0;
-        }
-        .header-file {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            font-size: var(--sm);
-            font-weight: 600;
-            color: var(--text-muted);
-            padding: 4px 12px;
-            background: var(--surface-2);
-            border-radius: var(--r-full);
-            border: 1px solid var(--divider);
-            cursor: pointer;
-            transition: background .15s;
-            max-width: 160px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        .header-file:hover {
-            background: var(--surface-off);
-        }
-        .header-file .arrow {
-            font-size: 10px;
-            margin-left: 2px;
-        }
-        .header-actions {
-            display: flex;
-            align-items: center;
-            gap: 4px;
-            flex-shrink: 0;
-        }
-        .header-avatar {
-            width: 30px;
-            height: 30px;
-            border-radius: var(--r-full);
-            object-fit: cover;
-            border: 2px solid var(--divider);
-        }
-        .btn-icon {
-            width: 34px;
-            height: 34px;
-            border-radius: var(--r-full);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: var(--surface-2);
-            border: 1px solid var(--divider);
-            font-size: 15px;
-            transition: background .15s;
-        }
-        .btn-icon:hover {
-            background: var(--surface-off);
-        }
-        .btn-icon:active {
-            transform: scale(.92);
-        }
+/* ============================================================
+   LOGIN
+============================================================ */
+#login-screen{align-items:center;justify-content:center;min-height:100dvh;padding:24px;background:var(--bg)}
+.login-card{background:var(--surface);backdrop-filter:blur(20px) saturate(180%);-webkit-backdrop-filter:blur(20px) saturate(180%);border:1px solid rgba(255,255,255,0.3);border-radius:var(--r-xl);padding:44px 32px;text-align:center;width:100%;max-width:380px;box-shadow:var(--shadow-lg)}
+[data-theme="dark"] .login-card{border-color:rgba(255,255,255,0.05)}
+.login-logo{font-size:56px;margin-bottom:8px;line-height:1}
+.login-title{font-size:var(--xl);font-weight:800;margin-bottom:6px}
+.login-sub{font-size:var(--sm);color:var(--text-muted);margin-bottom:32px;line-height:1.5}
+.btn-google{display:flex;align-items:center;justify-content:center;gap:10px;background:var(--text);color:var(--bg);border-radius:var(--r-full);width:100%;padding:16px 24px;font-size:var(--base);font-weight:700;transition:transform .15s var(--ease-spring), opacity .15s ease}
+.btn-google:active{transform:scale(.94)}
+.login-note{margin-top:20px;font-size:var(--xs);color:var(--text-faint)}
 
-        /* File Dropdown */
-        .file-dropdown {
-            position: absolute;
-            top: calc(100% + 8px);
-            left: 50%;
-            transform: translateX(-50%);
-            background: var(--surface);
-            backdrop-filter: blur(20px);
-            border: 1px solid var(--divider);
-            border-radius: var(--r-lg);
-            padding: 12px;
-            width: calc(100% - 32px);
-            max-width: 340px;
-            box-shadow: var(--shadow-lg);
-            z-index: 200;
-            display: none;
-        }
-        .file-dropdown.open {
-            display: block;
-        }
-        .file-dropdown .file-select {
-            width: 100%;
-            padding: 10px 12px;
-            background: var(--surface-2);
-            border: 1px solid var(--border);
-            border-radius: var(--r-md);
-            font-size: var(--sm);
-            outline: none;
-        }
-        .file-dropdown .btn-load {
-            width: 100%;
-            margin-top: 8px;
-            padding: 10px;
-            background: var(--primary);
-            color: #fff;
-            border-radius: var(--r-md);
-            font-weight: 700;
-            transition: background .15s;
-        }
-        .file-dropdown .btn-load:hover {
-            background: var(--primary-h);
-        }
-        .file-dropdown .btn-load:disabled {
-            opacity: .5;
-        }
-        .file-dropdown .drive-status {
-            font-size: var(--xs);
-            color: var(--text-muted);
-            text-align: center;
-            margin-top: 6px;
-            padding: 4px;
-            display: none;
-        }
-        .file-dropdown .drive-status.visible {
-            display: block;
-        }
-        .file-dropdown .drive-status.error {
-            color: var(--danger);
-        }
+/* ============================================================
+   HEADER (Upgraded - File name in center)
+============================================================ */
+.app-header{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:var(--surface);backdrop-filter:blur(20px) saturate(180%);-webkit-backdrop-filter:blur(20px) saturate(180%);border-bottom:1px solid var(--divider);position:sticky;top:0;z-index:100}
+[data-theme="dark"] .app-header{background:rgba(28,27,24,0.85)}
+.header-brand{font-size:var(--lg);font-weight:800;flex-shrink:0}
+.header-file{display:flex;align-items:center;gap:6px;font-size:var(--sm);font-weight:600;color:var(--text-muted);padding:4px 12px;background:var(--surface-2);border-radius:var(--r-full);border:1px solid var(--divider);cursor:pointer;transition:background .15s;max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.header-file:hover{background:var(--surface-off)}
+.header-file .arrow{font-size:10px;margin-left:2px}
+.header-actions{display:flex;align-items:center;gap:4px;flex-shrink:0}
+.header-avatar{width:30px;height:30px;border-radius:var(--r-full);object-fit:cover;border:2px solid var(--divider)}
+.btn-icon{width:34px;height:34px;border-radius:var(--r-full);display:flex;align-items:center;justify-content:center;background:var(--surface-2);border:1px solid var(--divider);font-size:15px;transition:background .15s}
+.btn-icon:hover{background:var(--surface-off)}
+.btn-icon:active{transform:scale(.92)}
 
-        /* ============================================================
-           CATEGORY FILTER
-        ============================================================ */
-        .cat-filter-wrap {
-            padding: 8px 16px;
-            background: var(--surface);
-            backdrop-filter: blur(20px);
-            border-bottom: 1px solid var(--divider);
-            display: flex;
-            gap: 6px;
-            overflow-x: auto;
-            -webkit-overflow-scrolling: touch;
-            scrollbar-width: none;
-            align-items: center;
-        }
-        .cat-filter-wrap::-webkit-scrollbar {
-            display: none;
-        }
-        .cat-chip {
-            display: flex;
-            align-items: center;
-            gap: 4px;
-            padding: 4px 12px;
-            background: var(--surface-2);
-            border: 1px solid var(--border);
-            border-radius: var(--r-full);
-            font-size: var(--xs);
-            font-weight: 600;
-            white-space: nowrap;
-            color: var(--text-muted);
-            transition: all .15s;
-            cursor: pointer;
-            flex-shrink: 0;
-        }
-        .cat-chip.active {
-            background: var(--primary-lt);
-            border-color: var(--primary);
-            color: var(--primary);
-        }
-        .cat-chip:active {
-            transform: scale(.94);
-        }
+/* File Dropdown (hidden by default, shown on header click) */
+.file-dropdown{position:absolute;top:calc(100% + 8px);left:50%;transform:translateX(-50%);background:var(--surface);backdrop-filter:blur(20px);border:1px solid var(--divider);border-radius:var(--r-lg);padding:12px;width:calc(100% - 32px);max-width:340px;box-shadow:var(--shadow-lg);z-index:200;display:none}
+.file-dropdown.open{display:block}
+.file-dropdown .file-select{width:100%;padding:10px 12px;background:var(--surface-2);border:1px solid var(--border);border-radius:var(--r-md);font-size:var(--sm);outline:none}
+.file-dropdown .btn-load{width:100%;margin-top:8px;padding:10px;background:var(--primary);color:#fff;border-radius:var(--r-md);font-weight:700;transition:background .15s}
+.file-dropdown .btn-load:hover{background:var(--primary-h)}
+.file-dropdown .btn-load:disabled{opacity:.5}
 
-        /* Search */
-        .search-toggle {
-            font-size: 16px;
-            padding: 4px 8px;
-            color: var(--text-muted);
-            cursor: pointer;
-        }
-        .search-bar-wrap {
-            padding: 6px 16px 10px;
-            background: var(--surface);
-            border-bottom: 1px solid var(--divider);
-            display: none;
-        }
-        .search-bar-wrap.open {
-            display: block;
-        }
-        .search-input-wrap {
-            position: relative;
-            display: flex;
-            align-items: center;
-        }
-        .search-icon {
-            position: absolute;
-            left: 12px;
-            color: var(--text-faint);
-        }
-        .search-input {
-            width: 100%;
-            padding: 8px 12px 8px 36px;
-            background: var(--surface-2);
-            border: 1px solid var(--border);
-            border-radius: var(--r-full);
-            font-size: var(--sm);
-            outline: none;
-            transition: border-color .15s;
-        }
-        .search-input:focus {
-            border-color: var(--primary);
-        }
-        .search-clear {
-            position: absolute;
-            right: 10px;
-            background: var(--surface-off);
-            border-radius: var(--r-full);
-            width: 20px;
-            height: 20px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 12px;
-            color: var(--text-muted);
-            cursor: pointer;
-            display: none;
-        }
-        .search-clear.show {
-            display: flex;
-        }
+/* ============================================================
+   CATEGORY FILTER (Compact floating pill row)
+============================================================ */
+.cat-filter-wrap{padding:8px 16px;background:var(--surface);backdrop-filter:blur(20px);border-bottom:1px solid var(--divider);display:flex;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;align-items:center}
+.cat-filter-wrap::-webkit-scrollbar{display:none}
+.cat-chip{display:flex;align-items:center;gap:4px;padding:4px 12px;background:var(--surface-2);border:1px solid var(--border);border-radius:var(--r-full);font-size:var(--xs);font-weight:600;white-space:nowrap;color:var(--text-muted);transition:all .15s;cursor:pointer;flex-shrink:0}
+.cat-chip.active{background:var(--primary-lt);border-color:var(--primary);color:var(--primary)}
+.cat-chip:active{transform:scale(.94)}
 
-        /* ============================================================
-           SWIPE ZONE
-        ============================================================ */
-        .swipe-zone {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 12px 16px;
-            overflow: hidden;
-            min-height: 0;
-        }
-        .empty-state {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            text-align: center;
-            padding: 40px 20px;
-            color: var(--text-muted);
-        }
-        .empty-icon {
-            font-size: 48px;
-            margin-bottom: 16px;
-        }
-        .empty-state h3 {
-            font-size: var(--lg);
-            font-weight: 700;
-            color: var(--text);
-            margin-bottom: 8px;
-        }
-        .empty-state p {
-            font-size: var(--sm);
-            line-height: 1.6;
-            max-width: 28ch;
-        }
+/* Search toggle in header */
+.search-toggle{font-size:16px;padding:4px 8px;color:var(--text-muted);cursor:pointer}
+.search-bar-wrap{padding:6px 16px 10px;background:var(--surface);border-bottom:1px solid var(--divider);display:none}
+.search-bar-wrap.open{display:block}
+.search-input-wrap{position:relative;display:flex;align-items:center}
+.search-icon{position:absolute;left:12px;color:var(--text-faint)}
+.search-input{width:100%;padding:8px 12px 8px 36px;background:var(--surface-2);border:1px solid var(--border);border-radius:var(--r-full);font-size:var(--sm);outline:none;transition:border-color .15s}
+.search-input:focus{border-color:var(--primary)}
+.search-clear{position:absolute;right:10px;background:var(--surface-off);border-radius:var(--r-full);width:20px;height:20px;display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--text-muted);cursor:pointer;display:none}
+.search-clear.show{display:flex}
 
-        /* Card stack */
-        .card-stack {
-            position: relative;
-            width: 100%;
-            max-width: 400px;
-            flex-shrink: 0;
-        }
-        .card-stack::before,
-        .card-stack::after {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background: var(--surface);
-            border-radius: var(--r-xl);
-            border: 1px solid var(--divider);
-            backdrop-filter: blur(10px);
-        }
-        .card-stack::before {
-            transform: rotate(-3deg) translateY(6px);
-            z-index: 0;
-            opacity: .4;
-        }
-        .card-stack::after {
-            transform: rotate(2deg) translateY(3px);
-            z-index: 1;
-            opacity: .7;
-        }
+/* ============================================================
+   SWIPE ZONE (Full height)
+============================================================ */
+.swipe-zone{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:12px 16px;overflow:hidden;min-height:0}
+.empty-state{display:flex;flex-direction:column;align-items:center;text-align:center;padding:40px 20px;color:var(--text-muted)}
+.empty-icon{font-size:48px;margin-bottom:16px}
+.empty-state h3{font-size:var(--lg);font-weight:700;color:var(--text);margin-bottom:8px}
+.empty-state p{font-size:var(--sm);line-height:1.6;max-width:28ch}
 
-        /* Inventory card — glassmorphism */
-        .inv-card {
-            position: relative;
-            z-index: 10;
-            background: var(--surface);
-            backdrop-filter: blur(24px) saturate(180%);
-            -webkit-backdrop-filter: blur(24px) saturate(180%);
-            border-radius: var(--r-xl);
-            padding: 20px 18px;
-            width: 100%;
-            border: 1px solid rgba(255, 255, 255, 0.4);
-            box-shadow: var(--shadow-lg);
-            user-select: none;
-            touch-action: pan-y;
-            will-change: transform;
-            max-height: 72vh;
-            overflow-y: auto;
-            -webkit-overflow-scrolling: touch;
-            transition: transform 0.5s var(--ease-spring), opacity 0.4s var(--ease-smooth), box-shadow 0.3s ease;
-        }
-        [data-theme="dark"] .inv-card {
-            border-color: rgba(255, 255, 255, 0.06);
-        }
-        .inv-card.dragging {
-            transition: none !important;
-        }
+/* Card stack */
+.card-stack{position:relative;width:100%;max-width:400px;flex-shrink:0}
+.card-stack::before,.card-stack::after{content:'';position:absolute;inset:0;background:var(--surface);border-radius:var(--r-xl);border:1px solid var(--divider);backdrop-filter:blur(10px)}
+.card-stack::before{transform:rotate(-3deg) translateY(6px);z-index:0;opacity:.4}
+.card-stack::after{transform:rotate(2deg) translateY(3px);z-index:1;opacity:.7}
 
-        /* Swipe indicators */
-        .swipe-ind {
-            position: absolute;
-            top: 16px;
-            padding: 5px 14px;
-            border-radius: var(--r-full);
-            font-size: var(--sm);
-            font-weight: 700;
-            opacity: 0;
-            pointer-events: none;
-            z-index: 20;
-            transition: opacity .1s;
-        }
-        .swipe-ind.save {
-            right: 14px;
-            background: var(--primary-lt);
-            color: var(--primary);
-        }
-        .swipe-ind.skip {
-            left: 14px;
-            background: var(--danger-lt);
-            color: var(--danger);
-        }
+/* Inventory card — GLASSMORPHISM + SPRING */
+.inv-card{position:relative;z-index:10;background:var(--surface);backdrop-filter:blur(24px) saturate(180%);-webkit-backdrop-filter:blur(24px) saturate(180%);border-radius:var(--r-xl);padding:20px 18px;width:100%;border:1px solid rgba(255,255,255,0.4);box-shadow:var(--shadow-lg);user-select:none;touch-action:pan-y;will-change:transform;max-height:72vh;overflow-y:auto;-webkit-overflow-scrolling:touch;transition:transform 0.5s var(--ease-spring), opacity 0.4s var(--ease-smooth), box-shadow 0.3s ease}
+[data-theme="dark"] .inv-card{border-color:rgba(255,255,255,0.06)}
+.inv-card.dragging{transition:none !important}
 
-        /* Card parts */
-        .card-cat-pill {
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
-            background: var(--surface-2);
-            border: 1px solid var(--divider);
-            border-radius: var(--r-full);
-            padding: 3px 10px;
-            font-size: var(--xs);
-            font-weight: 600;
-            color: var(--text-muted);
-            margin-bottom: 8px;
-        }
-        .card-name-row {
-            display: flex;
-            align-items: center;
-            margin-bottom: 12px;
-        }
-        .prod-icon {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            width: 36px;
-            height: 36px;
-            border-radius: var(--r-full);
-            color: #fff;
-            font-weight: 800;
-            font-size: 16px;
-            margin-right: 10px;
-            flex-shrink: 0;
-            box-shadow: var(--shadow-sm);
-        }
-        .card-prod-name {
-            font-size: var(--xl);
-            font-weight: 800;
-            line-height: 1.2;
-        }
-        .history-box {
-            background: var(--surface-2);
-            border: 1px solid var(--divider);
-            border-radius: var(--r-md);
-            padding: 8px 12px;
-            font-size: var(--xs);
-            color: var(--text-muted);
-            margin-bottom: 12px;
-            display: flex;
-            flex-wrap: wrap;
-            gap: 6px;
-            align-items: center;
-        }
-        .hist-tag {
-            background: var(--surface);
-            border: 1px solid var(--divider);
-            border-radius: var(--r-full);
-            padding: 2px 10px;
-            font-size: var(--xs);
-            color: var(--text-muted);
-            white-space: nowrap;
-        }
+/* Swipe indicators */
+.swipe-ind{position:absolute;top:16px;padding:5px 14px;border-radius:var(--r-full);font-size:var(--sm);font-weight:700;opacity:0;pointer-events:none;z-index:20;transition:opacity .1s}
+.swipe-ind.save{right:14px;background:var(--primary-lt);color:var(--primary)}
+.swipe-ind.skip{left:14px;background:var(--danger-lt);color:var(--danger)}
 
-        /* Stats */
-        .card-stats {
-            display: flex;
-            gap: 6px;
-            margin-bottom: 12px;
-        }
-        .stat-chip {
-            flex: 1;
-            background: var(--surface-2);
-            border: 1px solid var(--divider);
-            border-radius: var(--r-md);
-            padding: 8px 10px;
-            text-align: center;
-        }
-        .stat-label {
-            font-size: 10px;
-            color: var(--text-muted);
-            margin-bottom: 2px;
-            font-weight: 600;
-        }
-        .stat-val {
-            font-size: var(--base);
-            font-weight: 700;
-            font-variant-numeric: tabular-nums;
-        }
+/* Card parts */
+.card-cat-pill{display:inline-flex;align-items:center;gap:4px;background:var(--surface-2);border:1px solid var(--divider);border-radius:var(--r-full);padding:3px 10px;font-size:var(--xs);font-weight:600;color:var(--text-muted);margin-bottom:8px}
+.card-name-row{display:flex;align-items:center;margin-bottom:12px}
+.prod-icon{display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:var(--r-full);color:#fff;font-weight:800;font-size:16px;margin-right:10px;flex-shrink:0;box-shadow:var(--shadow-sm)}
+.card-prod-name{font-size:var(--xl);font-weight:800;line-height:1.2}
+.history-box{background:var(--surface-2);border:1px solid var(--divider);border-radius:var(--r-md);padding:8px 12px;font-size:var(--xs);color:var(--text-muted);margin-bottom:12px;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.hist-tag{background:var(--surface);border:1px solid var(--divider);border-radius:var(--r-full);padding:2px 10px;font-size:var(--xs);color:var(--text-muted);white-space:nowrap}
 
-        /* Inputs */
-        .inp-row {
-            display: flex;
-            gap: 8px;
-            margin-bottom: 6px;
-        }
-        .inp-col {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            gap: 3px;
-        }
-        .inp-col-label {
-            font-size: 10px;
-            font-weight: 700;
-            color: var(--text-muted);
-            text-transform: uppercase;
-            letter-spacing: .04em;
-            text-align: center;
-        }
-        .inp-wrap-sm {
-            display: flex;
-            align-items: center;
-            background: var(--surface-2);
-            border: 2px solid var(--border);
-            border-radius: var(--r-md);
-            overflow: hidden;
-            transition: border-color .15s, box-shadow .2s;
-        }
-        .inp-wrap-sm:focus-within {
-            border-color: var(--primary);
-        }
-        .stepper-btn {
-            width: 32px;
-            height: 38px;
-            background: transparent;
-            font-size: 18px;
-            font-weight: 300;
-            color: var(--text-muted);
-            flex-shrink: 0;
-            transition: background .15s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .stepper-btn:hover {
-            background: rgba(0, 0, 0, .04);
-            color: var(--text);
-        }
-        .stepper-btn:active {
-            background: rgba(0, 0, 0, .08);
-        }
-        .card-input {
-            flex: 1;
-            padding: 10px 4px;
-            background: transparent;
-            border: none;
-            font-size: var(--lg);
-            font-weight: 700;
-            text-align: center;
-            outline: none;
-            font-variant-numeric: tabular-nums;
-            -moz-appearance: textfield;
-            min-width: 0;
-        }
-        .card-input::-webkit-outer-spin-button,
-        .card-input::-webkit-inner-spin-button {
-            -webkit-appearance: none;
-            margin: 0;
-        }
-        .cost-preview {
-            font-size: var(--xs);
-            color: var(--text-faint);
-            text-align: right;
-            margin-bottom: 14px;
-        }
+/* Stats */
+.card-stats{display:flex;gap:6px;margin-bottom:12px}
+.stat-chip{flex:1;background:var(--surface-2);border:1px solid var(--divider);border-radius:var(--r-md);padding:8px 10px;text-align:center}
+.stat-label{font-size:10px;color:var(--text-muted);margin-bottom:2px;font-weight:600}
+.stat-val{font-size:var(--base);font-weight:700;font-variant-numeric:tabular-nums}
 
-        /* Card actions */
-        .card-btns {
-            display: flex;
-            gap: 8px;
-            margin-top: 4px;
-        }
-        .btn-skip-c {
-            flex: 1;
-            padding: 13px 0;
-            background: var(--surface-off);
-            border: 1px solid var(--divider);
-            border-radius: var(--r-full);
-            font-size: var(--sm);
-            font-weight: 700;
-            color: var(--text-muted);
-            transition: background .15s, transform .1s var(--ease-spring);
-        }
-        .btn-skip-c:active {
-            transform: scale(.94);
-        }
-        .btn-save-c {
-            flex: 2;
-            padding: 13px 0;
-            background: var(--primary);
-            border-radius: var(--r-full);
-            font-size: var(--sm);
-            font-weight: 700;
-            color: #fff;
-            transition: background .15s, transform .1s var(--ease-spring);
-        }
-        .btn-save-c:active {
-            transform: scale(.94);
-        }
-        .btn-save-c:hover {
-            background: var(--primary-h);
-        }
+/* Inputs — Neumorphic inspired */
+.inp-row{display:flex;gap:8px;margin-bottom:6px}
+.inp-col{flex:1;display:flex;flex-direction:column;gap:3px}
+.inp-col-label{font-size:10px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.04em;text-align:center}
+.inp-wrap-sm{display:flex;align-items:center;background:var(--surface-2);border:2px solid var(--border);border-radius:var(--r-md);overflow:hidden;transition:border-color .15s,box-shadow .2s}
+.inp-wrap-sm:focus-within{border-color:var(--primary)}
+.inp-label{width:68px;font-size:var(--sm);font-weight:600;color:var(--text-muted);flex-shrink:0}
+.inp-wrap{flex:1;display:flex;align-items:center;background:var(--surface-2);border-radius:var(--r-md);border:2px solid var(--border);transition:border-color .2s,box-shadow .2s}
+.inp-wrap:focus-within{border-color:var(--primary);box-shadow:0 0 0 4px rgba(45,125,70,.1)}
+.stepper-btn{width:32px;height:38px;background:transparent;font-size:18px;font-weight:300;color:var(--text-muted);flex-shrink:0;transition:background .15s;display:flex;align-items:center;justify-content:center}
+.stepper-btn:first-child{border-radius:var(--r-md) 0 0 var(--r-md)}
+.stepper-btn:last-child{border-radius:0 var(--r-md) var(--r-md) 0}
+.stepper-btn:hover{background:rgba(0,0,0,.04);color:var(--text)}
+.stepper-btn:active{background:rgba(0,0,0,.08)}
+.card-input{flex:1;padding:10px 4px;background:transparent;border:none;font-size:var(--lg);font-weight:700;text-align:center;outline:none;font-variant-numeric:tabular-nums;-moz-appearance:textfield;min-width:0}
+.card-input:focus{background:transparent;box-shadow:none}
+.card-input::-webkit-outer-spin-button,.card-input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.cost-preview{font-size:var(--xs);color:var(--text-faint);text-align:right;margin-bottom:14px}
 
-        .swipe-hint {
-            display: flex;
-            justify-content: space-between;
-            width: 100%;
-            max-width: 400px;
-            padding: 8px 6px 0;
-            font-size: var(--xs);
-            color: var(--text-faint);
-            font-weight: 500;
-        }
+/* Card actions */
+.card-btns{display:flex;gap:8px;margin-top:4px}
+.btn-skip-c{flex:1;padding:13px 0;background:var(--surface-off);border:1px solid var(--divider);border-radius:var(--r-full);font-size:var(--sm);font-weight:700;color:var(--text-muted);transition:background .15s,transform .1s var(--ease-spring)}
+.btn-skip-c:active{transform:scale(.94)}
+.btn-save-c{flex:2;padding:13px 0;background:var(--primary);border-radius:var(--r-full);font-size:var(--sm);font-weight:700;color:#fff;transition:background .15s,transform .1s var(--ease-spring)}
+.btn-save-c:active{transform:scale(.94)}
+.btn-save-c:hover{background:var(--primary-h)}
 
-        /* Done card */
-        .done-card {
-            background: var(--surface);
-            backdrop-filter: blur(20px);
-            border-radius: var(--r-xl);
-            padding: 36px 24px;
-            text-align: center;
-            width: 100%;
-            max-width: 400px;
-            box-shadow: var(--shadow-md);
-            border: 1px solid var(--divider);
-        }
-        .done-emoji {
-            font-size: 52px;
-            margin-bottom: 10px;
-        }
-        .done-title {
-            font-size: var(--xl);
-            font-weight: 800;
-            margin-bottom: 6px;
-        }
-        .done-sub {
-            font-size: var(--sm);
-            color: var(--text-muted);
-            margin-bottom: 20px;
-        }
-        .btn-restart {
-            padding: 12px 24px;
-            background: var(--surface-off);
-            border: 1px solid var(--divider);
-            border-radius: var(--r-full);
-            font-size: var(--sm);
-            font-weight: 700;
-            transition: background .15s;
-        }
-        .btn-restart:active {
-            transform: scale(.94);
-        }
+/* Swipe hint */
+.swipe-hint{display:flex;justify-content:space-between;width:100%;max-width:400px;padding:8px 6px 0;font-size:var(--xs);color:var(--text-faint);font-weight:500}
 
-        /* ============================================================
-           PROGRESS
-        ============================================================ */
-        .progress-section {
-            padding: 8px 16px 6px;
-            background: var(--surface);
-            backdrop-filter: blur(20px);
-            border-top: 1px solid var(--divider);
-        }
-        .progress-track {
-            height: 6px;
-            background: var(--surface-off);
-            border-radius: var(--r-full);
-            overflow: hidden;
-        }
-        .progress-fill {
-            height: 100%;
-            background: linear-gradient(90deg, var(--primary), #4caf6e);
-            border-radius: var(--r-full);
-            transition: width .5s var(--ease-smooth);
-            width: 0%;
-        }
-        .progress-label {
-            display: block;
-            text-align: center;
-            font-size: var(--xs);
-            font-weight: 600;
-            color: var(--text-muted);
-            margin-top: 4px;
-        }
+/* Done card */
+.done-card{background:var(--surface);backdrop-filter:blur(20px);border-radius:var(--r-xl);padding:36px 24px;text-align:center;width:100%;max-width:400px;box-shadow:var(--shadow-md);border:1px solid var(--divider)}
+.done-emoji{font-size:52px;margin-bottom:10px}
+.done-title{font-size:var(--xl);font-weight:800;margin-bottom:6px}
+.done-sub{font-size:var(--sm);color:var(--text-muted);margin-bottom:20px}
+.btn-restart{padding:12px 24px;background:var(--surface-off);border:1px solid var(--divider);border-radius:var(--r-full);font-size:var(--sm);font-weight:700;transition:background .15s}
+.btn-restart:active{transform:scale(.94)}
 
-        /* ============================================================
-           ACTION BAR
-        ============================================================ */
-        .action-bar {
-            position: sticky;
-            bottom: 60px;
-            padding: 8px 20px 16px;
-            background: transparent;
-            pointer-events: none;
-            z-index: 50;
-        }
-        .action-bar .btn-generate {
-            pointer-events: auto;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            width: 100%;
-            padding: 16px;
-            background: var(--text);
-            color: var(--bg);
-            border-radius: var(--r-full);
-            font-size: var(--base);
-            font-weight: 700;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, .15);
-            border: 1px solid rgba(255, 255, 255, .1);
-            transition: transform .3s var(--ease-spring), box-shadow .3s ease, opacity .3s ease;
-        }
-        .action-bar .btn-generate:not(:disabled):active {
-            transform: scale(.96);
-        }
-        .action-bar .btn-generate:disabled {
-            opacity: .35;
-            cursor: not-allowed;
-        }
-        .report-result {
-            margin-top: 8px;
-            padding: 10px 14px;
-            border-radius: var(--r-md);
-            font-size: var(--sm);
-            font-weight: 500;
-            text-align: center;
-            display: none;
-            pointer-events: auto;
-        }
-        .report-result.success {
-            display: block;
-            background: var(--primary-lt);
-            color: var(--primary);
-        }
-        .report-result.error {
-            display: block;
-            background: var(--danger-lt);
-            color: var(--danger);
-        }
-        .report-result a {
-            color: inherit;
-            font-weight: 700;
-            text-decoration: underline;
-        }
+/* ============================================================
+   PROGRESS
+============================================================ */
+.progress-section{padding:8px 16px 6px;background:var(--surface);backdrop-filter:blur(20px);border-top:1px solid var(--divider)}
+.progress-track{height:6px;background:var(--surface-off);border-radius:var(--r-full);overflow:hidden}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--primary),#4caf6e);border-radius:var(--r-full);transition:width .5s var(--ease-smooth);width:0%}
+.progress-label{display:block;text-align:center;font-size:var(--xs);font-weight:600;color:var(--text-muted);margin-top:4px}
 
-        /* ============================================================
-           TAB BAR
-        ============================================================ */
-        .tab-bar {
-            display: flex;
-            background: var(--surface);
-            backdrop-filter: blur(30px) saturate(180%);
-            -webkit-backdrop-filter: blur(30px) saturate(180%);
-            border-top: 1px solid rgba(0, 0, 0, .05);
-            padding: 4px 4px env(safe-area-inset-bottom);
-            position: sticky;
-            bottom: 0;
-            z-index: 100;
-        }
-        [data-theme="dark"] .tab-bar {
-            background: rgba(28, 27, 24, 0.85);
-            border-top-color: rgba(255, 255, 255, .05);
-        }
-        .tab-btn {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 2px;
-            padding: 6px 4px;
-            border-radius: var(--r-md);
-            font-size: 10px;
-            font-weight: 600;
-            color: var(--text-faint);
-            transition: color .2s;
-            position: relative;
-        }
-        .tab-btn .tab-icon {
-            font-size: 20px;
-            line-height: 1;
-        }
-        .tab-btn.active {
-            color: var(--primary);
-        }
-        .tab-btn.active::after {
-            content: '';
-            position: absolute;
-            top: 2px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 4px;
-            height: 4px;
-            border-radius: 50%;
-            background: var(--primary);
-        }
+/* ============================================================
+   FLOATING ACTION BAR (Overlay style)
+============================================================ */
+.action-bar{position:sticky;bottom:60px;padding:8px 20px 16px;background:transparent;pointer-events:none;z-index:50}
+.action-bar .btn-generate{pointer-events:auto;display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:16px;background:var(--text);color:var(--bg);border-radius:var(--r-full);font-size:var(--base);font-weight:700;box-shadow:0 8px 32px rgba(0,0,0,.15);border:1px solid rgba(255,255,255,.1);transition:transform .3s var(--ease-spring), box-shadow .3s ease, opacity .3s ease}
+.action-bar .btn-generate:not(:disabled):active{transform:scale(.96)}
+.action-bar .btn-generate:disabled{opacity:.35;cursor:not-allowed}
+.report-result{margin-top:8px;padding:10px 14px;border-radius:var(--r-md);font-size:var(--sm);font-weight:500;text-align:center;display:none;pointer-events:auto}
+.report-result.success{display:block;background:var(--primary-lt);color:var(--primary)}
+.report-result.error{display:block;background:var(--danger-lt);color:var(--danger)}
+.report-result a{color:inherit;font-weight:700;text-decoration:underline}
 
-        /* ============================================================
-           REVIEW / SUMMARY
-        ============================================================ */
-        .review-view,
-        .summary-view {
-            flex: 1;
-            overflow-y: auto;
-            padding: 12px 16px;
-            background: var(--bg);
-        }
-        .review-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 12px;
-        }
-        .review-count {
-            font-size: var(--sm);
-            font-weight: 700;
-        }
-        .review-sub {
-            font-size: var(--xs);
-            color: var(--text-muted);
-        }
-        .review-item {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            background: var(--surface);
-            backdrop-filter: blur(10px);
-            border: 1px solid var(--divider);
-            border-radius: var(--r-lg);
-            padding: 12px 14px;
-            margin-bottom: 8px;
-        }
-        .review-item-icon {
-            width: 36px;
-            height: 36px;
-            border-radius: var(--r-full);
-            color: #fff;
-            font-weight: 800;
-            font-size: 15px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-shrink: 0;
-        }
-        .review-item-info {
-            flex: 1;
-            min-width: 0;
-        }
-        .review-item-name {
-            font-size: var(--sm);
-            font-weight: 700;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        .review-item-cat {
-            font-size: var(--xs);
-            color: var(--text-muted);
-        }
-        .review-item-val {
-            display: flex;
-            flex-direction: column;
-            align-items: flex-end;
-            gap: 2px;
-        }
-        .review-val-close {
-            font-size: var(--base);
-            font-weight: 800;
-            font-variant-numeric: tabular-nums;
-        }
-        .review-val-add {
-            font-size: var(--xs);
-            color: var(--text-muted);
-        }
-        .btn-edit-review {
-            padding: 5px 12px;
-            background: var(--surface-2);
-            border: 1px solid var(--divider);
-            border-radius: var(--r-full);
-            font-size: var(--xs);
-            font-weight: 600;
-            transition: background .15s;
-        }
-        .btn-edit-review:active {
-            transform: scale(.92);
-        }
-        .review-empty {
-            text-align: center;
-            padding: 40px 20px;
-            color: var(--text-muted);
-        }
+/* ============================================================
+   TAB BAR (iOS style glass + pill)
+============================================================ */
+.tab-bar{display:flex;background:var(--surface);backdrop-filter:blur(30px) saturate(180%);-webkit-backdrop-filter:blur(30px) saturate(180%);border-top:1px solid rgba(0,0,0,.05);padding:4px 4px env(safe-area-inset-bottom);position:sticky;bottom:0;z-index:100}
+[data-theme="dark"] .tab-bar{background:rgba(28,27,24,0.85);border-top-color:rgba(255,255,255,.05)}
+.tab-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 4px;border-radius:var(--r-md);font-size:10px;font-weight:600;color:var(--text-faint);transition:color .2s;position:relative}
+.tab-btn .tab-icon{font-size:20px;line-height:1}
+.tab-btn.active{color:var(--primary)}
+.tab-btn.active::after{content:'';position:absolute;top:2px;left:50%;transform:translateX(-50%);width:4px;height:4px;border-radius:50%;background:var(--primary)}
 
-        /* Summary */
-        .summary-kpi-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 8px;
-            margin-bottom: 14px;
-        }
-        .kpi-card {
-            background: var(--surface);
-            backdrop-filter: blur(10px);
-            border: 1px solid var(--divider);
-            border-radius: var(--r-lg);
-            padding: 14px;
-            text-align: center;
-        }
-        .kpi-label {
-            font-size: var(--xs);
-            font-weight: 600;
-            color: var(--text-muted);
-        }
-        .kpi-value {
-            font-size: var(--xl);
-            font-weight: 800;
-            font-variant-numeric: tabular-nums;
-        }
-        .kpi-value.green {
-            color: var(--primary);
-        }
-        .summary-section-label {
-            font-size: var(--xs);
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: .06em;
-            color: var(--text-muted);
-            margin: 14px 0 8px;
-        }
-        .summary-item {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            background: var(--surface);
-            border: 1px solid var(--divider);
-            border-radius: var(--r-md);
-            padding: 10px 12px;
-            margin-bottom: 6px;
-        }
-        .summary-item-name {
-            flex: 1;
-            font-size: var(--sm);
-            font-weight: 600;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        .summary-item-val {
-            font-size: var(--sm);
-            font-weight: 800;
-            font-variant-numeric: tabular-nums;
-            color: var(--primary);
-        }
-        .btn-generate-summary {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            width: 100%;
-            padding: 15px;
-            background: var(--text);
-            color: var(--bg);
-            border-radius: var(--r-full);
-            font-size: var(--base);
-            font-weight: 700;
-            margin-top: 16px;
-            transition: opacity .15s, transform .1s var(--ease-spring);
-        }
-        .btn-generate-summary:active:not(:disabled) {
-            transform: scale(.96);
-        }
-        .btn-generate-summary:disabled {
-            opacity: .35;
-            cursor: not-allowed;
-        }
-        .result-banner {
-            margin-top: 10px;
-            padding: 10px 14px;
-            border-radius: var(--r-md);
-            font-size: var(--sm);
-            font-weight: 500;
-            text-align: center;
-            display: none;
-        }
-        .result-banner.success {
-            display: block;
-            background: var(--primary-lt);
-            color: var(--primary);
-        }
-        .result-banner.error {
-            display: block;
-            background: var(--danger-lt);
-            color: var(--danger);
-        }
-        .result-banner a {
-            color: inherit;
-            font-weight: 700;
-            text-decoration: underline;
-        }
+/* ============================================================
+   REVIEW / SUMMARY (Unchanged but styled with glass)
+============================================================ */
+.review-view,.summary-view{flex:1;overflow-y:auto;padding:12px 16px;background:var(--bg)}
+.review-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.review-count{font-size:var(--sm);font-weight:700}
+.review-sub{font-size:var(--xs);color:var(--text-muted)}
+.review-item{display:flex;align-items:center;gap:10px;background:var(--surface);backdrop-filter:blur(10px);border:1px solid var(--divider);border-radius:var(--r-lg);padding:12px 14px;margin-bottom:8px}
+.review-item-icon{width:36px;height:36px;border-radius:var(--r-full);color:#fff;font-weight:800;font-size:15px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.review-item-info{flex:1;min-width:0}
+.review-item-name{font-size:var(--sm);font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.review-item-cat{font-size:var(--xs);color:var(--text-muted)}
+.review-item-val{display:flex;flex-direction:column;align-items:flex-end;gap:2px}
+.review-val-close{font-size:var(--base);font-weight:800;font-variant-numeric:tabular-nums}
+.review-val-add{font-size:var(--xs);color:var(--text-muted)}
+.btn-edit-review{padding:5px 12px;background:var(--surface-2);border:1px solid var(--divider);border-radius:var(--r-full);font-size:var(--xs);font-weight:600;transition:background .15s}
+.btn-edit-review:active{transform:scale(.92)}
+.review-empty{text-align:center;padding:40px 20px;color:var(--text-muted)}
 
-        /* Modal */
-        .modal-overlay {
-            position: fixed;
-            inset: 0;
-            background: rgba(0, 0, 0, .4);
-            backdrop-filter: blur(4px);
-            z-index: 500;
-            display: flex;
-            align-items: flex-end;
-            justify-content: center;
-        }
-        .modal-overlay.hidden {
-            display: none;
-        }
-        .modal-sheet {
-            background: var(--surface);
-            border-radius: var(--r-xl) var(--r-xl) 0 0;
-            padding: 24px 20px 32px;
-            width: 100%;
-            max-width: 480px;
-            box-shadow: var(--shadow-lg);
-        }
-        .modal-handle {
-            width: 40px;
-            height: 4px;
-            background: var(--divider);
-            border-radius: var(--r-full);
-            margin: 0 auto 20px;
-        }
-        .modal-title {
-            font-size: var(--lg);
-            font-weight: 800;
-        }
-        .modal-sub {
-            font-size: var(--sm);
-            color: var(--text-muted);
-            margin-bottom: 20px;
-        }
-        .modal-inp-group {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 12px;
-        }
-        .modal-inp-label {
-            width: 72px;
-            font-size: var(--sm);
-            font-weight: 600;
-            color: var(--text-muted);
-        }
-        .modal-inp {
-            flex: 1;
-            padding: 12px 14px;
-            background: var(--surface-2);
-            border: 2px solid var(--border);
-            border-radius: var(--r-md);
-            font-size: var(--lg);
-            font-weight: 700;
-            outline: none;
-        }
-        .modal-inp:focus {
-            border-color: var(--primary);
-        }
-        .modal-btns {
-            display: flex;
-            gap: 8px;
-            margin-top: 16px;
-        }
-        .btn-modal-cancel {
-            flex: 1;
-            padding: 13px;
-            background: var(--surface-off);
-            border: 1px solid var(--divider);
-            border-radius: var(--r-full);
-            font-weight: 700;
-            color: var(--text-muted);
-        }
-        .btn-modal-save {
-            flex: 2;
-            padding: 13px;
-            background: var(--primary);
-            border-radius: var(--r-full);
-            font-weight: 700;
-            color: #fff;
-        }
-        .btn-modal-save:active {
-            transform: scale(.94);
-        }
+/* Summary */
+.summary-kpi-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
+.kpi-card{background:var(--surface);backdrop-filter:blur(10px);border:1px solid var(--divider);border-radius:var(--r-lg);padding:14px;text-align:center}
+.kpi-label{font-size:var(--xs);font-weight:600;color:var(--text-muted)}
+.kpi-value{font-size:var(--xl);font-weight:800;font-variant-numeric:tabular-nums}
+.kpi-value.green{color:var(--primary)}
+.summary-section-label{font-size:var(--xs);font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-muted);margin:14px 0 8px}
+.summary-item{display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--divider);border-radius:var(--r-md);padding:10px 12px;margin-bottom:6px}
+.summary-item-name{flex:1;font-size:var(--sm);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.summary-item-val{font-size:var(--sm);font-weight:800;font-variant-numeric:tabular-nums;color:var(--primary)}
+.btn-generate-summary{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:15px;background:var(--text);color:var(--bg);border-radius:var(--r-full);font-size:var(--base);font-weight:700;margin-top:16px;transition:opacity .15s,transform .1s var(--ease-spring)}
+.btn-generate-summary:active:not(:disabled){transform:scale(.96)}
+.btn-generate-summary:disabled{opacity:.35;cursor:not-allowed}
+.result-banner{margin-top:10px;padding:10px 14px;border-radius:var(--r-md);font-size:var(--sm);font-weight:500;text-align:center;display:none}
+.result-banner.success{display:block;background:var(--primary-lt);color:var(--primary)}
+.result-banner.error{display:block;background:var(--danger-lt);color:var(--danger)}
+.result-banner a{color:inherit;font-weight:700;text-decoration:underline}
 
-        /* Resume banner */
-        .resume-banner {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            background: var(--warn-lt);
-            border: 1px solid var(--warn);
-            border-radius: var(--r-md);
-            padding: 10px 14px;
-            margin: 8px 16px 0;
-            font-size: var(--sm);
-        }
-        .resume-banner.hidden {
-            display: none;
-        }
-        .resume-text {
-            flex: 1;
-            color: var(--warn);
-            font-weight: 600;
-        }
-        .btn-resume {
-            padding: 6px 14px;
-            background: var(--warn);
-            color: #fff;
-            border-radius: var(--r-full);
-            font-size: var(--xs);
-            font-weight: 700;
-        }
-        .btn-resume:active {
-            transform: scale(.92);
-        }
-        .btn-resume-dismiss {
-            font-size: 18px;
-            color: var(--warn);
-            padding: 0 4px;
-        }
+/* Modal */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);backdrop-filter:blur(4px);z-index:500;display:flex;align-items:flex-end;justify-content:center}
+.modal-overlay.hidden{display:none}
+.modal-sheet{background:var(--surface);border-radius:var(--r-xl) var(--r-xl) 0 0;padding:24px 20px 32px;width:100%;max-width:480px;box-shadow:var(--shadow-lg)}
+.modal-handle{width:40px;height:4px;background:var(--divider);border-radius:var(--r-full);margin:0 auto 20px}
+.modal-title{font-size:var(--lg);font-weight:800}
+.modal-sub{font-size:var(--sm);color:var(--text-muted);margin-bottom:20px}
+.modal-inp-group{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.modal-inp-label{width:72px;font-size:var(--sm);font-weight:600;color:var(--text-muted)}
+.modal-inp{flex:1;padding:12px 14px;background:var(--surface-2);border:2px solid var(--border);border-radius:var(--r-md);font-size:var(--lg);font-weight:700;outline:none}
+.modal-inp:focus{border-color:var(--primary)}
+.modal-btns{display:flex;gap:8px;margin-top:16px}
+.btn-modal-cancel{flex:1;padding:13px;background:var(--surface-off);border:1px solid var(--divider);border-radius:var(--r-full);font-weight:700;color:var(--text-muted)}
+.btn-modal-save{flex:2;padding:13px;background:var(--primary);border-radius:var(--r-full);font-weight:700;color:#fff}
+.btn-modal-save:active{transform:scale(.94)}
 
-        /* Undo bar */
-        .undo-bar {
-            position: fixed;
-            bottom: 80px;
-            left: 50%;
-            transform: translateX(-50%) translateY(20px);
-            background: var(--text);
-            color: var(--bg);
-            padding: 10px 16px;
-            border-radius: var(--r-full);
-            font-size: var(--sm);
-            font-weight: 600;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity .2s, transform .2s;
-            z-index: 400;
-            white-space: nowrap;
-            box-shadow: var(--shadow-md);
-        }
-        .undo-bar.show {
-            opacity: 1;
-            transform: translateX(-50%) translateY(0);
-            pointer-events: auto;
-        }
-        .btn-undo {
-            color: var(--primary);
-            font-weight: 800;
-        }
-        [data-theme="dark"] .btn-undo {
-            color: #4caf6e;
-        }
+/* Resume banner */
+.resume-banner{display:flex;align-items:center;gap:10px;background:var(--warn-lt);border:1px solid var(--warn);border-radius:var(--r-md);padding:10px 14px;margin:8px 16px 0;font-size:var(--sm)}
+.resume-banner.hidden{display:none}
+.resume-text{flex:1;color:var(--warn);font-weight:600}
+.btn-resume{padding:6px 14px;background:var(--warn);color:#fff;border-radius:var(--r-full);font-size:var(--xs);font-weight:700}
+.btn-resume:active{transform:scale(.92)}
+.btn-resume-dismiss{font-size:18px;color:var(--warn);padding:0 4px}
 
-        /* Toast */
-        .toast {
-            position: fixed;
-            bottom: 90px;
-            left: 50%;
-            transform: translateX(-50%) translateY(20px);
-            background: var(--text);
-            color: var(--bg);
-            padding: 9px 18px;
-            border-radius: var(--r-full);
-            font-size: var(--sm);
-            font-weight: 600;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity .2s, transform .2s;
-            z-index: 500;
-            white-space: nowrap;
-            box-shadow: var(--shadow-sm);
-        }
-        .toast.show {
-            opacity: 1;
-            transform: translateX(-50%) translateY(0);
-        }
+/* Undo bar */
+.undo-bar{position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--text);color:var(--bg);padding:10px 16px;border-radius:var(--r-full);font-size:var(--sm);font-weight:600;display:flex;align-items:center;gap:12px;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:400;white-space:nowrap;box-shadow:var(--shadow-md)}
+.undo-bar.show{opacity:1;transform:translateX(-50%) translateY(0);pointer-events:auto}
+.btn-undo{color:var(--primary);font-weight:800}
+[data-theme="dark"] .btn-undo{color:#4caf6e}
 
-        /* Loading */
-        .loading-overlay {
-            position: fixed;
-            inset: 0;
-            background: rgba(0, 0, 0, .35);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-            backdrop-filter: blur(4px);
-        }
-        .loading-overlay.hidden {
-            display: none;
-        }
-        .loading-box {
-            background: var(--surface);
-            border-radius: var(--r-xl);
-            padding: 28px 36px;
-            text-align: center;
-            box-shadow: var(--shadow-lg);
-        }
-        .spinner {
-            width: 36px;
-            height: 36px;
-            border: 3px solid var(--divider);
-            border-top-color: var(--primary);
-            border-radius: 50%;
-            animation: spin .8s linear infinite;
-            margin: 0 auto 14px;
-        }
-        @keyframes spin {
-            to {
-                transform: rotate(360deg);
-            }
-        }
-        .loading-text {
-            font-size: var(--sm);
-            font-weight: 600;
-            color: var(--text-muted);
-        }
+/* Toast */
+.toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--text);color:var(--bg);padding:9px 18px;border-radius:var(--r-full);font-size:var(--sm);font-weight:600;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:500;white-space:nowrap;box-shadow:var(--shadow-sm)}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 
-        /* Confetti */
-        .confetti-piece {
-            position: fixed;
-            pointer-events: none;
-            z-index: 900;
-            animation: cfall 1.5s ease-in forwards;
-            border-radius: 2px;
-        }
-        @keyframes cfall {
-            0% {
-                opacity: 1;
-                transform: translateY(0) rotate(0deg);
-            }
-            100% {
-                opacity: 0;
-                transform: translateY(80vh) rotate(720deg);
-            }
-        }
+/* Loading */
+.loading-overlay{position:fixed;inset:0;background:rgba(0,0,0,.35);display:flex;align-items:center;justify-content:center;z-index:1000;backdrop-filter:blur(4px)}
+.loading-overlay.hidden{display:none}
+.loading-box{background:var(--surface);border-radius:var(--r-xl);padding:28px 36px;text-align:center;box-shadow:var(--shadow-lg)}
+.spinner{width:36px;height:36px;border:3px solid var(--divider);border-top-color:var(--primary);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 14px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-text{font-size:var(--sm);font-weight:600;color:var(--text-muted)}
 
-        /* Confirm exit modal */
-        .confirm-overlay {
-            position: fixed;
-            inset: 0;
-            background: rgba(0, 0, 0, .55);
-            backdrop-filter: blur(6px);
-            -webkit-backdrop-filter: blur(6px);
-            z-index: 600;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 24px;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity .22s ease;
-        }
-        .confirm-overlay.visible {
-            opacity: 1;
-            pointer-events: auto;
-        }
-        .confirm-card {
-            background: var(--surface);
-            border-radius: var(--r-xl);
-            padding: 28px 24px 24px;
-            width: 100%;
-            max-width: 340px;
-            text-align: center;
-            box-shadow: 0 24px 60px rgba(0, 0, 0, .18);
-            border: 1px solid rgba(255, 255, 255, .22);
-            transform: scale(.92) translateY(12px);
-            transition: transform .28s var(--ease-spring);
-        }
-        .confirm-overlay.visible .confirm-card {
-            transform: scale(1) translateY(0);
-        }
-        .confirm-icon {
-            font-size: 44px;
-            margin-bottom: 12px;
-            line-height: 1;
-        }
-        .confirm-title {
-            font-size: var(--lg);
-            font-weight: 800;
-            margin-bottom: 6px;
-            letter-spacing: -.02em;
-        }
-        .confirm-msg {
-            font-size: var(--sm);
-            color: var(--text-muted);
-            line-height: 1.55;
-            margin-bottom: 24px;
-        }
-        .confirm-btns {
-            display: flex;
-            gap: 10px;
-        }
-        .confirm-btn-cancel {
-            flex: 1;
-            padding: 13px 0;
-            background: var(--surface-off);
-            border: 1px solid var(--divider);
-            border-radius: var(--r-full);
-            font-size: var(--sm);
-            font-weight: 700;
-            color: var(--text-muted);
-            transition: background .15s;
-        }
-        .confirm-btn-cancel:active {
-            transform: scale(.97);
-        }
-        .confirm-btn-exit {
-            flex: 1;
-            padding: 13px 0;
-            background: linear-gradient(135deg, #c62828, #ef5350);
-            border-radius: var(--r-full);
-            font-size: var(--sm);
-            font-weight: 800;
-            color: #fff;
-            box-shadow: 0 10px 24px rgba(198, 40, 40, .22);
-            transition: filter .15s;
-        }
-        .confirm-btn-exit:active {
-            transform: scale(.97);
-            filter: brightness(.92);
-        }
+/* Confetti */
+.confetti-piece{position:fixed;pointer-events:none;z-index:900;animation:cfall 1.5s ease-in forwards;border-radius:2px}
+@keyframes cfall{0%{opacity:1;transform:translateY(0) rotate(0deg)}100%{opacity:0;transform:translateY(80vh) rotate(720deg)}}
 
-        /* Responsive */
-        @media(max-width:360px) {
-            .inv-card {
-                padding: 16px 14px;
-            }
-            .stepper-btn {
-                width: 32px;
-            }
-        }
-        @media(min-width:500px) {
-            .swipe-zone {
-                padding: 20px;
-            }
-        }
-        @supports(padding:env(safe-area-inset-bottom)) {
-            .tab-bar {
-                padding-bottom: calc(4px + env(safe-area-inset-bottom));
-            }
-        }
-    </style>
+/* Responsive */
+@media(max-width:360px){.inv-card{padding:16px 14px}.stepper-btn{width:32px}}
+@media(min-width:500px){.swipe-zone{padding:20px}}
+
+/* PWA safe area */
+@supports(padding:env(safe-area-inset-bottom)){.tab-bar{padding-bottom:calc(4px + env(safe-area-inset-bottom))}}
+  
+/* ============================================================
+   CONFIRM EXIT MODAL
+============================================================ */
+.confirm-overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);z-index:600;display:flex;align-items:center;justify-content:center;padding:24px;opacity:0;pointer-events:none;transition:opacity .22s ease}
+.confirm-overlay.visible{opacity:1;pointer-events:auto}
+.confirm-card{background:var(--surface);border-radius:var(--r-xl);padding:28px 24px 24px;width:100%;max-width:340px;text-align:center;box-shadow:0 24px 60px rgba(0,0,0,.18);border:1px solid rgba(255,255,255,.22);transform:scale(.92) translateY(12px);transition:transform .28s var(--ease-spring)}
+.confirm-overlay.visible .confirm-card{transform:scale(1) translateY(0)}
+.confirm-icon{font-size:44px;margin-bottom:12px;line-height:1}
+.confirm-title{font-size:var(--lg);font-weight:800;margin-bottom:6px;letter-spacing:-.02em}
+.confirm-msg{font-size:var(--sm);color:var(--text-muted);line-height:1.55;margin-bottom:24px}
+.confirm-btns{display:flex;gap:10px}
+.confirm-btn-cancel{flex:1;padding:13px 0;background:var(--surface-off);border:1px solid var(--divider);border-radius:var(--r-full);font-size:var(--sm);font-weight:700;color:var(--text-muted);transition:background .15s}
+.confirm-btn-cancel:active{transform:scale(.97)}
+.confirm-btn-exit{flex:1;padding:13px 0;background:linear-gradient(135deg,#c62828,#ef5350);border-radius:var(--r-full);font-size:var(--sm);font-weight:800;color:#fff;box-shadow:0 10px 24px rgba(198,40,40,.22);transition:filter .15s}
+.confirm-btn-exit:active{transform:scale(.97);filter:brightness(.92)}
+
+</style>
 </head>
 <body>
-    <div id="shell">
+<div id="shell">
 
-        <!-- LOADING -->
-        <div class="loading-overlay hidden" id="loading-overlay">
-            <div class="loading-box"><div class="spinner"></div><div class="loading-text" id="loading-text">Loading…</div></div>
-        </div>
+  <!-- LOADING -->
+  <div class="loading-overlay hidden" id="loading-overlay">
+    <div class="loading-box"><div class="spinner"></div><div class="loading-text" id="loading-text">Loading…</div></div>
+  </div>
 
-        <!-- TOAST -->
-        <div class="toast" id="toast"></div>
+  <!-- TOAST -->
+  <div class="toast" id="toast"></div>
 
-        <!-- UNDO BAR -->
-        <div class="undo-bar" id="undo-bar">
-            <span id="undo-msg">Item skipped</span>
-            <button class="btn-undo" id="undo-btn">↩ Undo</button>
-        </div>
+  <!-- UNDO BAR -->
+  <div class="undo-bar" id="undo-bar">
+    <span id="undo-msg">Item skipped</span>
+    <button class="btn-undo" id="undo-btn">↩ Undo</button>
+  </div>
 
-        <!-- EDIT MODAL -->
-        <div class="modal-overlay hidden" id="edit-modal">
-            <div class="modal-sheet">
-                <div class="modal-handle"></div>
-                <div class="modal-title" id="modal-title">Edit Item</div>
-                <div class="modal-sub" id="modal-sub">Update closing count</div>
-                <div class="modal-inp-group"><label class="modal-inp-label">📥 Add</label><input class="modal-inp" type="number" id="modal-add" inputmode="numeric" min="0" /></div>
-                <div class="modal-inp-group"><label class="modal-inp-label">📦 Close</label><input class="modal-inp" type="number" id="modal-close" inputmode="numeric" min="0" /></div>
-                <div class="modal-btns"><button class="btn-modal-cancel" id="modal-cancel">Cancel</button><button class="btn-modal-save" id="modal-save">Save Changes</button></div>
-            </div>
-        </div>
+  <!-- EDIT MODAL -->
+  <div class="modal-overlay hidden" id="edit-modal">
+    <div class="modal-sheet">
+      <div class="modal-handle"></div>
+      <div class="modal-title" id="modal-title">Edit Item</div>
+      <div class="modal-sub" id="modal-sub">Update closing count</div>
+      <div class="modal-inp-group"><label class="modal-inp-label">📥 Add</label><input class="modal-inp" type="number" id="modal-add" inputmode="numeric" min="0" /></div>
+      <div class="modal-inp-group"><label class="modal-inp-label">📦 Close</label><input class="modal-inp" type="number" id="modal-close" inputmode="numeric" min="0" /></div>
+      <div class="modal-btns"><button class="btn-modal-cancel" id="modal-cancel">Cancel</button><button class="btn-modal-save" id="modal-save">Save Changes</button></div>
+    </div>
+  </div>
 
-        <!-- ===================== LOGIN ===================== -->
-        <div id="login-screen" class="screen active">
-            <div style="position:fixed;top:16px;right:16px;z-index:10"><button class="btn-icon" data-theme-toggle>🌙</button></div>
-            <div class="login-card">
-                <div class="login-logo">🧸</div>
-                <h1 class="login-title">Inventory Manager</h1>
-                <p class="login-sub">Sign in with Google to access<br>your Drive inventory files.</p>
-                <button class="btn-google" id="login-btn">
-                    <svg width="20" height="20" viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
-                    Sign in with Google
-                </button>
-                <p class="login-note">Uses Google OAuth · Read/Write Drive files</p>
-            </div>
-        </div>
+  <!-- ===================== LOGIN ===================== -->
+  <div id="login-screen" class="screen active">
+    <div style="position:fixed;top:16px;right:16px;z-index:10"><button class="btn-icon" data-theme-toggle>🌙</button></div>
+    <div class="login-card">
+      <div class="login-logo">🧸</div>
+      <h1 class="login-title">Inventory Manager</h1>
+      <p class="login-sub">Sign in with Google to access<br>your Drive inventory files.</p>
+      <button class="btn-google" id="login-btn">
+        <svg width="20" height="20" viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
+        Sign in with Google
+      </button>
+      <p class="login-note">Uses Google OAuth · Read/Write Drive files</p>
+    </div>
+  </div>
 
-        <!-- ===================== MAIN APP ===================== -->
-        <div id="app-screen" class="screen">
+  <!-- ===================== MAIN APP ===================== -->
+  <div id="app-screen" class="screen">
 
-            <!-- HEADER -->
-            <header class="app-header">
-                <div class="header-brand">🧸 GiftShop</div>
-                <div class="header-file" id="header-file" title="Change file">
-                    <span id="file-status-text">Select File</span>
-                    <span class="arrow">▾</span>
-                </div>
-                <div class="header-actions">
-                    <span class="search-toggle" id="search-toggle" title="Search">🔍</span>
-                    <img id="user-avatar" class="header-avatar" src="" alt="" style="display:none" />
-                    <button class="btn-icon" data-theme-toggle>🌙</button>
-                    <button class="btn-icon" id="logout-btn" title="Sign out">
-                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-                    </button>
-                </div>
+    <!-- HEADER (Upgraded) -->
+    <header class="app-header">
+      <div class="header-brand">🧸 GiftShop</div>
+      <div class="header-file" id="header-file" title="Change file">
+        <span id="file-status-text">Select File</span>
+        <span class="arrow">▾</span>
+      </div>
+      <div class="header-actions">
+        <span class="search-toggle" id="search-toggle" title="Search">🔍</span>
+        <img id="user-avatar" class="header-avatar" src="" alt="" style="display:none" />
+        <button class="btn-icon" data-theme-toggle>🌙</button>
+        <button class="btn-icon" id="logout-btn" title="Sign out">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        </button>
+      </div>
 
-                <!-- File dropdown -->
-                <div class="file-dropdown" id="file-dropdown">
-                    <select id="file-list" class="file-select">
-                        <option value="">— Choose from Google Drive —</option>
-                    </select>
-                    <button id="load-btn" class="btn-load" disabled>Load File</button>
-                    <div class="drive-status" id="drive-status"></div>
-                </div>
-            </header>
+      <!-- Hidden file dropdown that appears when clicking header-file -->
+      <div class="file-dropdown" id="file-dropdown">
+        <select id="file-list" class="file-select">
+          <option value="">— Choose from Google Drive —</option>
+        </select>
+        <button id="load-btn" class="btn-load" disabled>Load File</button>
+      </div>
+    </header>
 
-            <!-- RESUME BANNER -->
-            <div class="resume-banner hidden" id="resume-banner">
-                <div class="resume-text" id="resume-text">You have an unfinished session.</div>
-                <button class="btn-resume" id="resume-btn">Resume</button>
-                <button class="btn-resume-dismiss" id="resume-dismiss">✕</button>
-            </div>
-
-            <!-- CATEGORY FILTER -->
-            <div class="cat-filter-wrap" id="cat-filter-bar" style="display:none"></div>
-
-            <!-- SEARCH BAR -->
-            <div class="search-bar-wrap" id="search-bar-wrap">
-                <div class="search-input-wrap">
-                    <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-                    <input class="search-input" id="search-input" type="text" placeholder="Search product…" autocomplete="off" />
-                    <button class="search-clear" id="search-clear">✕</button>
-                </div>
-            </div>
-
-            <!-- VIEWS -->
-            <div class="view active" id="view-swipe">
-                <div class="swipe-zone" id="swipe-zone">
-                    <div class="empty-state" id="empty-state">
-                        <div class="empty-icon">📂</div>
-                        <h3>No file loaded</h3>
-                        <p>Select a file from the dropdown in the header.</p>
-                    </div>
-                </div>
-                <div class="progress-section">
-                    <div class="progress-track"><div class="progress-fill" id="progress-fill"></div></div>
-                    <span class="progress-label" id="progress-label">0 / 0</span>
-                </div>
-                <div class="action-bar">
-                    <button id="generate-btn" class="btn-generate" disabled>
-                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
-                        Generate Next Month Report
-                    </button>
-                    <div class="report-result" id="report-result"></div>
-                </div>
-            </div>
-
-            <div class="view" id="view-review">
-                <div class="review-view">
-                    <div class="review-header"><div><div class="review-count" id="review-count">0 items saved</div><div class="review-sub">Tap any item to edit</div></div></div>
-                    <div id="review-list"></div>
-                </div>
-            </div>
-
-            <div class="view" id="view-summary">
-                <div class="summary-view">
-                    <div class="summary-kpi-row">
-                        <div class="kpi-card"><div class="kpi-label">Items Saved</div><div class="kpi-value green" id="kpi-saved">0</div></div>
-                        <div class="kpi-card"><div class="kpi-label">Total Value</div><div class="kpi-value" id="kpi-value">$0</div></div>
-                        <div class="kpi-card"><div class="kpi-label">Total Items</div><div class="kpi-value" id="kpi-total">0</div></div>
-                        <div class="kpi-card"><div class="kpi-label">Progress</div><div class="kpi-value" id="kpi-progress">0%</div></div>
-                    </div>
-                    <div class="summary-section-label">Top Saved by Value</div>
-                    <div id="summary-top-list"></div>
-                    <button class="btn-generate-summary" id="generate-btn-2" disabled>
-                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
-                        Generate Report
-                    </button>
-                    <div class="result-banner" id="result-banner-2"></div>
-                </div>
-            </div>
-
-            <!-- TAB BAR -->
-            <nav class="tab-bar">
-                <button class="tab-btn active" data-tab="swipe"><span class="tab-icon">🃏</span>Swipe</button>
-                <button class="tab-btn" data-tab="review"><span class="tab-icon">📋</span>Review</button>
-                <button class="tab-btn" data-tab="summary"><span class="tab-icon">📊</span>Summary</button>
-            </nav>
-
-        </div><!-- /app-screen -->
-    </div><!-- /shell -->
-
-    <!-- Exit Confirmation Modal -->
-    <div class="confirm-overlay" id="confirm-overlay">
-        <div class="confirm-card">
-            <div class="confirm-icon">🚪</div>
-            <div class="confirm-title">Sign out?</div>
-            <div class="confirm-msg">Any unsaved progress will be lost.<br>Are you sure you want to exit?</div>
-            <div class="confirm-btns">
-                <button class="confirm-btn-cancel" id="confirm-cancel">Stay</button>
-                <button class="confirm-btn-exit" id="confirm-exit">Sign Out</button>
-            </div>
-        </div>
+    <!-- RESUME BANNER -->
+    <div class="resume-banner hidden" id="resume-banner">
+      <div class="resume-text" id="resume-text">You have an unfinished session.</div>
+      <button class="btn-resume" id="resume-btn">Resume</button>
+      <button class="btn-resume-dismiss" id="resume-dismiss">✕</button>
     </div>
 
-    <script>
-        /* ============================================================
-           CONFIG & STATE
-        ============================================================ */
-        const GOOGLE_CLIENT_ID = '397533113348-geurcc1e124egnn2ttf20epub2ero4vo.apps.googleusercontent.com';
-        const SCOPES = 'https://www.googleapis.com/auth/drive.readonly https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email';
-        const AUTOSAVE_KEY = 'giftshop_autosave';
-        const HISTORY_KEY = 'giftshop_history';
-        const THEME_KEY = 'giftshop_theme';
+    <!-- CATEGORY FILTER (Compact) -->
+    <div class="cat-filter-wrap" id="cat-filter-bar" style="display:none"></div>
 
-        let tokenClient = null,
-            accessToken = null,
-            userInfo = null;
-        let driveFiles = [],
-            items = [],
-            filteredItems = [];
-        let currentIndex = 0,
-            results = {},
-            currentFileId = null;
-        let isProcessing = false,
-            undoStack = [];
-        let activeCategory = 'All',
-            searchQuery = '';
-        let editingProductName = null;
+    <!-- SEARCH BAR (Collapsible) -->
+    <div class="search-bar-wrap" id="search-bar-wrap">
+      <div class="search-input-wrap">
+        <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input class="search-input" id="search-input" type="text" placeholder="Search product…" autocomplete="off" />
+        <button class="search-clear" id="search-clear">✕</button>
+      </div>
+    </div>
 
-        /* ============================================================
-           DOM REFS
-        ============================================================ */
-        const $ = id => document.getElementById(id);
-        const loginScreen = $('login-screen'),
-            appScreen = $('app-screen');
-        const loginBtn = $('login-btn'),
-            logoutBtn = $('logout-btn');
-        const userAvatar = $('user-avatar'),
-            fileListEl = $('file-list'),
-            loadBtn = $('load-btn'),
-            driveStatus = $('drive-status');
-        const swipeZone = $('swipe-zone'),
-            progressFill = $('progress-fill'),
-            progressLabel = $('progress-label');
-        const generateBtn = $('generate-btn'),
-            generateBtn2 = $('generate-btn-2');
-        const reportResult = $('report-result'),
-            resultBanner2 = $('result-banner-2');
-        const loadingOverlay = $('loading-overlay'),
-            loadingText = $('loading-text');
-        const toastEl = $('toast'),
-            undoBar = $('undo-bar'),
-            undoMsg = $('undo-msg'),
-            undoBtn = $('undo-btn');
-        const editModal = $('edit-modal'),
-            modalAdd = $('modal-add'),
-            modalClose = $('modal-close');
-        const modalCancel = $('modal-cancel'),
-            modalSave = $('modal-save'),
-            modalTitle = $('modal-title'),
-            modalSub = $('modal-sub');
-        const resumeBanner = $('resume-banner'),
-            resumeText = $('resume-text'),
-            resumeBtn = $('resume-btn'),
-            resumeDismiss = $('resume-dismiss');
-        const catFilterBar = $('cat-filter-bar'),
-            searchBarWrap = $('search-bar-wrap'),
-            searchInput = $('search-input'),
-            searchClear = $('search-clear');
-        const headerFile = $('header-file'),
-            fileDropdown = $('file-dropdown'),
-            fileStatusText = $('file-status-text');
-        const searchToggle = $('search-toggle');
-        const confirmOverlay = $('confirm-overlay');
-        const confirmCancel = $('confirm-cancel');
-        const confirmExit = $('confirm-exit');
+    <!-- VIEWS -->
+    <div class="view active" id="view-swipe">
+      <div class="swipe-zone" id="swipe-zone">
+        <div class="empty-state" id="empty-state">
+          <div class="empty-icon">📂</div>
+          <h3>No file loaded</h3>
+          <p>Select a file from the dropdown in the header.</p>
+        </div>
+      </div>
+      <div class="progress-section">
+        <div class="progress-track"><div class="progress-fill" id="progress-fill"></div></div>
+        <span class="progress-label" id="progress-label">0 / 0</span>
+      </div>
+      <div class="action-bar">
+        <button id="generate-btn" class="btn-generate" disabled>
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+          Generate Next Month Report
+        </button>
+        <div class="report-result" id="report-result"></div>
+      </div>
+    </div>
 
-        /* ============================================================
-           THEME
-        ============================================================ */
-        (function() {
-            const html = document.documentElement;
-            let theme = 'light';
-            try { theme = localStorage.getItem(THEME_KEY) || (window.matchMedia('(prefers-color-scheme:dark)').matches ?
-                    'dark' : 'light'); } catch (e) {}
-            html.setAttribute('data-theme', theme);
+    <div class="view" id="view-review">
+      <div class="review-view">
+        <div class="review-header"><div><div class="review-count" id="review-count">0 items saved</div><div class="review-sub">Tap any item to edit</div></div></div>
+        <div id="review-list"></div>
+      </div>
+    </div>
 
-            function updateIcons() {
-                document.querySelectorAll('[data-theme-toggle]').forEach(b => b.textContent = theme === 'dark' ? '☀️' :
-                    '🌙');
-            }
-            updateIcons();
-            document.addEventListener('click', e => {
-                if (e.target.closest('[data-theme-toggle]')) {
-                    theme = theme === 'dark' ? 'light' : 'dark';
-                    html.setAttribute('data-theme', theme);
-                    try { localStorage.setItem(THEME_KEY, theme); } catch (e) {}
-                    updateIcons();
-                }
-            });
-        })();
+    <div class="view" id="view-summary">
+      <div class="summary-view">
+        <div class="summary-kpi-row">
+          <div class="kpi-card"><div class="kpi-label">Items Saved</div><div class="kpi-value green" id="kpi-saved">0</div></div>
+          <div class="kpi-card"><div class="kpi-label">Total Value</div><div class="kpi-value" id="kpi-value">$0</div></div>
+          <div class="kpi-card"><div class="kpi-label">Total Items</div><div class="kpi-value" id="kpi-total">0</div></div>
+          <div class="kpi-card"><div class="kpi-label">Progress</div><div class="kpi-value" id="kpi-progress">0%</div></div>
+        </div>
+        <div class="summary-section-label">Top Saved by Value</div>
+        <div id="summary-top-list"></div>
+        <button class="btn-generate-summary" id="generate-btn-2" disabled>
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+          Generate Report
+        </button>
+        <div class="result-banner" id="result-banner-2"></div>
+      </div>
+    </div>
 
-        /* ============================================================
-           TOAST / LOADING
-        ============================================================ */
-        function showLoading(t = 'Loading…') { loadingText.textContent = t;
-            loadingOverlay.classList.remove('hidden'); }
+    <!-- TAB BAR (iOS style) -->
+    <nav class="tab-bar">
+      <button class="tab-btn active" data-tab="swipe"><span class="tab-icon">🃏</span>Swipe</button>
+      <button class="tab-btn" data-tab="review"><span class="tab-icon">📋</span>Review</button>
+      <button class="tab-btn" data-tab="summary"><span class="tab-icon">📊</span>Summary</button>
+    </nav>
 
-        function hideLoading() { loadingOverlay.classList.add('hidden'); }
-        let toastTimer;
+  </div><!-- /app-screen -->
+</div><!-- /shell -->
 
-        function showToast(msg) {
-            clearTimeout(toastTimer);
-            toastEl.textContent = msg;
-            toastEl.classList.add('show');
-            toastTimer = setTimeout(() => toastEl.classList.remove('show'), 2500);
-        }
+<script>
+/* ============================================================
+   CONFIG & STATE
+============================================================ */
+const GOOGLE_CLIENT_ID = '397533113348-geurcc1e124egnn2ttf20epub2ero4vo.apps.googleusercontent.com';
+const SCOPES = 'https://www.googleapis.com/auth/drive.readonly https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email';
+const AUTOSAVE_KEY  = 'giftshop_autosave';
+const HISTORY_KEY   = 'giftshop_history';
+const THEME_KEY     = 'giftshop_theme';
 
-        /* ============================================================
-           TAB NAVIGATION
-        ============================================================ */
-        document.querySelectorAll('[data-tab]').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const tab = btn.dataset.tab;
-                document.querySelectorAll('[data-tab]').forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-                document.getElementById('view-' + tab).classList.add('active');
-                if (tab === 'review') renderReview();
-                if (tab === 'summary') renderSummary();
-                fileDropdown.classList.remove('open');
-            });
-        });
+let tokenClient = null, accessToken = null, userInfo = null;
+let driveFiles = [], items = [], filteredItems = [];
+let currentIndex = 0, results = {}, currentFileId = null;
+let isProcessing = false, undoStack = [];
+let activeCategory = 'All', searchQuery = '';
+let editingProductName = null;
 
-        /* ============================================================
-           GOOGLE AUTH
-        ============================================================ */
-        async function handleTokenResponse(tr) {
-            if (tr.error) { showToast('Login failed: ' + tr.error);
-                hideLoading(); return; }
-            accessToken = tr.access_token;
-            await loadUserInfo();
-            await loadDriveFiles();
-            showApp();
-        }
+/* ============================================================
+   DOM REFS
+============================================================ */
+const $ = id => document.getElementById(id);
+const loginScreen   = $('login-screen'), appScreen = $('app-screen');
+const loginBtn      = $('login-btn'), logoutBtn = $('logout-btn');
+const userAvatar    = $('user-avatar'), fileListEl = $('file-list'), loadBtn = $('load-btn');
+const swipeZone     = $('swipe-zone'), progressFill = $('progress-fill'), progressLabel = $('progress-label');
+const generateBtn   = $('generate-btn'), generateBtn2 = $('generate-btn-2');
+const reportResult  = $('report-result'), resultBanner2 = $('result-banner-2');
+const loadingOverlay= $('loading-overlay'), loadingText = $('loading-text');
+const toastEl       = $('toast'), undoBar = $('undo-bar'), undoMsg = $('undo-msg'), undoBtn = $('undo-btn');
+const editModal     = $('edit-modal'), modalAdd = $('modal-add'), modalClose = $('modal-close');
+const modalCancel   = $('modal-cancel'), modalSave = $('modal-save'), modalTitle = $('modal-title'), modalSub = $('modal-sub');
+const resumeBanner  = $('resume-banner'), resumeText = $('resume-text'), resumeBtn = $('resume-btn'), resumeDismiss = $('resume-dismiss');
+const catFilterBar  = $('cat-filter-bar'), searchBarWrap = $('search-bar-wrap'), searchInput = $('search-input'), searchClear = $('search-clear');
+const headerFile    = $('header-file'), fileDropdown = $('file-dropdown'), fileStatusText = $('file-status-text');
+const searchToggle  = $('search-toggle');
 
-        document.addEventListener('touchmove', function(e) {
-            if (!e.target.closest('.cat-filter-bar') && !e.target.closest('.review-view') &&
-                !e.target.closest('.summary-view') && !e.target.closest('.modal-sheet')) {
-                if (window.scrollY === 0) e.preventDefault();
-            }
-        }, { passive: false });
+/* ============================================================
+   THEME
+============================================================ */
+(function(){
+  const html = document.documentElement;
+  let theme = 'light';
+  try { theme = localStorage.getItem(THEME_KEY) || (window.matchMedia('(prefers-color-scheme:dark)').matches ? 'dark' : 'light'); } catch(e){}
+  html.setAttribute('data-theme', theme);
+  function updateIcons(){ document.querySelectorAll('[data-theme-toggle]').forEach(b => b.textContent = theme === 'dark' ? '☀️' : '🌙'); }
+  updateIcons();
+  document.addEventListener('click', e => {
+    if (e.target.closest('[data-theme-toggle]')) {
+      theme = theme === 'dark' ? 'light' : 'dark';
+      html.setAttribute('data-theme', theme);
+      try { localStorage.setItem(THEME_KEY, theme); } catch(e){}
+      updateIcons();
+    }
+  });
+})();
 
-        window.addEventListener('load', () => {
-            tokenClient = google.accounts.oauth2.initTokenClient({
-                client_id: GOOGLE_CLIENT_ID,
-                scope: SCOPES,
-                callback: handleTokenResponse
-            });
-        });
+/* ============================================================
+   TOAST / LOADING
+============================================================ */
+function showLoading(t='Loading…'){ loadingText.textContent=t; loadingOverlay.classList.remove('hidden'); }
+function hideLoading(){ loadingOverlay.classList.add('hidden'); }
+let toastTimer;
+function showToast(msg){ clearTimeout(toastTimer); toastEl.textContent=msg; toastEl.classList.add('show'); toastTimer=setTimeout(()=>toastEl.classList.remove('show'),2500); }
 
-        loginBtn.addEventListener('click', () => {
-            showLoading('Connecting…');
-            tokenClient.requestAccessToken({ prompt: 'select_account consent' });
-        });
+/* ============================================================
+   TAB NAVIGATION
+============================================================ */
+document.querySelectorAll('[data-tab]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const tab = btn.dataset.tab;
+    document.querySelectorAll('[data-tab]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    document.getElementById('view-' + tab).classList.add('active');
+    if (tab === 'review') renderReview();
+    if (tab === 'summary') renderSummary();
+    // Close dropdown if open
+    fileDropdown.classList.remove('open');
+  });
+});
 
-        function doLogout() {
-            if (accessToken) google.accounts.oauth2.revoke(accessToken, () => {});
-            accessToken = null;
-            userInfo = null;
-            items = [];
-            results = {};
-            driveFiles = [];
-            tokenClient = null;
-            setTimeout(() => {
-                tokenClient = google.accounts.oauth2.initTokenClient({
-                    client_id: GOOGLE_CLIENT_ID,
-                    scope: SCOPES,
-                    callback: handleTokenResponse
-                });
-            }, 100);
-            showLogin();
-        }
+/* ============================================================
+   GOOGLE AUTH
+============================================================ */
+async function handleTokenResponse(tr){
+  if (tr.error){ showToast('Login failed: ' + tr.error); hideLoading(); return; }
+  accessToken = tr.access_token;
+  await loadUserInfo();
+  await loadDriveFiles();
+  showApp();
+}
 
-        logoutBtn.addEventListener('click', () => {
-            confirmOverlay.classList.add('visible');
-        });
-        confirmCancel.addEventListener('click', () => {
-            confirmOverlay.classList.remove('visible');
-        });
-        confirmExit.addEventListener('click', () => {
-            confirmOverlay.classList.remove('visible');
-            doLogout();
-        });
-        confirmOverlay.addEventListener('click', e => {
-            if (e.target === confirmOverlay) confirmOverlay.classList.remove('visible');
-        });
+// Prevent pull-to-refresh on mobile
+document.addEventListener('touchmove', e => {
+  if (!e.target.closest('.cat-filter-bar') && !e.target.closest('.review-view') &&
+      !e.target.closest('.summary-view') && !e.target.closest('.modal-sheet')) {
+    if (window.scrollY === 0) e.preventDefault();
+  }
+}, {passive: false});
 
-        window.addEventListener('beforeunload', e => {
-            if (Object.keys(results).length > 0) {
-                e.preventDefault();
-                e.returnValue = 'You have unsaved inventory progress. Are you sure you want to leave?';
-            }
-        });
+window.addEventListener('load', () => {
+  tokenClient = google.accounts.oauth2.initTokenClient({
+    client_id: GOOGLE_CLIENT_ID, scope: SCOPES, callback: handleTokenResponse
+  });
+});
+loginBtn.addEventListener('click', () => { showLoading('Connecting…'); tokenClient.requestAccessToken({ prompt: 'select_account consent' }); });
+// Confirm-exit modal
+const confirmOverlay = document.getElementById('confirm-overlay');
+const confirmCancel  = document.getElementById('confirm-cancel');
+const confirmExit    = document.getElementById('confirm-exit');
 
-        function showLogin() {
-            loginScreen.classList.add('active');
-            appScreen.classList.remove('active');
-            loginScreen.style.display = 'flex';
-            appScreen.style.display = 'none';
-        }
+function doLogout(){
+  if (accessToken) google.accounts.oauth2.revoke(accessToken, ()=>{});
+  accessToken = null; userInfo = null; items = []; results = {}; driveFiles = [];
+  tokenClient = null;
+  setTimeout(() => { tokenClient = google.accounts.oauth2.initTokenClient({ client_id: GOOGLE_CLIENT_ID, scope: SCOPES, callback: handleTokenResponse }); }, 100);
+  showLogin();
+}
+logoutBtn.addEventListener('click', () => { confirmOverlay.classList.add('visible'); });
+confirmCancel.addEventListener('click', () => { confirmOverlay.classList.remove('visible'); });
+confirmExit.addEventListener('click', () => { confirmOverlay.classList.remove('visible'); doLogout(); });
+confirmOverlay.addEventListener('click', e => { if (e.target === confirmOverlay) confirmOverlay.classList.remove('visible'); }); accessToken = null; userInfo = null; items = []; results = {}; driveFiles = [];
+  tokenClient = null;
+  setTimeout(() => { tokenClient = google.accounts.oauth2.initTokenClient({ client_id: GOOGLE_CLIENT_ID, scope: SCOPES, callback: handleTokenResponse }); }, 100);
+  showLogin();
+});
 
-        function showApp() {
-            hideLoading();
-            loginScreen.classList.remove('active');
-            appScreen.classList.add('active');
-            loginScreen.style.display = 'none';
-            appScreen.style.display = 'flex';
-            if (userInfo) {
-                userAvatar.src = userInfo.picture || '';
-                userAvatar.style.display = userInfo.picture ? 'block' : 'none';
-            }
-            checkAutosave();
-        }
+function showLogin(){ loginScreen.classList.add('active'); appScreen.classList.remove('active'); loginScreen.style.display='flex'; appScreen.style.display='none'; }
+function showApp(){
+  hideLoading();
+  loginScreen.classList.remove('active'); appScreen.classList.add('active');
+  loginScreen.style.display='none'; appScreen.style.display='flex';
+  if (userInfo){ userAvatar.src = userInfo.picture||''; userAvatar.style.display = userInfo.picture?'block':'none'; }
+  checkAutosave();
+}
 
-        /* ============================================================
-           DRIVE API
-        ============================================================ */
-        async function apiGet(url) {
-            const r = await fetch(url, { headers: { Authorization: `Bearer ${accessToken}` } });
-            if (!r.ok) throw new Error(`API ${r.status}`);
-            return r.json();
-        }
+/* ============================================================
+   DRIVE API
+============================================================ */
+async function apiGet(url){ const r = await fetch(url, { headers: { Authorization: `Bearer ${accessToken}` } }); if (!r.ok) throw new Error(`API ${r.status}`); return r.json(); }
+async function loadUserInfo(){ try { userInfo = await apiGet('https://www.googleapis.com/oauth2/v2/userinfo'); } catch(e){} }
+async function loadDriveFiles(){
+  showLoading('Loading Drive…');
+  try {
+    const q = encodeURIComponent("mimeType='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' and trashed=false");
+    const fields = encodeURIComponent('files(id,name,modifiedTime)');
+    const data = await apiGet(`https://www.googleapis.com/drive/v3/files?q=${q}&fields=${fields}&orderBy=modifiedTime+desc&includeItemsFromAllDrives=true&supportsAllDrives=true&corpora=user`);
+    driveFiles = data.files || [];
+    fileListEl.innerHTML = '<option value="">— Choose from Google Drive —</option>';
+    if (!driveFiles.length){ fileListEl.innerHTML = `<option value="">No .xlsx files found</option>`; }
+    else { driveFiles.forEach(f => { const o = document.createElement('option'); o.value=f.id; o.textContent=`${f.name} (${new Date(f.modifiedTime).toLocaleDateString()})`; fileListEl.appendChild(o); }); loadBtn.disabled = false; }
+  } catch(e){ fileListEl.innerHTML = `<option value="">Error: ${e.message}</option>`; showToast('Drive error: ' + e.message); }
+  hideLoading();
+}
+fileListEl.addEventListener('change', () => { loadBtn.disabled = !fileListEl.value; });
 
-        async function loadUserInfo() {
-            try { userInfo = await apiGet('https://www.googleapis.com/oauth2/v2/userinfo'); } catch (e) {}
-        }
+// Header click toggles dropdown
+headerFile.addEventListener('click', (e) => {
+  e.stopPropagation();
+  fileDropdown.classList.toggle('open');
+  // Refresh file list if open
+  if (fileDropdown.classList.contains('open')) loadDriveFiles();
+});
+document.addEventListener('click', (e) => { if (!fileDropdown.contains(e.target) && e.target !== headerFile) fileDropdown.classList.remove('open'); });
 
-        async function loadDriveFiles() {
-            showLoading('Loading Drive…');
-            driveStatus.className = 'drive-status';
-            driveStatus.textContent = '';
-            try {
-                const q = encodeURIComponent(
-                    "mimeType='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' and trashed=false"
-                    );
-                const fields = encodeURIComponent('files(id,name,modifiedTime)');
-                const data = await apiGet(
-                    `https://www.googleapis.com/drive/v3/files?q=${q}&fields=${fields}&orderBy=modifiedTime+desc&includeItemsFromAllDrives=true&supportsAllDrives=true&corpora=user`
-                    );
-                driveFiles = data.files || [];
-                fileListEl.innerHTML = '<option value="">— Choose from Google Drive —</option>';
-                if (!driveFiles.length) {
-                    fileListEl.innerHTML = `<option value="">No .xlsx files found</option>`;
-                    driveStatus.className = 'drive-status visible error';
-                    driveStatus.textContent = '⚠️ No Excel files found in your Drive.';
-                    loadBtn.disabled = true;
-                } else {
-                    driveFiles.forEach(f => {
-                        const o = document.createElement('option');
-                        o.value = f.id;
-                        o.textContent = `${f.name} (${new Date(f.modifiedTime).toLocaleDateString()})`;
-                        fileListEl.appendChild(o);
-                    });
-                    loadBtn.disabled = false;
-                    driveStatus.className = 'drive-status visible';
-                    driveStatus.textContent = `✅ ${driveFiles.length} file(s) found`;
-                }
-            } catch (e) {
-                fileListEl.innerHTML = `<option value="">Error loading files</option>`;
-                driveStatus.className = 'drive-status visible error';
-                driveStatus.textContent = '❌ ' + e.message;
-                loadBtn.disabled = true;
-                showToast('Drive error: ' + e.message);
-                console.error('Drive API error:', e);
-            }
-            hideLoading();
-        }
+loadBtn.addEventListener('click', async () => {
+  const fid = fileListEl.value; if (!fid) return;
+  currentFileId = fid;
+  fileDropdown.classList.remove('open');
+  await loadExcelFile(fid);
+});
 
-        fileListEl.addEventListener('change', () => {
-            loadBtn.disabled = !fileListEl.value;
-            if (fileListEl.value) {
-                driveStatus.className = 'drive-status visible';
-                driveStatus.textContent = '✅ Ready to load';
-            } else {
-                driveStatus.className = 'drive-status';
-                driveStatus.textContent = '';
-            }
-        });
+/* ============================================================
+   EXCEL PARSE
+============================================================ */
+async function loadExcelFile(fileId){
+  showLoading('Downloading…');
+  try {
+    const r = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, { headers: { Authorization: `Bearer ${accessToken}` } });
+    if (!r.ok) throw new Error('Download failed');
+    const buf = await r.arrayBuffer();
+    const wb = XLSX.read(buf, { type: 'array' });
+    parseWorkbook(wb);
+    // Update header
+    const fname = driveFiles.find(f => f.id === fileId)?.name || 'File';
+    fileStatusText.textContent = fname;
+    // Hide the bulky file section (it's now in the header dropdown)
+    buildCategoryFilter();
+    buildSearchBar();
+    startSwipe();
+    showToast(`✅ Loaded ${items.length} items`);
+  } catch(e){ showToast('Error: ' + e.message); console.error(e); }
+  hideLoading();
+}
 
-        headerFile.addEventListener('click', (e) => {
-            e.stopPropagation();
-            fileDropdown.classList.toggle('open');
-            if (fileDropdown.classList.contains('open')) {
-                loadDriveFiles();
-            }
-        });
+function parseWorkbook(wb){
+  items = []; results = {};
+  const SKIP = ['TOTAL','GIFT SHOP','INVENTORY','OPENING','CLOSING','PRODUCT','ITEM','NAME','DESCRIPTION'];
+  const CATS = ['CANS','BOTTLES','ENERGY','CHIPS','ICE CREAM','GUM','ACCESSORIES','MEDICINES','TOYS','HATS','HOODIE','POOL','SMOKE','CANDY','SNACK','DRINK','BEVERAGE','CLOTHING'];
+  wb.SheetNames.forEach(sn => {
+    const sheet = wb.Sheets[sn];
+    const rows = XLSX.utils.sheet_to_json(sheet, { header:1, defval:'' });
+    let cat = sn;
+    rows.forEach(row => {
+      if (!row || row.length < 2) return;
+      const name = String(row[0]||'').trim(); if (!name) return;
+      const up = name.toUpperCase();
+      if (SKIP.some(k => up.includes(k))) return;
+      if (CATS.some(k => up.includes(k))){ cat = name; return; }
+      const open = parseFloat(row[1])||0, add = parseFloat(row[2])||0;
+      const close = parseFloat(row[3])||0, price = parseFloat(row[5])||0;
+      if (open===0 && price===0) return;
+      items.push({ name, category:cat, open, add, close, price, sheet:sn });
+    });
+  });
+}
 
-        document.addEventListener('click', (e) => {
-            if (!fileDropdown.contains(e.target) && e.target !== headerFile) {
-                fileDropdown.classList.remove('open');
-            }
-        });
+/* ============================================================
+   CATEGORY FILTER & SEARCH
+============================================================ */
+function buildCategoryFilter(){
+  const cats = ['All', ...new Set(items.map(i => i.category))];
+  catFilterBar.innerHTML = '';
+  cats.forEach(cat => {
+    const ch = document.createElement('button');
+    ch.className = 'cat-chip' + (cat === 'All' ? ' active' : '');
+    ch.textContent = cat === 'All' ? `🗂 All (${items.length})` : cat;
+    ch.addEventListener('click', () => {
+      activeCategory = cat;
+      document.querySelectorAll('.cat-chip').forEach(c => c.classList.remove('active'));
+      ch.classList.add('active');
+      applyFilter();
+    });
+    catFilterBar.appendChild(ch);
+  });
+  catFilterBar.style.display = cats.length > 2 ? 'flex' : 'none';
+}
 
-        loadBtn.addEventListener('click', async () => {
-            const fid = fileListEl.value;
-            if (!fid) return;
-            currentFileId = fid;
-            fileDropdown.classList.remove('open');
-            await loadExcelFile(fid);
-        });
+function buildSearchBar(){
+  searchBarWrap.classList.remove('open');
+  searchInput.value = '';
+  searchQuery = '';
+}
+searchToggle.addEventListener('click', () => {
+  searchBarWrap.classList.toggle('open');
+  if (searchBarWrap.classList.contains('open')) searchInput.focus();
+});
+searchInput.addEventListener('input', () => {
+  searchQuery = searchInput.value.trim().toLowerCase();
+  searchClear.classList.toggle('show', !!searchQuery);
+  applyFilter();
+});
+searchClear.addEventListener('click', () => {
+  searchInput.value = ''; searchQuery = '';
+  searchClear.classList.remove('show');
+  applyFilter();
+});
 
-        /* ============================================================
-           EXCEL PARSE
-        ============================================================ */
-        async function loadExcelFile(fileId) {
-            showLoading('Downloading…');
-            try {
-                const r = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, { headers: {
-                        Authorization: `Bearer ${accessToken}` } });
-                if (!r.ok) throw new Error('Download failed (HTTP ' + r.status + ')');
-                const buf = await r.arrayBuffer();
-                const wb = XLSX.read(buf, { type: 'array' });
-                parseWorkbook(wb);
-                const fname = driveFiles.find(f => f.id === fileId)?.name || 'File';
-                fileStatusText.textContent = fname;
-                buildCategoryFilter();
-                buildSearchBar();
-                startSwipe();
-                showToast(`✅ Loaded ${items.length} items`);
-            } catch (e) {
-                showToast('Error: ' + e.message);
-                console.error('Excel load error:', e);
-            }
-            hideLoading();
-        }
+function applyFilter(){
+  if (items.length === 0) return;
+  const remaining = items.filter((item) => {
+    const catOk = activeCategory === 'All' || item.category === activeCategory;
+    const searchOk = !searchQuery || item.name.toLowerCase().includes(searchQuery) || item.category.toLowerCase().includes(searchQuery);
+    return catOk && searchOk;
+  });
+  if (searchQuery && remaining.length > 0){
+    const firstMatch = items.findIndex(i => remaining[0].name === i.name);
+    if (firstMatch !== -1 && firstMatch !== currentIndex){ currentIndex = firstMatch; renderCard(); return; }
+  }
+  filteredItems = remaining;
+  renderCard();
+}
 
-        function parseWorkbook(wb) {
-            items = [];
-            results = {};
-            const SKIP = ['TOTAL', 'GIFT SHOP', 'INVENTORY', 'OPENING', 'CLOSING', 'PRODUCT', 'ITEM', 'NAME', 'DESCRIPTION'];
-            const CATS = ['CANS', 'BOTTLES', 'ENERGY', 'CHIPS', 'ICE CREAM', 'GUM', 'ACCESSORIES', 'MEDICINES', 'TOYS',
-                'HATS', 'HOODIE', 'POOL', 'SMOKE', 'CANDY', 'SNACK', 'DRINK', 'BEVERAGE', 'CLOTHING'
-            ];
-            wb.SheetNames.forEach(sn => {
-                const sheet = wb.Sheets[sn];
-                const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
-                let cat = sn;
-                rows.forEach(row => {
-                    if (!row || row.length < 2) return;
-                    const name = String(row[0] || '').trim();
-                    if (!name) return;
-                    const up = name.toUpperCase();
-                    if (SKIP.some(k => up.includes(k))) return;
-                    if (CATS.some(k => up.includes(k))) { cat = name; return; }
-                    const open = parseFloat(row[1]) || 0,
-                        add = parseFloat(row[2]) || 0;
-                    const close = parseFloat(row[3]) || 0,
-                        price = parseFloat(row[5]) || 0;
-                    if (open === 0 && price === 0) return;
-                    items.push({ name, category: cat, open, add, close, price, sheet: sn });
-                });
-            });
-            // Sort items by name for consistent ordering
-            items.sort((a, b) => a.name.localeCompare(b.name));
-        }
+/* ============================================================
+   AUTOSAVE / RESUME
+============================================================ */
+function autosave(){
+  if (!currentFileId || items.length === 0) return;
+  try { localStorage.setItem(AUTOSAVE_KEY, JSON.stringify({ fileId: currentFileId, fileName: fileStatusText.textContent, currentIndex, results, timestamp: Date.now() })); } catch(e){}
+}
+function checkAutosave(){
+  try {
+    const saved = JSON.parse(localStorage.getItem(AUTOSAVE_KEY)||'null');
+    if (!saved || !saved.results || Object.keys(saved.results).length === 0) return;
+    const mins = Math.round((Date.now() - saved.timestamp) / 60000);
+    const timeStr = mins < 60 ? `${mins}m ago` : `${Math.round(mins/60)}h ago`;
+    resumeText.textContent = `Resume session from ${timeStr} — ${Object.keys(saved.results).length} items saved`;
+    resumeBanner.classList.remove('hidden');
+  } catch(e){}
+}
+resumeBtn.addEventListener('click', async () => {
+  try {
+    const saved = JSON.parse(localStorage.getItem(AUTOSAVE_KEY));
+    if (!saved) return;
+    resumeBanner.classList.add('hidden');
+    // Find and select file
+    for (let i = 0; i < fileListEl.options.length; i++){
+      if (fileListEl.options[i].value === saved.fileId){ fileListEl.selectedIndex = i; break; }
+    }
+    currentFileId = saved.fileId;
+    fileStatusText.textContent = saved.fileName || 'File';
+    await loadExcelFile(saved.fileId);
+    results = saved.results;
+    currentIndex = Math.min(saved.currentIndex, items.length);
+    updateProgress();
+    renderCard();
+    showToast(`✅ Resumed — ${Object.keys(results).length} items restored`);
+  } catch(e){ showToast('Could not resume session'); }
+});
+resumeDismiss.addEventListener('click', () => { resumeBanner.classList.add('hidden'); try { localStorage.removeItem(AUTOSAVE_KEY); } catch(e){} });
 
-        /* ============================================================
-           CATEGORY FILTER & SEARCH
-        ============================================================ */
-        function buildCategoryFilter() {
-            const cats = ['All', ...new Set(items.map(i => i.category))];
-            catFilterBar.innerHTML = '';
-            cats.forEach(cat => {
-                const ch = document.createElement('button');
-                ch.className = 'cat-chip' + (cat === 'All' ? ' active' : '');
-                ch.textContent = cat === 'All' ? `🗂 All (${items.length})` : cat;
-                ch.addEventListener('click', () => {
-                    activeCategory = cat;
-                    document.querySelectorAll('.cat-chip').forEach(c => c.classList.remove('active'));
-                    ch.classList.add('active');
-                    applyFilter();
-                });
-                catFilterBar.appendChild(ch);
-            });
-            catFilterBar.style.display = cats.length > 2 ? 'flex' : 'none';
-        }
+/* ============================================================
+   SWIPE LOGIC
+============================================================ */
+function startSwipe(){
+  currentIndex = 0; results = {}; undoStack = [];
+  generateBtn.disabled = true;
+  reportResult.className = 'report-result';
+  renderCard();
+  try { localStorage.removeItem(AUTOSAVE_KEY); } catch(e){}
+}
 
-        function buildSearchBar() {
-            searchBarWrap.classList.remove('open');
-            searchInput.value = '';
-            searchQuery = '';
-        }
-
-        searchToggle.addEventListener('click', () => {
-            searchBarWrap.classList.toggle('open');
-            if (searchBarWrap.classList.contains('open')) searchInput.focus();
-        });
-
-        searchInput.addEventListener('input', () => {
-            searchQuery = searchInput.value.trim().toLowerCase();
-            searchClear.classList.toggle('show', !!searchQuery);
-            applyFilter();
-        });
-
-        searchClear.addEventListener('click', () => {
-            searchInput.value = '';
-            searchQuery = '';
-            searchClear.classList.remove('show');
-            applyFilter();
-        });
-
-        function applyFilter() {
-            if (items.length === 0) return;
-            const remaining = items.filter((item) => {
-                const catOk = activeCategory === 'All' || item.category === activeCategory;
-                const searchOk = !searchQuery || item.name.toLowerCase().includes(searchQuery) || item.category
-                    .toLowerCase().includes(searchQuery);
-                return catOk && searchOk;
-            });
-            if (searchQuery && remaining.length > 0) {
-                const firstMatch = items.findIndex(i => remaining[0].name === i.name);
-                if (firstMatch !== -1 && firstMatch !== currentIndex) { currentIndex = firstMatch;
-                    renderCard(); return; }
-            }
-            filteredItems = remaining;
-            renderCard();
-        }
-
-        /* ============================================================
-           AUTOSAVE / RESUME
-        ============================================================ */
-        function autosave() {
-            if (!currentFileId || items.length === 0) return;
-            try {
-                localStorage.setItem(AUTOSAVE_KEY, JSON.stringify({ fileId: currentFileId, fileName: fileStatusText
-                        .textContent, currentIndex, results, timestamp: Date.now() }));
-            } catch (e) {}
-        }
-
-        function checkAutosave() {
-            try {
-                const saved = JSON.parse(localStorage.getItem(AUTOSAVE_KEY) || 'null');
-                if (!saved || !saved.results || Object.keys(saved.results).length === 0) return;
-                const mins = Math.round((Date.now() - saved.timestamp) / 60000);
-                const timeStr = mins < 60 ? `${mins}m ago` : `${Math.round(mins/60)}h ago`;
-                resumeText.textContent =
-                    `Resume session from ${timeStr} — ${Object.keys(saved.results).length} items saved`;
-                resumeBanner.classList.remove('hidden');
-            } catch (e) {}
-        }
-
-        resumeBtn.addEventListener('click', async () => {
-            try {
-                const saved = JSON.parse(localStorage.getItem(AUTOSAVE_KEY));
-                if (!saved) return;
-                resumeBanner.classList.add('hidden');
-                // Find and select the file
-                let found = false;
-                for (let i = 0; i < fileListEl.options.length; i++) {
-                    if (fileListEl.options[i].value === saved.fileId) {
-                        fileListEl.selectedIndex = i;
-                        found = true;
-                        break;
-                    }
-                }
-                if (!found) {
-                    showToast('⚠️ Original file not found in Drive');
-                    return;
-                }
-                currentFileId = saved.fileId;
-                fileStatusText.textContent = saved.fileName || 'File';
-                await loadExcelFile(saved.fileId);
-                results = saved.results;
-                currentIndex = Math.min(saved.currentIndex, items.length);
-                updateProgress();
-                renderCard();
-                showToast(`✅ Resumed — ${Object.keys(results).length} items restored`);
-            } catch (e) {
-                showToast('Could not resume session: ' + e.message);
-                console.error(e);
-            }
-        });
-
-        resumeDismiss.addEventListener('click', () => {
-            resumeBanner.classList.add('hidden');
-            try { localStorage.removeItem(AUTOSAVE_KEY); } catch (e) {}
-        });
-
-        /* ============================================================
-           SWIPE LOGIC
-        ============================================================ */
-        function startSwipe() {
-            currentIndex = 0;
-            results = {};
-            undoStack = [];
-            generateBtn.disabled = true;
-            reportResult.className = 'report-result';
-            renderCard();
-            try { localStorage.removeItem(AUTOSAVE_KEY); } catch (e) {}
-        }
-
-        function renderCard() {
-            updateProgress();
-            if (items.length === 0) {
-                swipeZone.innerHTML =
-                    `<div class="empty-state"><div class="empty-icon">⚠️</div><h3>No items found</h3><p>Check your Excel format.</p></div>`;
-                return;
-            }
-            if (currentIndex >= items.length) {
-                swipeZone.innerHTML = `
-              <div class="done-card">
-                <div class="done-emoji">🎉</div>
-                <div class="done-title">All Done!</div>
-                <div class="done-sub">Saved ${Object.keys(results).length} of ${items.length} items.</div>
-                <button class="btn-restart" onclick="startSwipe()">↺ Start Over</button>
-              </div>`;
-                launchConfetti();
-                return;
-            }
-            const item = items[currentIndex];
-            // Build the card HTML with proper structure
-            swipeZone.innerHTML = `
-            <div class="card-stack">
-              <div class="inv-card" id="cur-card">
-                <span class="swipe-ind save" id="ind-save">✅ Save</span>
-                <span class="swipe-ind skip" id="ind-skip">⏭ Skip</span>
-                <div class="card-cat-pill">📁 ${esc(item.category)}</div>
-                <div class="card-name-row">${prodIcon(item.name)}<div class="card-prod-name">${esc(item.name)}</div></div>
-                ${historyHtml(item.name)}
-                <div class="card-stats">
-                  <div class="stat-chip"><div class="stat-label">Opening</div><div class="stat-val">${item.open}</div></div>
-                  <div class="stat-chip"><div class="stat-label">Last Close</div><div class="stat-val">${item.close||'—'}</div></div>
-                  <div class="stat-chip"><div class="stat-label">Price</div><div class="stat-val">$${item.price.toFixed(2)}</div></div>
-                </div>
-                <div class="inp-row">
-                  <div class="inp-col">
-                    <div class="inp-col-label">📥 Add</div>
-                    <div class="inp-wrap-sm">
-                      <button class="stepper-btn" data-target="inp-add" data-delta="-1" type="button">−</button>
-                      <input class="card-input" type="number" id="inp-add" value="0" min="0" inputmode="numeric" pattern="[0-9]*" autocomplete="off" />
-                      <button class="stepper-btn" data-target="inp-add" data-delta="1" type="button">+</button>
-                    </div>
-                  </div>
-                  <div class="inp-col">
-                    <div class="inp-col-label">📦 Close</div>
-                    <div class="inp-wrap-sm">
-                      <button class="stepper-btn" data-target="inp-close" data-delta="-1" type="button">−</button>
-                      <input class="card-input" type="number" id="inp-close" value="${item.close}" min="0" inputmode="numeric" pattern="[0-9]*" autocomplete="off" />
-                      <button class="stepper-btn" data-target="inp-close" data-delta="1" type="button">+</button>
-                    </div>
-                  </div>
-                </div>
-                <div class="cost-preview" id="cost-preview">—</div>
-                <div class="card-btns">
-                  <button class="btn-skip-c" id="btn-skip" type="button">⬅ Skip</button>
-                  <button class="btn-save-c" id="btn-save" type="button">Save ➡</button>
-                </div>
-              </div>
+function renderCard(){
+  updateProgress();
+  if (items.length === 0){ swipeZone.innerHTML = `<div class="empty-state"><div class="empty-icon">⚠️</div><h3>No items found</h3><p>Check your Excel format.</p></div>`; return; }
+  if (currentIndex >= items.length){
+    swipeZone.innerHTML = `
+      <div class="done-card">
+        <div class="done-emoji">🎉</div>
+        <div class="done-title">All Done!</div>
+        <div class="done-sub">Saved ${Object.keys(results).length} of ${items.length} items.</div>
+        <button class="btn-restart" onclick="startSwipe()">↺ Start Over</button>
+      </div>`;
+    launchConfetti();
+    return;
+  }
+  const item = items[currentIndex];
+  swipeZone.innerHTML = `
+    <div class="card-stack">
+      <div class="inv-card" id="cur-card">
+        <span class="swipe-ind save" id="ind-save">✅ Save</span>
+        <span class="swipe-ind skip" id="ind-skip">⏭ Skip</span>
+        <div class="card-cat-pill">📁 ${esc(item.category)}</div>
+        <div class="card-name-row">${prodIcon(item.name)}<div class="card-prod-name">${esc(item.name)}</div></div>
+        ${historyHtml(item.name)}
+        <div class="card-stats">
+          <div class="stat-chip"><div class="stat-label">Opening</div><div class="stat-val">${item.open}</div></div>
+          <div class="stat-chip"><div class="stat-label">Last Close</div><div class="stat-val">${item.close||'—'}</div></div>
+          <div class="stat-chip"><div class="stat-label">Price</div><div class="stat-val">$${item.price.toFixed(2)}</div></div>
+        </div>
+        <div class="inp-row">
+          <div class="inp-col">
+            <div class="inp-col-label">📥 Add</div>
+            <div class="inp-wrap-sm">
+              <button class="stepper-btn" data-target="inp-add" data-delta="-1" type="button">−</button>
+              <input class="card-input" type="number" id="inp-add" value="0" min="0" inputmode="numeric" pattern="[0-9]*" autocomplete="off" />
+              <button class="stepper-btn" data-target="inp-add" data-delta="1" type="button">+</button>
             </div>
-            <div class="swipe-hint"><span>⬅ Skip</span><span>Save ➡</span></div>`;
+          </div>
+          <div class="inp-col">
+            <div class="inp-col-label">📦 Close</div>
+            <div class="inp-wrap-sm">
+              <button class="stepper-btn" data-target="inp-close" data-delta="-1" type="button">−</button>
+              <input class="card-input" type="number" id="inp-close" value="${item.close}" min="0" inputmode="numeric" pattern="[0-9]*" autocomplete="off" />
+              <button class="stepper-btn" data-target="inp-close" data-delta="1" type="button">+</button>
+            </div>
+          </div>
+        </div></div></div>
+        <div class="cost-preview" id="cost-preview">—</div>
+        <div class="card-btns"><button class="btn-skip-c" id="btn-skip">⬅ Skip</button><button class="btn-save-c" id="btn-save">Save ➡</button></div>
+      </div>
+    </div>
+    <div class="swipe-hint"><span>⬅ Skip</span><span>Save ➡</span></div>`;
 
-            const card = document.getElementById('cur-card');
-            const addInp = document.getElementById('inp-add');
-            const closeInp = document.getElementById('inp-close');
-            const costPrev = document.getElementById('cost-preview');
-            const indSave = document.getElementById('ind-save');
-            const indSkip = document.getElementById('ind-skip');
+  const card = document.getElementById('cur-card');
+  const addInp = document.getElementById('inp-add');
+  const closeInp = document.getElementById('inp-close');
+  const costPrev = document.getElementById('cost-preview');
+  const indSave = document.getElementById('ind-save');
+  const indSkip = document.getElementById('ind-skip');
 
-            function updateCost() {
-                const c = parseFloat(closeInp.value) || 0,
-                    a = parseFloat(addInp.value) || 0;
-                costPrev.textContent =
-                    `Usage: ${Math.max(0, item.open + a - c)} units · Close value: $${(c * item.price).toFixed(2)}`;
-            }
-            addInp.addEventListener('input', updateCost);
-            closeInp.addEventListener('input', updateCost);
-            updateCost();
+  function updateCost(){
+    const c = parseFloat(closeInp.value)||0, a = parseFloat(addInp.value)||0;
+    costPrev.textContent = `Usage: ${Math.max(0, item.open + a - c)} units · Close value: $${(c * item.price).toFixed(2)}`;
+  }
+  addInp.addEventListener('input', updateCost);
+  closeInp.addEventListener('input', updateCost);
+  updateCost();
 
-            // Steppers with long-press support
-            card.querySelectorAll('.stepper-btn').forEach(btn => {
-                let pressTimer;
-                const target = () => document.getElementById(btn.dataset.target);
-                const delta = () => parseInt(btn.dataset.delta);
-                const step = (mult = 1) => {
-                    const inp = target();
-                    const v = (parseFloat(inp.value) || 0) + delta() * mult;
-                    inp.value = Math.max(0, v);
-                    updateCost();
-                };
-                btn.addEventListener('click', () => step(1));
-                btn.addEventListener('mousedown', () => { pressTimer = setTimeout(() => step(5), 500); });
-                btn.addEventListener('touchstart', () => { pressTimer = setTimeout(() => step(5), 500); }, { passive: true });
-                btn.addEventListener('mouseup', () => clearTimeout(pressTimer));
-                btn.addEventListener('touchend', () => clearTimeout(pressTimer));
-                btn.addEventListener('mouseleave', () => clearTimeout(pressTimer));
-            });
+  // Steppers
+  card.querySelectorAll('.stepper-btn').forEach(btn => {
+    let pressTimer;
+    const target = () => document.getElementById(btn.dataset.target);
+    const delta = () => parseInt(btn.dataset.delta);
+    const step = (mult=1) => { const inp = target(); const v = (parseFloat(inp.value)||0) + delta() * mult; inp.value = Math.max(0, v); updateCost(); };
+    btn.addEventListener('click', () => step(1));
+    btn.addEventListener('mousedown', () => { pressTimer = setTimeout(() => step(5), 500); });
+    btn.addEventListener('touchstart', () => { pressTimer = setTimeout(() => step(5), 500); }, {passive:true});
+    btn.addEventListener('mouseup', () => clearTimeout(pressTimer));
+    btn.addEventListener('touchend', () => clearTimeout(pressTimer));
+  });
 
-            closeInp.addEventListener('keydown', e => { if (e.key === 'Enter') swipeCard('right'); });
-            document.getElementById('btn-save').addEventListener('click', () => swipeCard('right'));
-            document.getElementById('btn-skip').addEventListener('click', () => swipeCard('left'));
+  closeInp.addEventListener('keydown', e => { if (e.key === 'Enter') swipeCard('right'); });
+  document.getElementById('btn-save').addEventListener('click', () => swipeCard('right'));
+  document.getElementById('btn-skip').addEventListener('click', () => swipeCard('left'));
 
-            // Drag/swipe — horizontal only, ignores stepper/button taps
-            let startX = 0,
-                startY = 0,
-                isDragging = false,
-                isHoriz = false;
-            const IGNORE = new Set(['BUTTON', 'INPUT', 'TEXTAREA', 'SELECT', 'LABEL']);
+  // Drag
+  // Drag/swipe — horizontal only, ignores stepper/button taps, keeps keyboard open
+  let startX=0, startY=0, isDragging=false, isHoriz=false;
+  const IGNORE = new Set(['BUTTON','INPUT','TEXTAREA','SELECT','LABEL']);
 
-            const dragStart = (x, y, tgt) => {
-                if (isProcessing || IGNORE.has(tgt.tagName) || tgt.closest('.stepper-btn')) return;
-                isDragging = true;
-                isHoriz = false;
-                startX = x;
-                startY = y;
-                card.classList.add('dragging');
-            };
-            const dragMove = (x, y) => {
-                if (!isDragging) return;
-                const dx = x - startX,
-                    dy = y - startY;
-                if (!isHoriz) {
-                    if (Math.abs(dx) < 5 && Math.abs(dy) < 5) return;
-                    if (Math.abs(dx) > Math.abs(dy)) isHoriz = true;
-                    else { isDragging = false;
-                        card.classList.remove('dragging'); return; }
-                }
-                card.style.transform = `translateX(${dx}px) rotate(${dx*.035}deg)`;
-                card.style.opacity = String(1 - Math.abs(dx) / 350);
-                indSave.style.opacity = dx > 30 ? String(Math.min(1, (dx - 30) / 60)) : '0';
-                indSkip.style.opacity = dx < -30 ? String(Math.min(1, (-dx - 30) / 60)) : '0';
-            };
-            const dragEnd = x => {
-                if (!isDragging) return;
-                isDragging = false;
-                isHoriz = false;
-                card.classList.remove('dragging');
-                const d = x - startX;
-                if (d > 80) swipeCard('right');
-                else if (d < -80) swipeCard('left');
-                else {
-                    card.style.transform = '';
-                    card.style.opacity = '1';
-                    indSave.style.opacity = '0';
-                    indSkip.style.opacity = '0';
-                }
-            };
-            card.addEventListener('mousedown', e => dragStart(e.clientX, e.clientY, e.target));
-            document.addEventListener('mousemove', e => { if (isDragging) dragMove(e.clientX, e.clientY); });
-            document.addEventListener('mouseup', e => dragEnd(e.clientX));
-            card.addEventListener('touchstart', e => dragStart(e.touches[0].clientX, e.touches[0].clientY, e.target), { passive: true });
-            card.addEventListener('touchmove', e => {
-                if (isDragging && isHoriz) e.preventDefault();
-                dragMove(e.touches[0].clientX, e.touches[0].clientY);
-            }, { passive: false });
-            card.addEventListener('touchend', e => dragEnd(e.changedTouches[0].clientX));
+  const dragStart = (x, y, tgt) => {
+    if (isProcessing || IGNORE.has(tgt.tagName) || tgt.closest('.stepper-btn')) return;
+    isDragging=true; isHoriz=false; startX=x; startY=y;
+    card.classList.add('dragging');
+  };
+  const dragMove = (x, y) => {
+    if (!isDragging) return;
+    const dx=x-startX, dy=y-startY;
+    if (!isHoriz) {
+      if (Math.abs(dx)<5 && Math.abs(dy)<5) return;
+      if (Math.abs(dx)>Math.abs(dy)) isHoriz=true;
+      else { isDragging=false; card.classList.remove('dragging'); return; }
+    }
+    card.style.transform=`translateX(${dx}px) rotate(${dx*.035}deg)`;
+    card.style.opacity=String(1-Math.abs(dx)/350);
+    indSave.style.opacity=dx>30?String(Math.min(1,(dx-30)/60)):'0';
+    indSkip.style.opacity=dx<-30?String(Math.min(1,(-dx-30)/60)):'0';
+  };
+  const dragEnd = x => {
+    if (!isDragging) return;
+    isDragging=false; isHoriz=false; card.classList.remove('dragging');
+    const d=x-startX;
+    if (d>80) swipeCard('right');
+    else if (d<-80) swipeCard('left');
+    else { card.style.transform=''; card.style.opacity='1'; indSave.style.opacity='0'; indSkip.style.opacity='0'; }
+  };
+  card.addEventListener('mousedown', e=>dragStart(e.clientX,e.clientY,e.target));
+  document.addEventListener('mousemove', e=>{ if(isDragging) dragMove(e.clientX,e.clientY); });
+  document.addEventListener('mouseup', e=>dragEnd(e.clientX));
+  card.addEventListener('touchstart', e=>dragStart(e.touches[0].clientX,e.touches[0].clientY,e.target),{passive:true});
+  card.addEventListener('touchmove', e=>{
+    if(isDragging&&isHoriz) e.preventDefault();
+    dragMove(e.touches[0].clientX,e.touches[0].clientY);
+  },{passive:false});
+  card.addEventListener('touchend', e=>dragEnd(e.changedTouches[0].clientX));
+  closeInp.focus();
+}
 
-            // Focus the close input to keep keyboard open
-            closeInp.focus();
-        }
+function swipeCard(direction){
+  if (isProcessing) return;
+  const card = document.getElementById('cur-card');
+  if (!card) return;
+  isProcessing = true;
+  const item = items[currentIndex];
+  undoStack.push({ index: currentIndex, item, savedData: results[item.name]||null, direction });
 
-        function swipeCard(direction) {
-            if (isProcessing) return;
-            const card = document.getElementById('cur-card');
-            if (!card) return;
-            isProcessing = true;
-            const item = items[currentIndex];
-            undoStack.push({ index: currentIndex, item, savedData: results[item.name] || null, direction });
+  if (direction === 'right'){
+    const closeVal = parseFloat(document.getElementById('inp-close')?.value)||0;
+    const addVal   = parseFloat(document.getElementById('inp-add')?.value)||0;
+    results[item.name] = { close: closeVal, add: addVal, sheet: item.sheet };
+    card.style.transition = 'transform .28s cubic-bezier(.2,.8,.2,1),opacity .28s ease';
+    card.style.transform = 'translateX(120%) rotate(12deg)';
+    card.style.opacity = '0';
+    if (navigator.vibrate) navigator.vibrate(8);
+  } else {
+    card.style.transition = 'transform .28s cubic-bezier(.2,.8,.2,1),opacity .28s ease';
+    card.style.transform = 'translateX(-120%) rotate(-12deg)';
+    card.style.opacity = '0';
+  }
+  showUndoBar(direction === 'right' ? `✅ "${item.name}" saved` : `⏭ "${item.name}" skipped`);
+  autosave();
+  setTimeout(() => {
+    currentIndex++;
+    isProcessing = false;
+    renderCard();
+    const nextInp = document.getElementById('inp-close');
+    if (nextInp) { nextInp.focus(); nextInp.select(); }
+  }, 290);
+}
 
-            if (direction === 'right') {
-                const closeVal = parseFloat(document.getElementById('inp-close')?.value) || 0;
-                const addVal = parseFloat(document.getElementById('inp-add')?.value) || 0;
-                results[item.name] = { close: closeVal, add: addVal, sheet: item.sheet };
-                card.style.transition = 'transform .28s cubic-bezier(.2,.8,.2,1),opacity .28s ease';
-                card.style.transform = 'translateX(120%) rotate(12deg)';
-                card.style.opacity = '0';
-                if (navigator.vibrate) navigator.vibrate(8);
-            } else {
-                card.style.transition = 'transform .28s cubic-bezier(.2,.8,.2,1),opacity .28s ease';
-                card.style.transform = 'translateX(-120%) rotate(-12deg)';
-                card.style.opacity = '0';
-            }
-            showUndoBar(direction === 'right' ? `✅ "${item.name}" saved` : `⏭ "${item.name}" skipped`);
-            autosave();
-            setTimeout(() => {
-                currentIndex++;
-                isProcessing = false;
-                renderCard();
-                const nextInp = document.getElementById('inp-close');
-                if (nextInp) { nextInp.focus();
-                    nextInp.select(); }
-            }, 290);
-        }
+/* ============================================================
+   UNDO
+============================================================ */
+let undoTimer;
+function showUndoBar(msg){ clearTimeout(undoTimer); undoMsg.textContent=msg; undoBar.classList.add('show'); undoTimer=setTimeout(()=>undoBar.classList.remove('show'),3000); }
+undoBtn.addEventListener('click', () => {
+  if (!undoStack.length) return;
+  undoBar.classList.remove('show');
+  const last = undoStack.pop();
+  currentIndex = last.index;
+  if (last.savedData) results[last.item.name] = last.savedData;
+  else delete results[last.item.name];
+  isProcessing = false;
+  renderCard();
+  showToast('↩ Undone');
+  autosave();
+});
 
-        /* ============================================================
-           UNDO
-        ============================================================ */
-        let undoTimer;
+/* ============================================================
+   PROGRESS & GENERATE STATE
+============================================================ */
+function updateProgress(){
+  const total = items.length, done = Math.min(currentIndex, total);
+  const pct = total > 0 ? (done/total)*100 : 0;
+  progressFill.style.width = `${pct}%`;
+  progressLabel.textContent = `${done} / ${total}`;
+  const savedCount = Object.keys(results).length;
+  const isDone = currentIndex >= items.length;
+  if (savedCount > 0){
+    generateBtn.disabled = false; generateBtn2.disabled = false;
+    generateBtn.innerHTML = isDone
+      ? `<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg> Generate Full Report (${savedCount} items)`
+      : `<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg> Generate Partial Report (${savedCount}/${total})`;
+  } else {
+    generateBtn.disabled = true; generateBtn2.disabled = true;
+    generateBtn.innerHTML = `<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg> Generate Next Month Report`;
+  }
+}
 
-        function showUndoBar(msg) {
-            clearTimeout(undoTimer);
-            undoMsg.textContent = msg;
-            undoBar.classList.add('show');
-            undoTimer = setTimeout(() => undoBar.classList.remove('show'), 3000);
-        }
+/* ============================================================
+   REVIEW
+============================================================ */
+function renderReview(){
+  const list = document.getElementById('review-list');
+  const count = document.getElementById('review-count');
+  const saved = Object.keys(results);
+  count.textContent = `${saved.length} item${saved.length!==1?'s':''} saved`;
+  if (!saved.length){ list.innerHTML = `<div class="review-empty">No items saved yet.<br>Go to Swipe tab.</div>`; return; }
+  list.innerHTML = saved.map(name => {
+    const item = items.find(i => i.name === name);
+    const data = results[name];
+    if (!item) return '';
+    return `<div class="review-item"><div class="review-item-icon" style="background:${iconColor(name)}">${name.charAt(0).toUpperCase()}</div><div class="review-item-info"><div class="review-item-name">${esc(name)}</div><div class="review-item-cat">${esc(item.category)}</div></div><div class="review-item-val"><div class="review-val-close">Close: ${data.close}</div><div class="review-val-add">Add: ${data.add}</div></div><button class="btn-edit-review" data-name="${esc(name)}">Edit</button></div>`;
+  }).join('');
+  list.querySelectorAll('.btn-edit-review').forEach(btn => btn.addEventListener('click', () => openEditModal(btn.dataset.name)));
+}
+function openEditModal(name){
+  const item = items.find(i => i.name === name); const data = results[name];
+  if (!item || !data) return;
+  editingProductName = name;
+  modalTitle.textContent = name; modalSub.textContent = `${item.category} · $${item.price.toFixed(2)}`;
+  modalAdd.value = data.add; modalClose.value = data.close;
+  editModal.classList.remove('hidden');
+  setTimeout(() => modalClose.focus(), 200);
+}
+modalCancel.addEventListener('click', () => editModal.classList.add('hidden'));
+editModal.addEventListener('click', e => { if (e.target === editModal) editModal.classList.add('hidden'); });
+modalSave.addEventListener('click', () => {
+  if (!editingProductName) return;
+  results[editingProductName].close = parseFloat(modalClose.value)||0;
+  results[editingProductName].add   = parseFloat(modalAdd.value)||0;
+  editModal.classList.add('hidden');
+  renderReview(); autosave(); showToast('✅ Updated');
+});
 
-        undoBtn.addEventListener('click', () => {
-            if (!undoStack.length) return;
-            undoBar.classList.remove('show');
-            const last = undoStack.pop();
-            currentIndex = last.index;
-            if (last.savedData) results[last.item.name] = last.savedData;
-            else delete results[last.item.name];
-            isProcessing = false;
-            renderCard();
-            showToast('↩ Undone');
-            autosave();
-        });
+/* ============================================================
+   SUMMARY
+============================================================ */
+function renderSummary(){
+  const saved = Object.keys(results);
+  const total = items.length;
+  let totalValue = 0;
+  saved.forEach(name => { const item = items.find(i => i.name === name); if (item) totalValue += (results[name].close * item.price); });
+  document.getElementById('kpi-saved').textContent = saved.length;
+  document.getElementById('kpi-total').textContent = total;
+  document.getElementById('kpi-value').textContent = `$${totalValue.toFixed(0)}`;
+  document.getElementById('kpi-progress').textContent = total > 0 ? `${Math.round((Math.min(currentIndex,total)/total)*100)}%` : '0%';
+  const topList = document.getElementById('summary-top-list');
+  const sorted = saved.map(name => {
+    const item = items.find(i => i.name === name);
+    return { name, value: item ? results[name].close * item.price : 0 };
+  }).sort((a,b) => b.value - a.value).slice(0, 8);
+  if (!sorted.length){ topList.innerHTML = '<div style="color:var(--text-muted);text-align:center;padding:20px">No saved items yet</div>'; }
+  else {
+    topList.innerHTML = sorted.map(({name, value}) => `
+      <div class="summary-item">
+        <div class="review-item-icon" style="background:${iconColor(name)};width:28px;height:28px;font-size:12px;flex-shrink:0;display:flex;align-items:center;justify-content:center;border-radius:50%;color:#fff;font-weight:800">${name.charAt(0).toUpperCase()}</div>
+        <div class="summary-item-name">${esc(name)}</div>
+        <div class="summary-item-val">$${value.toFixed(2)}</div>
+      </div>`).join('');
+  }
+  generateBtn2.disabled = saved.length === 0;
+}
 
-        /* ============================================================
-           PROGRESS & GENERATE STATE
-        ============================================================ */
-        function updateProgress() {
-            const total = items.length,
-                done = Math.min(currentIndex, total);
-            const pct = total > 0 ? (done / total) * 100 : 0;
-            progressFill.style.width = `${pct}%`;
-            progressLabel.textContent = `${done} / ${total}`;
-            const savedCount = Object.keys(results).length;
-            const isDone = currentIndex >= items.length;
-            if (savedCount > 0) {
-                generateBtn.disabled = false;
-                generateBtn2.disabled = false;
-                generateBtn.innerHTML = isDone ?
-                    `<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg> Generate Full Report (${savedCount} items)` :
-                    `<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg> Generate Partial Report (${savedCount}/${total})`;
-            } else {
-                generateBtn.disabled = true;
-                generateBtn2.disabled = true;
-                generateBtn.innerHTML =
-                    `<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg> Generate Next Month Report`;
-            }
-        }
+/* ============================================================
+   GENERATE REPORT
+============================================================ */
+async function doGenerate(resultEl, btn){
+  if (!Object.keys(results).length){ showToast('No data saved yet!'); return; }
+  if (!currentFileId){ showToast('No source file selected'); return; }
+  btn.disabled = true;
+  btn.innerHTML = `<span>⏳ Generating…</span>`;
+  resultEl.className = 'report-result';
+  resultEl.style.display = 'none';
+  showLoading('Generating…');
+  try {
+    const r = await fetch(`https://www.googleapis.com/drive/v3/files/${currentFileId}?alt=media`, { headers: { Authorization: `Bearer ${accessToken}` } });
+    const buf = await r.arrayBuffer();
+    const wb = XLSX.read(buf, { type: 'array' });
+    wb.SheetNames.forEach(sn => {
+      const sheet = wb.Sheets[sn];
+      const rows = XLSX.utils.sheet_to_json(sheet, { header:1, defval:'' });
+      rows.forEach((row, ri) => {
+        const name = String(row[0]||'').trim();
+        if (!name || !results[name]) return;
+        const saved = results[name];
+        const openVal = parseFloat(row[1])||0;
+        const price = parseFloat(row[5])||0;
+        const usage = openVal + saved.add - saved.close;
+        const setCell = (col, val) => { const addr = XLSX.utils.encode_cell({r:ri,c:col}); if (!sheet[addr]) sheet[addr] = {}; sheet[addr].v = val; sheet[addr].t = 'n'; };
+        setCell(2, saved.add); setCell(3, saved.close); setCell(4, usage);
+        setCell(6, usage * price); setCell(7, saved.close * price);
+      });
+    });
+    const now = new Date();
+    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    const newName = `${months[(now.getMonth()+1)%12]} ${now.getFullYear()+(now.getMonth()===11?1:0)}`;
+    const wbOut = XLSX.write(wb, { bookType:'xlsx', type:'array' });
+    const blob = new Blob([wbOut], { type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    const meta = JSON.stringify({ name: `${newName}.xlsx`, mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    const fd = new FormData();
+    fd.append('metadata', new Blob([meta], {type:'application/json'}));
+    fd.append('file', blob);
+    const up = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,name,webViewLink', {
+      method: 'POST', headers: { Authorization: `Bearer ${accessToken}` }, body: fd
+    });
+    if (!up.ok) throw new Error(`Upload failed: ${up.status}`);
+    const upData = await up.json();
+    // Save history
+    try {
+      let hist = JSON.parse(localStorage.getItem(HISTORY_KEY)||'{}');
+      Object.entries(results).forEach(([pname, data]) => {
+        if (!hist[pname]) hist[pname] = [];
+        hist[pname].push({ month: newName, close: data.close });
+        if (hist[pname].length > 6) hist[pname].shift();
+      });
+      localStorage.setItem(HISTORY_KEY, JSON.stringify(hist));
+    } catch(e){}
+    try { localStorage.removeItem(AUTOSAVE_KEY); } catch(e){}
+    resultEl.className = 'report-result success'; resultEl.style.display = 'block';
+    resultEl.innerHTML = `✅ <strong>${upData.name}</strong> saved! <a href="${upData.webViewLink}" target="_blank" rel="noopener noreferrer">📂 Open in Drive</a>`;
+    await loadDriveFiles();
+    launchConfetti();
+  } catch(e){
+    resultEl.className = 'report-result error'; resultEl.style.display = 'block';
+    resultEl.textContent = `❌ Error: ${e.message}`;
+  }
+  hideLoading();
+  updateProgress();
+}
+generateBtn.addEventListener('click', () => doGenerate(reportResult, generateBtn));
+generateBtn2.addEventListener('click', () => doGenerate(resultBanner2, generateBtn2));
 
-        /* ============================================================
-           REVIEW
-        ============================================================ */
-        function renderReview() {
-            const list = document.getElementById('review-list');
-            const count = document.getElementById('review-count');
-            const saved = Object.keys(results);
-            count.textContent = `${saved.length} item${saved.length!==1?'s':''} saved`;
-            if (!saved.length) {
-                list.innerHTML = `<div class="review-empty">No items saved yet.<br>Go to Swipe tab.</div>`;
-                return;
-            }
-            list.innerHTML = saved.map(name => {
-                const item = items.find(i => i.name === name);
-                const data = results[name];
-                if (!item) return '';
-                return `<div class="review-item"><div class="review-item-icon" style="background:${iconColor(name)}">${name.charAt(0).toUpperCase()}</div><div class="review-item-info"><div class="review-item-name">${esc(name)}</div><div class="review-item-cat">${esc(item.category)}</div></div><div class="review-item-val"><div class="review-val-close">Close: ${data.close}</div><div class="review-val-add">Add: ${data.add}</div></div><button class="btn-edit-review" data-name="${esc(name)}">Edit</button></div>`;
-            }).join('');
-            list.querySelectorAll('.btn-edit-review').forEach(btn => btn.addEventListener('click', () => openEditModal(btn
-                .dataset.name)));
-        }
+/* ============================================================
+   HELPERS
+============================================================ */
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+const ICON_COLORS = ['#2d7d46','#c62828','#1565c0','#f57c00','#6a1b9a','#00838f','#d81b60','#2e7d32','#4527a0','#bf360c'];
+function iconColor(name){ const h = name.split('').reduce((a,c) => a + c.charCodeAt(0), 0); return ICON_COLORS[h % ICON_COLORS.length]; }
+function prodIcon(name){ return `<span class="prod-icon" style="background:${iconColor(name)}">${name.charAt(0).toUpperCase()}</span>`; }
+function historyHtml(name){
+  let hist = {};
+  try { hist = JSON.parse(localStorage.getItem(HISTORY_KEY)||'{}'); } catch(e){}
+  const h = hist[name] || [];
+  if (!h.length) return `<div class="history-box">📊 <span style="color:var(--text-faint);font-size:var(--xs)">No history yet</span></div>`;
+  return `<div class="history-box">📊 ${h.slice(-4).map(x => `<span class="hist-tag">${x.month}: <strong>${x.close}</strong></span>`).join('')}</div>`;
+}
+function launchConfetti(){
+  const colors = ['#2d7d46','#4caf6e','#ffd700','#ff6b6b','#4fc3f7','#ce93d8'];
+  for (let i=0; i<60; i++){
+    const p = document.createElement('div');
+    p.className = 'confetti-piece';
+    p.style.cssText = `left:${Math.random()*100}vw;top:-10px;background:${colors[Math.floor(Math.random()*colors.length)]};animation-delay:${Math.random()*.6}s;animation-duration:${1.2+Math.random()}s;width:${6+Math.random()*8}px;height:${6+Math.random()*8}px;border-radius:${Math.random()>.5?'50%':'2px'}`;
+    document.body.appendChild(p);
+    setTimeout(() => p.remove(), 2500);
+  }
+}
+</script>
 
-        function openEditModal(name) {
-            const item = items.find(i => i.name === name);
-            const data = results[name];
-            if (!item || !data) return;
-            editingProductName = name;
-            modalTitle.textContent = name;
-            modalSub.textContent = `${item.category} · $${item.price.toFixed(2)}`;
-            modalAdd.value = data.add;
-            modalClose.value = data.close;
-            editModal.classList.remove('hidden');
-            setTimeout(() => modalClose.focus(), 200);
-        }
-
-        modalCancel.addEventListener('click', () => editModal.classList.add('hidden'));
-        editModal.addEventListener('click', e => { if (e.target === editModal) editModal.classList.add('hidden'); });
-        modalSave.addEventListener('click', () => {
-            if (!editingProductName) return;
-            results[editingProductName].close = parseFloat(modalClose.value) || 0;
-            results[editingProductName].add = parseFloat(modalAdd.value) || 0;
-            editModal.classList.add('hidden');
-            renderReview();
-            autosave();
-            showToast('✅ Updated');
-        });
-
-        /* ============================================================
-           SUMMARY
-        ============================================================ */
-        function renderSummary() {
-            const saved = Object.keys(results);
-            const total = items.length;
-            let totalValue = 0;
-            saved.forEach(name => {
-                const item = items.find(i => i.name === name);
-                if (item) totalValue += (results[name].close * item.price);
-            });
-            document.getElementById('kpi-saved').textContent = saved.length;
-            document.getElementById('kpi-total').textContent = total;
-            document.getElementById('kpi-value').textContent = `$${totalValue.toFixed(0)}`;
-            document.getElementById('kpi-progress').textContent = total > 0 ? `${Math.round((Math.min(currentIndex,total)/total)*100)}%` :
-                '0%';
-            const topList = document.getElementById('summary-top-list');
-            const sorted = saved.map(name => {
-                const item = items.find(i => i.name === name);
-                return { name, value: item ? results[name].close * item.price : 0 };
-            }).sort((a, b) => b.value - a.value).slice(0, 8);
-            if (!sorted.length) {
-                topList.innerHTML =
-                    '<div style="color:var(--text-muted);text-align:center;padding:20px">No saved items yet</div>';
-            } else {
-                topList.innerHTML = sorted.map(({ name, value }) => `
-              <div class="summary-item">
-                <div class="review-item-icon" style="background:${iconColor(name)};width:28px;height:28px;font-size:12px;flex-shrink:0;display:flex;align-items:center;justify-content:center;border-radius:50%;color:#fff;font-weight:800">${name.charAt(0).toUpperCase()}</div>
-                <div class="summary-item-name">${esc(name)}</div>
-                <div class="summary-item-val">$${value.toFixed(2)}</div>
-              </div>`).join('');
-            }
-            generateBtn2.disabled = saved.length === 0;
-        }
-
-        /* ============================================================
-           GENERATE REPORT
-        ============================================================ */
-        async function doGenerate(resultEl, btn) {
-            if (!Object.keys(results).length) { showToast('No data saved yet!'); return; }
-            if (!currentFileId) { showToast('No source file selected'); return; }
-            btn.disabled = true;
-            btn.innerHTML = `<span>⏳ Generating…</span>`;
-            resultEl.className = 'report-result';
-            resultEl.style.display = 'none';
-            showLoading('Generating…');
-            try {
-                const r = await fetch(`https://www.googleapis.com/drive/v3/files/${currentFileId}?alt=media`, { headers: {
-                        Authorization: `Bearer ${accessToken}` } });
-                if (!r.ok) throw new Error('Download failed (HTTP ' + r.status + ')');
-                const buf = await r.arrayBuffer();
-                const wb = XLSX.read(buf, { type: 'array' });
-                wb.SheetNames.forEach(sn => {
-                    const sheet = wb.Sheets[sn];
-                    const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
-                    rows.forEach((row, ri) => {
-                        const name = String(row[0] || '').trim();
-                        if (!name || !results[name]) return;
-                        const saved = results[name];
-                        const openVal = parseFloat(row[1]) || 0;
-                        const price = parseFloat(row[5]) || 0;
-                        const usage = openVal + saved.add - saved.close;
-                        const setCell = (col, val) => {
-                            const addr = XLSX.utils.encode_cell({ r: ri, c: col });
-                            if (!sheet[addr]) sheet[addr] = {};
-                            sheet[addr].v = val;
-                            sheet[addr].t = 'n';
-                        };
-                        setCell(2, saved.add);
-                        setCell(3, saved.close);
-                        setCell(4, usage);
-                        setCell(6, usage * price);
-                        setCell(7, saved.close * price);
-                    });
-                });
-                const now = new Date();
-                const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-                const newName =
-                    `${months[(now.getMonth()+1)%12]} ${now.getFullYear()+(now.getMonth()===11?1:0)}`;
-                const wbOut = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
-                const blob = new Blob([wbOut], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-                const meta = JSON.stringify({ name: `${newName}.xlsx`,
-                    mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-                const fd = new FormData();
-                fd.append('metadata', new Blob([meta], { type: 'application/json' }));
-                fd.append('file', blob);
-                const up = await fetch(
-                    'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,name,webViewLink', {
-                        method: 'POST',
-                        headers: { Authorization: `Bearer ${accessToken}` },
-                        body: fd
-                    });
-                if (!up.ok) throw new Error('Upload failed: ' + up.status);
-                const upData = await up.json();
-                // Save history
-                try {
-                    let hist = JSON.parse(localStorage.getItem(HISTORY_KEY) || '{}');
-                    Object.entries(results).forEach(([pname, data]) => {
-                        if (!hist[pname]) hist[pname] = [];
-                        hist[pname].push({ month: newName, close: data.close });
-                        if (hist[pname].length > 6) hist[pname].shift();
-                    });
-                    localStorage.setItem(HISTORY_KEY, JSON.stringify(hist));
-                } catch (e) {}
-                try { localStorage.removeItem(AUTOSAVE_KEY); } catch (e) {}
-                resultEl.className = 'report-result success';
-                resultEl.style.display = 'block';
-                resultEl.innerHTML =
-                    `✅ <strong>${upData.name}</strong> saved! <a href="${upData.webViewLink}" target="_blank" rel="noopener noreferrer">📂 Open in Drive</a>`;
-                await loadDriveFiles();
-                launchConfetti();
-            } catch (e) {
-                resultEl.className = 'report-result error';
-                resultEl.style.display = 'block';
-                resultEl.textContent = `❌ Error: ${e.message}`;
-                console.error('Generate error:', e);
-            }
-            hideLoading();
-            updateProgress();
-            btn.disabled = false;
-            btn.innerHTML = `<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg> Generate Report`;
-        }
-
-        generateBtn.addEventListener('click', () => doGenerate(reportResult, generateBtn));
-        generateBtn2.addEventListener('click', () => doGenerate(resultBanner2, generateBtn2));
-
-        /* ============================================================
-           HELPERS
-        ============================================================ */
-        function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g,
-                '&quot;'); }
-
-        const ICON_COLORS = ['#2d7d46', '#c62828', '#1565c0', '#f57c00', '#6a1b9a', '#00838f', '#d81b60', '#2e7d32',
-            '#4527a0', '#bf360c'
-        ];
-
-        function iconColor(name) {
-            const h = name.split('').reduce((a, c) => a + c.charCodeAt(0), 0);
-            return ICON_COLORS[h % ICON_COLORS.length];
-        }
-
-        function prodIcon(name) {
-            return `<span class="prod-icon" style="background:${iconColor(name)}">${name.charAt(0).toUpperCase()}</span>`;
-        }
-
-        function historyHtml(name) {
-            let hist = {};
-            try { hist = JSON.parse(localStorage.getItem(HISTORY_KEY) || '{}'); } catch (e) {}
-            const h = hist[name] || [];
-            if (!h.length) return `<div class="history-box">📊 <span style="color:var(--text-faint);font-size:var(--xs)">No history yet</span></div>`;
-            return `<div class="history-box">📊 ${h.slice(-4).map(x => `<span class="hist-tag">${x.month}: <strong>${x.close}</strong></span>`).join('')}</div>`;
-        }
-
-        function launchConfetti() {
-            const colors = ['#2d7d46', '#4caf6e', '#ffd700', '#ff6b6b', '#4fc3f7', '#ce93d8'];
-            for (let i = 0; i < 60; i++) {
-                const p = document.createElement('div');
-                p.className = 'confetti-piece';
-                p.style.cssText =
-                    `left:${Math.random()*100}vw;top:-10px;background:${colors[Math.floor(Math.random()*colors.length)]};animation-delay:${Math.random()*.6}s;animation-duration:${1.2+Math.random()}s;width:${6+Math.random()*8}px;height:${6+Math.random()*8}px;border-radius:${Math.random()>.5?'50%':'2px'}`;
-                document.body.appendChild(p);
-                setTimeout(() => p.remove(), 2500);
-            }
-        }
-
-        // Expose startSwipe globally for the restart button
-        window.startSwipe = startSwipe;
-    </script>
+<!-- Exit Confirmation Modal -->
+<div class="confirm-overlay" id="confirm-overlay">
+  <div class="confirm-card">
+    <div class="confirm-icon">🚪</div>
+    <div class="confirm-title">Sign out?</div>
+    <div class="confirm-msg">Any unsaved progress will be lost.<br>Are you sure you want to exit?</div>
+    <div class="confirm-btns">
+      <button class="confirm-btn-cancel" id="confirm-cancel">Stay</button>
+      <button class="confirm-btn-exit" id="confirm-exit">Sign Out</button>
+    </div>
+  </div>
+</div>
 
 </body>
 </html>
