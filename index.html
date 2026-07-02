@@ -7,19 +7,12 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <meta name="apple-mobile-web-app-title" content="GiftShop" />
-    <title>🧸 GiftShop Inventory</title>
+  <link rel="manifest" href="manifest.json" />
+  <title>🧸 GiftShop Inventory</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <script src="https://apis.google.com/js/api.js">
-window.addEventListener('beforeunload', e => {
-  if (Object.keys(results).length > 0) {
-    e.preventDefault();
-    e.returnValue = 'You have unsaved inventory progress. Are you sure you want to leave?';
-  }
-});
-
-</script>
+  <script src="https://apis.google.com/js/api.js"></script>
   <script src="https://accounts.google.com/gsi/client"></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <style>
@@ -91,9 +84,9 @@ input,select{font:inherit;color:inherit}
 /* ============================================================
    HEADER (Upgraded - File name in center)
 ============================================================ */
-.app-header{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:var(--surface);backdrop-filter:blur(20px) saturate(180%);-webkit-backdrop-filter:blur(20px) saturate(180%);border-bottom:1px solid var(--divider);position:sticky;top:0;z-index:100}
+.app-header{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:linear-gradient(180deg, rgba(255,255,255,0.22), rgba(255,255,255,0.08)), var(--surface);backdrop-filter:blur(22px) saturate(180%);-webkit-backdrop-filter:blur(22px) saturate(180%);border-bottom:1px solid rgba(255,255,255,0.24);position:sticky;top:0;z-index:100;box-shadow:0 6px 24px rgba(0,0,0,.04)}
 [data-theme="dark"] .app-header{background:rgba(28,27,24,0.85)}
-.header-brand{font-size:var(--lg);font-weight:800;flex-shrink:0}
+.header-brand{font-size:var(--lg);font-weight:800;flex-shrink:0;letter-spacing:-.02em;display:flex;align-items:center;gap:6px}
 .header-file{display:flex;align-items:center;gap:6px;font-size:var(--sm);font-weight:600;color:var(--text-muted);padding:4px 12px;background:var(--surface-2);border-radius:var(--r-full);border:1px solid var(--divider);cursor:pointer;transition:background .15s;max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .header-file:hover{background:var(--surface-off)}
 .header-file .arrow{font-size:10px;margin-left:2px}
@@ -134,73 +127,46 @@ input,select{font:inherit;color:inherit}
 /* ============================================================
    SWIPE ZONE (Full height)
 ============================================================ */
-.swipe-zone{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:12px 16px;overflow:hidden;min-height:0}
+/* ============================================================
+   CARD — COMPACT MOBILE OPTIMIZED
+============================================================ */
+.swipe-zone{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:8px 12px 4px;overflow:hidden;min-height:0}
 .empty-state{display:flex;flex-direction:column;align-items:center;text-align:center;padding:40px 20px;color:var(--text-muted)}
 .empty-icon{font-size:48px;margin-bottom:16px}
 .empty-state h3{font-size:var(--lg);font-weight:700;color:var(--text);margin-bottom:8px}
 .empty-state p{font-size:var(--sm);line-height:1.6;max-width:28ch}
-
-/* Card stack */
-.card-stack{position:relative;width:100%;max-width:400px;flex-shrink:0}
-.card-stack::before,.card-stack::after{content:'';position:absolute;inset:0;background:var(--surface);border-radius:var(--r-xl);border:1px solid var(--divider);backdrop-filter:blur(10px)}
-.card-stack::before{transform:rotate(-3deg) translateY(6px);z-index:0;opacity:.4}
-.card-stack::after{transform:rotate(2deg) translateY(3px);z-index:1;opacity:.7}
-
-/* Inventory card — GLASSMORPHISM + SPRING */
-.inv-card{position:relative;z-index:10;background:var(--surface);backdrop-filter:blur(24px) saturate(180%);-webkit-backdrop-filter:blur(24px) saturate(180%);border-radius:var(--r-xl);padding:20px 18px;width:100%;border:1px solid rgba(255,255,255,0.4);box-shadow:var(--shadow-lg);user-select:none;touch-action:pan-y;will-change:transform;max-height:72vh;overflow-y:auto;-webkit-overflow-scrolling:touch;transition:transform 0.5s var(--ease-spring), opacity 0.4s var(--ease-smooth), box-shadow 0.3s ease}
-[data-theme="dark"] .inv-card{border-color:rgba(255,255,255,0.06)}
-.inv-card.dragging{transition:none !important}
-
-/* Swipe indicators */
-.swipe-ind{position:absolute;top:16px;padding:5px 14px;border-radius:var(--r-full);font-size:var(--sm);font-weight:700;opacity:0;pointer-events:none;z-index:20;transition:opacity .1s}
-.swipe-ind.save{right:14px;background:var(--primary-lt);color:var(--primary)}
-.swipe-ind.skip{left:14px;background:var(--danger-lt);color:var(--danger)}
-
-/* Card parts */
-.card-cat-pill{display:inline-flex;align-items:center;gap:4px;background:var(--surface-2);border:1px solid var(--divider);border-radius:var(--r-full);padding:3px 10px;font-size:var(--xs);font-weight:600;color:var(--text-muted);margin-bottom:8px}
-.card-name-row{display:flex;align-items:center;margin-bottom:12px}
-.prod-icon{display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:var(--r-full);color:#fff;font-weight:800;font-size:16px;margin-right:10px;flex-shrink:0;box-shadow:var(--shadow-sm)}
-.card-prod-name{font-size:var(--xl);font-weight:800;line-height:1.2}
-.history-box{background:var(--surface-2);border:1px solid var(--divider);border-radius:var(--r-md);padding:8px 12px;font-size:var(--xs);color:var(--text-muted);margin-bottom:12px;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
-.hist-tag{background:var(--surface);border:1px solid var(--divider);border-radius:var(--r-full);padding:2px 10px;font-size:var(--xs);color:var(--text-muted);white-space:nowrap}
-
-/* Stats */
-.card-stats{display:flex;gap:6px;margin-bottom:12px}
-.stat-chip{flex:1;background:var(--surface-2);border:1px solid var(--divider);border-radius:var(--r-md);padding:8px 10px;text-align:center}
-.stat-label{font-size:10px;color:var(--text-muted);margin-bottom:2px;font-weight:600}
-.stat-val{font-size:var(--base);font-weight:700;font-variant-numeric:tabular-nums}
-
-/* Inputs — Neumorphic inspired */
+.empty-icon{filter:drop-shadow(0 10px 20px rgba(45,125,70,.12))}
+.card-stack{position:relative;width:100%;max-width:420px;flex-shrink:0}
+.card-stack::before{content:'';position:absolute;inset:0;background:var(--surface);border-radius:var(--r-xl);border:1px solid var(--divider);transform:rotate(-2.5deg) translateY(5px);z-index:0;opacity:.4}
+.card-stack::after{content:'';position:absolute;inset:0;background:var(--surface);border-radius:var(--r-xl);border:1px solid var(--divider);transform:rotate(1.5deg) translateY(3px);z-index:1;opacity:.65}
+.inv-card{position:relative;z-index:10;background:linear-gradient(180deg, rgba(255,255,255,.22), rgba(255,255,255,.06)), var(--surface);backdrop-filter:blur(24px) saturate(165%);-webkit-backdrop-filter:blur(24px) saturate(165%);border-radius:var(--r-xl);padding:14px 14px 10px;width:100%;box-shadow:0 18px 45px rgba(0,0,0,.12);border:1px solid rgba(255,255,255,.28);user-select:none;will-change:transform;overflow:hidden;touch-action:none}
+.inv-card.dragging{transition:none}
+.card-sticky-top{background:linear-gradient(180deg, rgba(255,255,255,.18), rgba(255,255,255,.02)), var(--surface);padding-bottom:8px;margin:-2px -2px 8px;padding-left:2px;padding-right:2px;border-bottom:1px solid var(--divider)}
+.card-cat-pill{display:inline-flex;align-items:center;gap:3px;background:var(--surface-2);border:1px solid var(--divider);border-radius:var(--r-full);padding:2px 8px;font-size:11px;font-weight:600;color:var(--text-muted);margin-bottom:4px}
+.card-name-row{display:flex;align-items:center;gap:8px}
+.prod-icon{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;min-width:30px;border-radius:var(--r-full);color:#fff;font-weight:800;font-size:14px;box-shadow:var(--shadow-sm)}
+.card-prod-name{font-size:clamp(1rem,4.2vw,1.28rem);font-weight:800;line-height:1.15;word-break:break-word;letter-spacing:-.02em}
+.card-stats{display:flex;gap:5px;margin-bottom:8px}
+.stat-chip{flex:1;background:linear-gradient(180deg, rgba(255,255,255,.14), rgba(255,255,255,.03)), var(--surface-2);border:1px solid rgba(255,255,255,.18);border-radius:var(--r-md);padding:6px 6px;text-align:center;box-shadow:inset 0 1px 0 rgba(255,255,255,.18)}
+.stat-label{font-size:9px;color:var(--text-muted);margin-bottom:1px;font-weight:600;text-transform:uppercase;letter-spacing:.02em}
+.stat-val{font-size:clamp(.8rem,3.5vw,.95rem);font-weight:700;font-variant-numeric:tabular-nums}
 .inp-row{display:flex;gap:8px;margin-bottom:6px}
 .inp-col{flex:1;display:flex;flex-direction:column;gap:3px}
 .inp-col-label{font-size:10px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.04em;text-align:center}
-.inp-wrap-sm{display:flex;align-items:center;background:var(--surface-2);border:2px solid var(--border);border-radius:var(--r-md);overflow:hidden;transition:border-color .15s,box-shadow .2s}
+.inp-wrap-sm{display:flex;align-items:center;background:linear-gradient(180deg, rgba(255,255,255,.14), rgba(255,255,255,.03)), var(--surface-2);border:2px solid var(--border);border-radius:var(--r-md);overflow:hidden;transition:border-color .15s, box-shadow .2s ease;box-shadow:inset 0 1px 0 rgba(255,255,255,.16)}
 .inp-wrap-sm:focus-within{border-color:var(--primary)}
-.inp-label{width:68px;font-size:var(--sm);font-weight:600;color:var(--text-muted);flex-shrink:0}
-.inp-wrap{flex:1;display:flex;align-items:center;background:var(--surface-2);border-radius:var(--r-md);border:2px solid var(--border);transition:border-color .2s,box-shadow .2s}
-.inp-wrap:focus-within{border-color:var(--primary);box-shadow:0 0 0 4px rgba(45,125,70,.1)}
-.stepper-btn{width:32px;height:38px;background:transparent;font-size:18px;font-weight:300;color:var(--text-muted);flex-shrink:0;transition:background .15s;display:flex;align-items:center;justify-content:center}
-.stepper-btn:first-child{border-radius:var(--r-md) 0 0 var(--r-md)}
-.stepper-btn:last-child{border-radius:0 var(--r-md) var(--r-md) 0}
-.stepper-btn:hover{background:rgba(0,0,0,.04);color:var(--text)}
-.stepper-btn:active{background:rgba(0,0,0,.08)}
-.card-input{flex:1;padding:10px 4px;background:transparent;border:none;font-size:var(--lg);font-weight:700;text-align:center;outline:none;font-variant-numeric:tabular-nums;-moz-appearance:textfield;min-width:0}
-.card-input:focus{background:transparent;box-shadow:none}
+.stepper-btn{width:32px;height:38px;background:transparent;font-size:18px;font-weight:400;color:var(--text-muted);flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:background .1s;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+.stepper-btn:active{background:var(--surface-off)}
+.card-input{flex:1;min-width:0;padding:6px 2px;background:transparent;border:none;font-size:clamp(1rem,4vw,1.15rem);font-weight:800;text-align:center;outline:none;font-variant-numeric:tabular-nums;-moz-appearance:textfield;color:var(--text)}
 .card-input::-webkit-outer-spin-button,.card-input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
-.cost-preview{font-size:var(--xs);color:var(--text-faint);text-align:right;margin-bottom:14px}
-
-/* Card actions */
-.card-btns{display:flex;gap:8px;margin-top:4px}
-.btn-skip-c{flex:1;padding:13px 0;background:var(--surface-off);border:1px solid var(--divider);border-radius:var(--r-full);font-size:var(--sm);font-weight:700;color:var(--text-muted);transition:background .15s,transform .1s var(--ease-spring)}
-.btn-skip-c:active{transform:scale(.94)}
-.btn-save-c{flex:2;padding:13px 0;background:var(--primary);border-radius:var(--r-full);font-size:var(--sm);font-weight:700;color:#fff;transition:background .15s,transform .1s var(--ease-spring)}
-.btn-save-c:active{transform:scale(.94)}
+.cost-preview{font-size:10px;color:var(--text-faint);text-align:center;margin-bottom:8px}
+.card-btns{display:flex;gap:6px}
+.btn-skip-c{flex:1;padding:11px 0;background:linear-gradient(180deg, rgba(255,255,255,.15), rgba(255,255,255,.02)), var(--surface-off);border:1px solid rgba(255,255,255,.16);border-radius:var(--r-full);font-size:var(--sm);font-weight:700;color:var(--text-muted);touch-action:manipulation;box-shadow:0 6px 18px rgba(0,0,0,.05)}
+.btn-save-c{flex:2;padding:11px 0;background:linear-gradient(135deg,var(--primary),#58b875);border-radius:var(--r-full);font-size:var(--sm);font-weight:800;color:#fff;touch-action:manipulation;box-shadow:0 12px 26px rgba(45,125,70,.24)}
 .btn-save-c:hover{background:var(--primary-h)}
+.btn-save-c:active,.btn-skip-c:active{transform:scale(.97)}
+.swipe-hint{display:flex;justify-content:space-between;width:100%;max-width:420px;padding:5px 6px 0;font-size:11px;color:var(--text-faint);font-weight:500}
 
-/* Swipe hint */
-.swipe-hint{display:flex;justify-content:space-between;width:100%;max-width:400px;padding:8px 6px 0;font-size:var(--xs);color:var(--text-faint);font-weight:500}
-
-/* Done card */
 .done-card{background:var(--surface);backdrop-filter:blur(20px);border-radius:var(--r-xl);padding:36px 24px;text-align:center;width:100%;max-width:400px;box-shadow:var(--shadow-md);border:1px solid var(--divider)}
 .done-emoji{font-size:52px;margin-bottom:10px}
 .done-title{font-size:var(--xl);font-weight:800;margin-bottom:6px}
@@ -220,7 +186,7 @@ input,select{font:inherit;color:inherit}
    FLOATING ACTION BAR (Overlay style)
 ============================================================ */
 .action-bar{position:sticky;bottom:60px;padding:8px 20px 16px;background:transparent;pointer-events:none;z-index:50}
-.action-bar .btn-generate{pointer-events:auto;display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:16px;background:var(--text);color:var(--bg);border-radius:var(--r-full);font-size:var(--base);font-weight:700;box-shadow:0 8px 32px rgba(0,0,0,.15);border:1px solid rgba(255,255,255,.1);transition:transform .3s var(--ease-spring), box-shadow .3s ease, opacity .3s ease}
+.action-bar .btn-generate{pointer-events:auto;display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:16px;background:linear-gradient(135deg,var(--text), rgba(31,28,24,.88));color:var(--bg);border-radius:var(--r-full);font-size:var(--base);font-weight:800;box-shadow:0 14px 36px rgba(0,0,0,.18);border:1px solid rgba(255,255,255,.12);transition:transform .3s var(--ease-spring), box-shadow .3s ease, opacity .3s ease, filter .2s ease}
 .action-bar .btn-generate:not(:disabled):active{transform:scale(.96)}
 .action-bar .btn-generate:disabled{opacity:.35;cursor:not-allowed}
 .report-result{margin-top:8px;padding:10px 14px;border-radius:var(--r-md);font-size:var(--sm);font-weight:500;text-align:center;display:none;pointer-events:auto}
@@ -245,7 +211,7 @@ input,select{font:inherit;color:inherit}
 .review-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
 .review-count{font-size:var(--sm);font-weight:700}
 .review-sub{font-size:var(--xs);color:var(--text-muted)}
-.review-item{display:flex;align-items:center;gap:10px;background:var(--surface);backdrop-filter:blur(10px);border:1px solid var(--divider);border-radius:var(--r-lg);padding:12px 14px;margin-bottom:8px}
+.review-item{display:flex;align-items:center;gap:10px;background:linear-gradient(180deg, rgba(255,255,255,.14), rgba(255,255,255,.04)), var(--surface);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.16);border-radius:var(--r-lg);padding:12px 14px;margin-bottom:8px;box-shadow:0 8px 22px rgba(0,0,0,.05)}
 .review-item-icon{width:36px;height:36px;border-radius:var(--r-full);color:#fff;font-weight:800;font-size:15px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .review-item-info{flex:1;min-width:0}
 .review-item-name{font-size:var(--sm);font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -259,11 +225,11 @@ input,select{font:inherit;color:inherit}
 
 /* Summary */
 .summary-kpi-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
-.kpi-card{background:var(--surface);backdrop-filter:blur(10px);border:1px solid var(--divider);border-radius:var(--r-lg);padding:14px;text-align:center}
+.kpi-card{background:linear-gradient(180deg, rgba(255,255,255,.16), rgba(255,255,255,.04)), var(--surface);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.18);border-radius:var(--r-lg);padding:14px;text-align:center;box-shadow:0 10px 24px rgba(0,0,0,.05)}
 .kpi-label{font-size:var(--xs);font-weight:600;color:var(--text-muted)}
 .kpi-value{font-size:var(--xl);font-weight:800;font-variant-numeric:tabular-nums}
 .kpi-value.green{color:var(--primary)}
-.summary-section-label{font-size:var(--xs);font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-muted);margin:14px 0 8px}
+.summary-section-label{font-size:var(--xs);font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:var(--text-muted);margin:16px 0 8px}
 .summary-item{display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--divider);border-radius:var(--r-md);padding:10px 12px;margin-bottom:6px}
 .summary-item-name{flex:1;font-size:var(--sm);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .summary-item-val{font-size:var(--sm);font-weight:800;font-variant-numeric:tabular-nums;color:var(--primary)}
@@ -327,24 +293,7 @@ input,select{font:inherit;color:inherit}
 
 /* PWA safe area */
 @supports(padding:env(safe-area-inset-bottom)){.tab-bar{padding-bottom:calc(4px + env(safe-area-inset-bottom))}}
-  
-/* ============================================================
-   CONFIRM EXIT MODAL
-============================================================ */
-.confirm-overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);z-index:600;display:flex;align-items:center;justify-content:center;padding:24px;opacity:0;pointer-events:none;transition:opacity .22s ease}
-.confirm-overlay.visible{opacity:1;pointer-events:auto}
-.confirm-card{background:var(--surface);border-radius:var(--r-xl);padding:28px 24px 24px;width:100%;max-width:340px;text-align:center;box-shadow:0 24px 60px rgba(0,0,0,.18);border:1px solid rgba(255,255,255,.22);transform:scale(.92) translateY(12px);transition:transform .28s var(--ease-spring)}
-.confirm-overlay.visible .confirm-card{transform:scale(1) translateY(0)}
-.confirm-icon{font-size:44px;margin-bottom:12px;line-height:1}
-.confirm-title{font-size:var(--lg);font-weight:800;margin-bottom:6px;letter-spacing:-.02em}
-.confirm-msg{font-size:var(--sm);color:var(--text-muted);line-height:1.55;margin-bottom:24px}
-.confirm-btns{display:flex;gap:10px}
-.confirm-btn-cancel{flex:1;padding:13px 0;background:var(--surface-off);border:1px solid var(--divider);border-radius:var(--r-full);font-size:var(--sm);font-weight:700;color:var(--text-muted);transition:background .15s}
-.confirm-btn-cancel:active{transform:scale(.97)}
-.confirm-btn-exit{flex:1;padding:13px 0;background:linear-gradient(135deg,#c62828,#ef5350);border-radius:var(--r-full);font-size:var(--sm);font-weight:800;color:#fff;box-shadow:0 10px 24px rgba(198,40,40,.22);transition:filter .15s}
-.confirm-btn-exit:active{transform:scale(.97);filter:brightness(.92)}
-
-</style>
+  </style>
 </head>
 <body>
 <div id="shell">
@@ -585,12 +534,14 @@ async function handleTokenResponse(tr){
   await loadDriveFiles();
   showApp();
 }
-
 // Prevent pull-to-refresh on mobile
 document.addEventListener('touchmove', e => {
-  if (!e.target.closest('.cat-filter-bar') && !e.target.closest('.review-view') &&
-      !e.target.closest('.summary-view') && !e.target.closest('.modal-sheet')) {
-    if (window.scrollY === 0) e.preventDefault();
+  if (e.touches.length === 1 && !e.target.closest('.cat-filter-bar') && !e.target.closest('.review-view') && !e.target.closest('.summary-view') && !e.target.closest('.modal-sheet')) {
+    // Only prevent if at top of page (the pull-to-refresh gesture)
+    if (window.scrollY === 0 && e.touches[0].clientY > 0) {
+      // Let card dragging handle it, prevent browser refresh
+      e.preventDefault();
+    }
   }
 }, {passive: false});
 
@@ -600,22 +551,9 @@ window.addEventListener('load', () => {
   });
 });
 loginBtn.addEventListener('click', () => { showLoading('Connecting…'); tokenClient.requestAccessToken({ prompt: 'select_account consent' }); });
-// Confirm-exit modal
-const confirmOverlay = document.getElementById('confirm-overlay');
-const confirmCancel  = document.getElementById('confirm-cancel');
-const confirmExit    = document.getElementById('confirm-exit');
-
-function doLogout(){
+logoutBtn.addEventListener('click', () => {
   if (accessToken) google.accounts.oauth2.revoke(accessToken, ()=>{});
   accessToken = null; userInfo = null; items = []; results = {}; driveFiles = [];
-  tokenClient = null;
-  setTimeout(() => { tokenClient = google.accounts.oauth2.initTokenClient({ client_id: GOOGLE_CLIENT_ID, scope: SCOPES, callback: handleTokenResponse }); }, 100);
-  showLogin();
-}
-logoutBtn.addEventListener('click', () => { confirmOverlay.classList.add('visible'); });
-confirmCancel.addEventListener('click', () => { confirmOverlay.classList.remove('visible'); });
-confirmExit.addEventListener('click', () => { confirmOverlay.classList.remove('visible'); doLogout(); });
-confirmOverlay.addEventListener('click', e => { if (e.target === confirmOverlay) confirmOverlay.classList.remove('visible'); }); accessToken = null; userInfo = null; items = []; results = {}; driveFiles = [];
   tokenClient = null;
   setTimeout(() => { tokenClient = google.accounts.oauth2.initTokenClient({ client_id: GOOGLE_CLIENT_ID, scope: SCOPES, callback: handleTokenResponse }); }, 100);
   showLogin();
@@ -836,11 +774,12 @@ function renderCard(){
       <div class="inv-card" id="cur-card">
         <span class="swipe-ind save" id="ind-save">✅ Save</span>
         <span class="swipe-ind skip" id="ind-skip">⏭ Skip</span>
-        <div class="card-cat-pill">📁 ${esc(item.category)}</div>
-        <div class="card-name-row">${prodIcon(item.name)}<div class="card-prod-name">${esc(item.name)}</div></div>
-        ${historyHtml(item.name)}
+        <div class="card-sticky-top">
+          <div class="card-cat-pill">📁 ${esc(item.category)}</div>
+          <div class="card-name-row">${prodIcon(item.name)}<div class="card-prod-name">${esc(item.name)}</div></div>
+        </div>
         <div class="card-stats">
-          <div class="stat-chip"><div class="stat-label">Opening</div><div class="stat-val">${item.open}</div></div>
+          <div class="stat-chip"><div class="stat-label">Open</div><div class="stat-val">${item.open}</div></div>
           <div class="stat-chip"><div class="stat-label">Last Close</div><div class="stat-val">${item.close||'—'}</div></div>
           <div class="stat-chip"><div class="stat-label">Price</div><div class="stat-val">$${item.price.toFixed(2)}</div></div>
         </div>
@@ -861,9 +800,9 @@ function renderCard(){
               <button class="stepper-btn" data-target="inp-close" data-delta="1" type="button">+</button>
             </div>
           </div>
-        </div></div></div>
+        </div>
         <div class="cost-preview" id="cost-preview">—</div>
-        <div class="card-btns"><button class="btn-skip-c" id="btn-skip">⬅ Skip</button><button class="btn-save-c" id="btn-save">Save ➡</button></div>
+        <div class="card-btns"><button class="btn-skip-c" id="btn-skip" type="button">⬅ Skip</button><button class="btn-save-c" id="btn-save" type="button">Save ➡</button></div>
       </div>
     </div>
     <div class="swipe-hint"><span>⬅ Skip</span><span>Save ➡</span></div>`;
@@ -900,8 +839,7 @@ function renderCard(){
   document.getElementById('btn-save').addEventListener('click', () => swipeCard('right'));
   document.getElementById('btn-skip').addEventListener('click', () => swipeCard('left'));
 
-  // Drag
-  // Drag/swipe — horizontal only, ignores stepper/button taps, keeps keyboard open
+  // Drag/swipe — horizontal only, skip taps on controls, keep keyboard open
   let startX=0, startY=0, isDragging=false, isHoriz=false;
   const IGNORE = new Set(['BUTTON','INPUT','TEXTAREA','SELECT','LABEL']);
 
@@ -940,8 +878,10 @@ function renderCard(){
     dragMove(e.touches[0].clientX,e.touches[0].clientY);
   },{passive:false});
   card.addEventListener('touchend', e=>dragEnd(e.changedTouches[0].clientX));
+
+  // Focus close input to open keyboard — keep it open across swipes
   closeInp.focus();
-}
+} // end renderCard
 
 function swipeCard(direction){
   if (isProcessing) return;
@@ -970,6 +910,7 @@ function swipeCard(direction){
     currentIndex++;
     isProcessing = false;
     renderCard();
+    // Keep keyboard open on next card
     const nextInp = document.getElementById('inp-close');
     if (nextInp) { nextInp.focus(); nextInp.select(); }
   }, 290);
@@ -1173,19 +1114,5 @@ function launchConfetti(){
   }
 }
 </script>
-
-<!-- Exit Confirmation Modal -->
-<div class="confirm-overlay" id="confirm-overlay">
-  <div class="confirm-card">
-    <div class="confirm-icon">🚪</div>
-    <div class="confirm-title">Sign out?</div>
-    <div class="confirm-msg">Any unsaved progress will be lost.<br>Are you sure you want to exit?</div>
-    <div class="confirm-btns">
-      <button class="confirm-btn-cancel" id="confirm-cancel">Stay</button>
-      <button class="confirm-btn-exit" id="confirm-exit">Sign Out</button>
-    </div>
-  </div>
-</div>
-
 </body>
 </html>
