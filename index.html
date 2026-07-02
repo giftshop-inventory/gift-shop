@@ -495,6 +495,20 @@ input,select{font:inherit;color:inherit}
   </div><!-- /app-screen -->
 </div><!-- /shell -->
 
+<!-- Exit Confirmation Modal -->
+<div class="confirm-overlay" id="confirm-overlay">
+  <div class="confirm-card">
+    <div class="confirm-icon">🚪</div>
+    <div class="confirm-title">Sign out?</div>
+    <div class="confirm-msg">Any unsaved progress will be lost.<br>Are you sure you want to exit?</div>
+    <div class="confirm-btns">
+      <button class="confirm-btn-cancel" id="confirm-cancel">Stay</button>
+      <button class="confirm-btn-exit" id="confirm-exit">Sign Out</button>
+    </div>
+  </div>
+</div>
+
+
 <script>
 /* ============================================================
    CONFIG & STATE
@@ -607,17 +621,12 @@ const confirmCancel  = document.getElementById('confirm-cancel');
 const confirmExit    = document.getElementById('confirm-exit');
 
 function doLogout(){
-  try { if (accessToken) google.accounts.oauth2.revoke(accessToken, ()=>{}); } catch(e){}
-  accessToken = null;
-  userInfo = null;
-  items = [];
-  results = {};
-  driveFiles = [];
-  currentFileId = null;
-  tokenClient = google.accounts.oauth2.initTokenClient({ client_id: GOOGLE_CLIENT_ID, scope: SCOPES, callback: handleTokenResponse });
+  if (accessToken) google.accounts.oauth2.revoke(accessToken, ()=>{});
+  accessToken = null; userInfo = null; items = []; results = {}; driveFiles = [];
+  tokenClient = null;
+  setTimeout(() => { tokenClient = google.accounts.oauth2.initTokenClient({ client_id: GOOGLE_CLIENT_ID, scope: SCOPES, callback: handleTokenResponse }); }, 100);
   showLogin();
 }
-
 logoutBtn.addEventListener('click', () => { confirmOverlay.classList.add('visible'); });
 confirmCancel.addEventListener('click', () => { confirmOverlay.classList.remove('visible'); });
 confirmExit.addEventListener('click', () => { confirmOverlay.classList.remove('visible'); doLogout(); });
@@ -1164,14 +1173,6 @@ function historyHtml(name){
   if (!h.length) return `<div class="history-box">📊 <span style="color:var(--text-faint);font-size:var(--xs)">No history yet</span></div>`;
   return `<div class="history-box">📊 ${h.slice(-4).map(x => `<span class="hist-tag">${x.month}: <strong>${x.close}</strong></span>`).join('')}</div>`;
 }
-
-window.addEventListener('beforeunload', e => {
-  if (Object.keys(results).length > 0) {
-    e.preventDefault();
-    e.returnValue = 'You have unsaved inventory progress. Are you sure you want to leave?';
-  }
-});
-
 function launchConfetti(){
   const colors = ['#2d7d46','#4caf6e','#ffd700','#ff6b6b','#4fc3f7','#ce93d8'];
   for (let i=0; i<60; i++){
@@ -1183,19 +1184,6 @@ function launchConfetti(){
   }
 }
 </script>
-
-<!-- Exit Confirmation Modal -->
-<div class="confirm-overlay" id="confirm-overlay">
-  <div class="confirm-card">
-    <div class="confirm-icon">🚪</div>
-    <div class="confirm-title">Sign out?</div>
-    <div class="confirm-msg">Any unsaved progress will be lost.<br>Are you sure you want to exit?</div>
-    <div class="confirm-btns">
-      <button class="confirm-btn-cancel" id="confirm-cancel">Stay</button>
-      <button class="confirm-btn-exit" id="confirm-exit">Sign Out</button>
-    </div>
-  </div>
-</div>
 
 </body>
 </html>
