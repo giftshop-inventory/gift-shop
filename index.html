@@ -607,23 +607,21 @@ const confirmCancel  = document.getElementById('confirm-cancel');
 const confirmExit    = document.getElementById('confirm-exit');
 
 function doLogout(){
-  if (accessToken) google.accounts.oauth2.revoke(accessToken, ()=>{});
-  accessToken = null; userInfo = null; items = []; results = {}; driveFiles = [];
-  tokenClient = null;
-  setTimeout(() => { tokenClient = google.accounts.oauth2.initTokenClient({ client_id: GOOGLE_CLIENT_ID, scope: SCOPES, callback: handleTokenResponse }); }, 100);
+  try { if (accessToken) google.accounts.oauth2.revoke(accessToken, ()=>{}); } catch(e){}
+  accessToken = null;
+  userInfo = null;
+  items = [];
+  results = {};
+  driveFiles = [];
+  currentFileId = null;
+  tokenClient = google.accounts.oauth2.initTokenClient({ client_id: GOOGLE_CLIENT_ID, scope: SCOPES, callback: handleTokenResponse });
   showLogin();
 }
+
 logoutBtn.addEventListener('click', () => { confirmOverlay.classList.add('visible'); });
 confirmCancel.addEventListener('click', () => { confirmOverlay.classList.remove('visible'); });
 confirmExit.addEventListener('click', () => { confirmOverlay.classList.remove('visible'); doLogout(); });
 confirmOverlay.addEventListener('click', e => { if (e.target === confirmOverlay) confirmOverlay.classList.remove('visible'); });
-
-window.addEventListener('beforeunload', e => {
-  if (Object.keys(results).length > 0) {
-    e.preventDefault();
-    e.returnValue = 'You have unsaved inventory progress. Are you sure you want to leave?';
-  }
-});
 
 function showLogin(){ loginScreen.classList.add('active'); appScreen.classList.remove('active'); loginScreen.style.display='flex'; appScreen.style.display='none'; }
 function showApp(){
@@ -1166,6 +1164,14 @@ function historyHtml(name){
   if (!h.length) return `<div class="history-box">📊 <span style="color:var(--text-faint);font-size:var(--xs)">No history yet</span></div>`;
   return `<div class="history-box">📊 ${h.slice(-4).map(x => `<span class="hist-tag">${x.month}: <strong>${x.close}</strong></span>`).join('')}</div>`;
 }
+
+window.addEventListener('beforeunload', e => {
+  if (Object.keys(results).length > 0) {
+    e.preventDefault();
+    e.returnValue = 'You have unsaved inventory progress. Are you sure you want to leave?';
+  }
+});
+
 function launchConfetti(){
   const colors = ['#2d7d46','#4caf6e','#ffd700','#ff6b6b','#4fc3f7','#ce93d8'];
   for (let i=0; i<60; i++){
