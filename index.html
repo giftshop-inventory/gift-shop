@@ -2215,6 +2215,54 @@
                 padding-bottom: calc(2px + env(safe-area-inset-bottom));
             }
         }
+
+        
+    </style>
+    <style>
+        /* Make the input row slimmer and prevent overflow */
+.inp-row {
+  gap: 6px;                 /* tighter gap between Add & Close */
+  margin-bottom: 4px;
+}
+
+.inp-col {
+  gap: 1px;
+}
+
+/* Reduce stepper button size */
+.stepper-btn {
+  width: 28px;
+  height: 34px;
+  font-size: 16px;
+}
+
+/* Compact the number input */
+.card-input {
+  padding: 7px 2px;
+  font-size: 0.95rem;       /* slightly smaller than previous --lg */
+}
+
+/* Give more room to the Close column (since it’s used more) */
+.inp-row .inp-col:first-child {
+  flex: 0.7;                /* Add column narrower */
+}
+.inp-row .inp-col:last-child {
+  flex: 1.3;                /* Close column wider */
+}
+
+/* Optional: slightly reduce card padding to free up horizontal space */
+.inv-card {
+  padding: 10px 8px;        /* was 12px 10px */
+  max-height: 56vh;         /* was 58vh */
+}
+
+/* Optional: shrink stat chips and labels to match the compact look */
+.stat-chip {
+  padding: 6px 6px;
+}
+.stat-label {
+  font-size: 7px;
+}
     </style>
 </head>
 <body>
