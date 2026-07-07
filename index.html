@@ -1994,900 +1994,907 @@
         </div>
     </div>
 
-    <script>
-        // ============ SUPABASE SETUP ============
-        const SUPABASE_URL = 'https://aqybyckpfphnaxybkdmq.supabase.co';
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFxeWJ5Y2twZnBobmF4eWJrZG1xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMzMDg1OTksImV4cCI6MjA5ODg4NDU5OX0.KwoV1kPSG2GsDRfd6ppDLgLyb3i2QsLBlzck3zbUArE';
-        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+<script>
+    // ============ SUPABASE SETUP ============
+    const SUPABASE_URL = 'https://aqybyckpfphnaxybkdmq.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFxeWJ5Y2twZnBobmF4eWJrZG1xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMzMDg1OTksImV4cCI6MjA5ODg4NDU5OX0.KwoV1kPSG2GsDRfd6ppDLgLyb3i2QsLBlzck3zbUArE';
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        // ============ GLOBALS ============
-        const THEME_KEY = 'giftshop_theme';
-        let currentUser = null;
-        let items = [], filteredItems = [];
-        let currentIndex = 0, results = {};
-        let activeSessionId = null, activeSessionName = '';
-        let isProcessing = false, undoStack = [];
-        let activeCategory = 'All', searchQuery = '';
-        let selectedReviewItems = new Set();
-        let editingProductName = null;   // ← ADD THIS LINE
+    // ============ GLOBALS ============
+    const THEME_KEY = 'giftshop_theme';
+    let currentUser = null;
+    let items = [], filteredItems = [];
+    let currentIndex = 0, results = {};
+    let activeSessionId = null, activeSessionName = '';
+    let isProcessing = false, undoStack = [];
+    let activeCategory = 'All', searchQuery = '';
+    let selectedReviewItems = new Set();
+    let editingProductName = null;   // ← this was missing!
+    let voiceActive = false, recognition = null;
+    let voiceErrorCount = 0, voiceRestartTimeout = null;
+    let summaryChart = null;
+    let itemNotes = {};
 
-        let voiceActive = false, recognition = null;
-        let voiceErrorCount = 0, voiceRestartTimeout = null;
-        let summaryChart = null;
-        let itemNotes = {}; // localStorage temporarily
+    // ============ DOM ELEMENTS ============
+    const $ = id => document.getElementById(id);
+    const loginScreen = $('login-screen'), appScreen = $('app-screen');
+    const loginBtn = $('login-btn'), logoutBtn = $('logout-btn');
+    const userAvatar = $('user-avatar');
+    const swipeZone = $('swipe-zone'), progressFill = $('progress-fill'), progressLabel = $('progress-label');
+    const generateBtn = $('generate-btn'), generateBtn2 = $('generate-btn-2'), csvBtn = $('csv-btn');
+    const reportResult = $('report-result'), resultBanner2 = $('result-banner-2');
+    const loadingOverlay = $('loading-overlay'), loadingText = $('loading-text');
+    const toastEl = $('toast'), undoBar = $('undo-bar'), undoMsg = $('undo-msg'), undoBtn = $('undo-btn');
+    const editModal = $('edit-modal'), modalAdd = $('modal-add'), modalClose = $('modal-close');
+    const modalCancel = $('modal-cancel'), modalSave = $('modal-save'), modalTitle = $('modal-title'), modalSub = $('modal-sub');
+    const catFilterBar = $('cat-filter-bar'), searchBarWrap = $('search-bar-wrap'), searchInput = $('search-input'), searchClear = $('search-clear');
+    const searchToggle = $('search-toggle');
+    const voiceToggle = $('voice-toggle'), voiceIndicator = $('voice-indicator');
+    const quickStatsBar = $('quick-stats-bar');
+    const bulkModal = $('bulk-modal'), bulkAdd = $('bulk-add'), bulkClose = $('bulk-close');
+    const bulkCancel = $('bulk-cancel'), bulkSave = $('bulk-save'), bulkModalSub = $('bulk-modal-sub');
+    const sortSelect = $('sort-select');
+    const confirmOverlay = $('confirm-overlay'), confirmCancel = $('confirm-cancel'), confirmExit = $('confirm-exit');
+    const importBtn = $('import-btn'), importFileInput = $('import-file-input');
 
-        // ============ DOM ELEMENTS ============
-        const $ = id => document.getElementById(id);
-        const loginScreen = $('login-screen'), appScreen = $('app-screen');
-        const loginBtn = $('login-btn'), logoutBtn = $('logout-btn');
-        const userAvatar = $('user-avatar');
-        const swipeZone = $('swipe-zone'), progressFill = $('progress-fill'), progressLabel = $('progress-label');
-        const generateBtn = $('generate-btn'), generateBtn2 = $('generate-btn-2'), csvBtn = $('csv-btn');
-        const reportResult = $('report-result'), resultBanner2 = $('result-banner-2');
-        const loadingOverlay = $('loading-overlay'), loadingText = $('loading-text');
-        const toastEl = $('toast'), undoBar = $('undo-bar'), undoMsg = $('undo-msg'), undoBtn = $('undo-btn');
-        const editModal = $('edit-modal'), modalAdd = $('modal-add'), modalClose = $('modal-close');
-        const modalCancel = $('modal-cancel'), modalSave = $('modal-save'), modalTitle = $('modal-title'), modalSub = $('modal-sub');
-        const catFilterBar = $('cat-filter-bar'), searchBarWrap = $('search-bar-wrap'), searchInput = $('search-input'), searchClear = $('search-clear');
-        const searchToggle = $('search-toggle');
-        const voiceToggle = $('voice-toggle'), voiceIndicator = $('voice-indicator');
-        const quickStatsBar = $('quick-stats-bar');
-        const bulkModal = $('bulk-modal'), bulkAdd = $('bulk-add'), bulkClose = $('bulk-close');
-        const bulkCancel = $('bulk-cancel'), bulkSave = $('bulk-save'), bulkModalSub = $('bulk-modal-sub');
-        const sortSelect = $('sort-select');
-        const confirmOverlay = $('confirm-overlay'), confirmCancel = $('confirm-cancel'), confirmExit = $('confirm-exit');
-        const importBtn = $('import-btn'), importFileInput = $('import-file-input');
-
-        // ============ THEME ============
-        (function() {
-            const html = document.documentElement;
-            let theme = 'light';
-            try { theme = localStorage.getItem(THEME_KEY) || (window.matchMedia('(prefers-color-scheme:dark)').matches ? 'dark' : 'light'); } catch (e) {}
-            html.setAttribute('data-theme', theme);
-            function updateIcons() { document.querySelectorAll('[data-theme-toggle]').forEach(b => b.textContent = theme === 'dark' ? '☀️' : '🌙'); }
-            updateIcons();
-            document.addEventListener('click', e => {
-                if (e.target.closest('[data-theme-toggle]')) {
-                    theme = theme === 'dark' ? 'light' : 'dark';
-                    html.setAttribute('data-theme', theme);
-                    try { localStorage.setItem(THEME_KEY, theme); } catch (e) {}
-                    updateIcons();
-                    if (summaryChart && document.getElementById('view-summary').classList.contains('active')) renderSummary();
-                }
-            });
-        })();
-
-        // ============ LOADING & TOAST ============
-        function showLoading(t = 'Loading…') { loadingText.textContent = t; loadingOverlay.classList.remove('hidden'); }
-        function hideLoading() { loadingOverlay.classList.add('hidden'); }
-        let toastTimer;
-        function showToast(msg) { clearTimeout(toastTimer); toastEl.textContent = msg; toastEl.classList.add('show'); toastTimer = setTimeout(() => toastEl.classList.remove('show'), 2200); }
-
-        // ============ AUTH ============
-        async function signInWithGoogle() {
-            const { data, error } = await supabase.auth.signInWithOAuth({
-                provider: 'google',
-                options: { redirectTo: 'https://giftshop-inventory.github.io/gift-shop/' },
-            });
-            if (error) alert('Login error: ' + error.message);
-        }
-loginBtn.addEventListener('click', () => {
-  alert('Login button clicked');
-  signInWithGoogle();
-});
-        supabase.auth.onAuthStateChange(async (event, session) => {
-            if (event === 'SIGNED_IN') {
-                currentUser = session.user;
-                await supabase.from('profiles').upsert({
-                    id: currentUser.id,
-                    full_name: currentUser.user_metadata?.full_name || currentUser.email,
-                    avatar_url: currentUser.user_metadata?.avatar_url || '',
-                }, { onConflict: 'id' });
-                if (currentUser.user_metadata?.avatar_url) {
-                    userAvatar.src = currentUser.user_metadata.avatar_url;
-                    userAvatar.style.display = 'block';
-                }
-                hideLoading();
-                showApp();
-                initVoice();
-                await loadProductsFromSupabase();
-            } else if (event === 'SIGNED_OUT') {
-                currentUser = null;
-                userAvatar.style.display = 'none';
-                showLogin();
+    // ============ THEME ============
+    (function() {
+        const html = document.documentElement;
+        let theme = 'light';
+        try { theme = localStorage.getItem(THEME_KEY) || (window.matchMedia('(prefers-color-scheme:dark)').matches ? 'dark' : 'light'); } catch (e) {}
+        html.setAttribute('data-theme', theme);
+        function updateIcons() { document.querySelectorAll('[data-theme-toggle]').forEach(b => b.textContent = theme === 'dark' ? '☀️' : '🌙'); }
+        updateIcons();
+        document.addEventListener('click', e => {
+            if (e.target.closest('[data-theme-toggle]')) {
+                theme = theme === 'dark' ? 'light' : 'dark';
+                html.setAttribute('data-theme', theme);
+                try { localStorage.setItem(THEME_KEY, theme); } catch (e) {}
+                updateIcons();
+                if (summaryChart && document.getElementById('view-summary').classList.contains('active')) renderSummary();
             }
         });
+    })();
 
-        function doLogout() { supabase.auth.signOut(); }
-        logoutBtn.addEventListener('click', () => confirmOverlay.classList.add('visible'));
-        confirmCancel.addEventListener('click', () => confirmOverlay.classList.remove('visible'));
-        confirmExit.addEventListener('click', () => { confirmOverlay.classList.remove('visible'); doLogout(); });
-        confirmOverlay.addEventListener('click', e => { if (e.target === confirmOverlay) confirmOverlay.classList.remove('visible'); });
+    // ============ LOADING & TOAST ============
+    function showLoading(t = 'Loading…') { loadingText.textContent = t; loadingOverlay.classList.remove('hidden'); }
+    function hideLoading() { loadingOverlay.classList.add('hidden'); }
+    let toastTimer;
+    function showToast(msg) { clearTimeout(toastTimer); toastEl.textContent = msg; toastEl.classList.add('show'); toastTimer = setTimeout(() => toastEl.classList.remove('show'), 2200); }
 
-        function showLogin() { loginScreen.classList.add('active'); appScreen.classList.remove('active'); }
-        function showApp() { hideLoading(); loginScreen.classList.remove('active'); appScreen.classList.add('active'); }
-
-        // ============ LOAD PRODUCTS FROM SUPABASE ============
-        async function loadProductsFromSupabase() {
-            showLoading('Loading products…');
-            const { data, error } = await supabase.from('products').select('*').eq('user_id', currentUser.id);
-            if (error) { showToast('Error loading products: ' + error.message); hideLoading(); return; }
-            if (data.length === 0) {
-                items = [];
-                swipeZone.innerHTML = `<div class="empty-state"><div class="empty-icon">📂</div><h3>No products found</h3><p>Click “Import Excel” to load your inventory sheet.</p></div>`;
-                hideLoading();
-                return;
-            }
-            items = data.map(p => ({
-                id: p.id,
-                name: p.name,
-                category: p.category,
-                price: p.price,
-                sheet: p.sheet_name || '',
-                open: p.opening || 0,
-                add: 0,
-                close: 0,
-            }));
-            hideLoading();
-            buildCategoryFilter();
-            buildSearchBar();
-            await startSwipe();
-        }
-
-        // ============ EXCEL IMPORT ============
-        importBtn.addEventListener('click', () => importFileInput.click());
-        importFileInput.addEventListener('change', async (e) => {
-            const file = e.target.files[0];
-            if (!file) return;
-            showLoading('Importing Excel…');
-            try {
-                const buf = await file.arrayBuffer();
-                const wb = XLSX.read(buf, { type: 'array' });
-                const parsed = parseWorkbookToArray(wb);
-                // Save to Supabase
-                for (const prod of parsed) {
-                    const { error } = await supabase.from('products').upsert({
-                        user_id: currentUser.id,
-                        name: prod.name,
-                        category: prod.category,
-                        price: prod.price,
-                        sheet_name: prod.sheet,
-                        opening: prod.open,
-                    }, { onConflict: 'user_id, name' });
-                    if (error) console.error('Insert error:', error);
-                }
-                await loadProductsFromSupabase();
-                showToast(`✅ Imported ${parsed.length} products`);
-            } catch (err) {
-                showToast('Error: ' + err.message);
-                console.error(err);
-            }
-            hideLoading();
-            importFileInput.value = '';
+    // ============ AUTH (with debug logs) ============
+    async function signInWithGoogle() {
+        console.log('signInWithGoogle called');
+        const { data, error } = await supabase.auth.signInWithOAuth({
+            provider: 'google',
+            options: { redirectTo: 'https://giftshop-inventory.github.io/gift-shop/' },
         });
+        if (error) {
+            console.error('Login error:', error);
+            alert('Login error: ' + error.message);
+        } else {
+            console.log('OAuth redirect initiated', data);
+        }
+    }
 
-        function parseWorkbookToArray(wb) {
-            const itemsArr = [];
-            const SKIP = ['TOTAL', 'GIFT SHOP', 'INVENTORY', 'OPENING', 'CLOSING', 'PRODUCT', 'ITEM', 'NAME', 'DESCRIPTION'];
-            const CATS = ['CANS', 'BOTTLES', 'ENERGY', 'CHIPS', 'ICE CREAM', 'GUM', 'ACCESSORIES', 'MEDICINES', 'TOYS', 'HATS', 'HOODIE', 'POOL', 'SMOKE', 'CANDY', 'SNACK', 'DRINK', 'BEVERAGE', 'CLOTHING'];
-            wb.SheetNames.forEach(sn => {
-                const sheet = wb.Sheets[sn];
-                const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
-                let cat = sn;
-                rows.forEach(row => {
-                    if (!row || row.length < 2) return;
-                    const name = String(row[0] || '').trim();
-                    if (!name) return;
-                    const up = name.toUpperCase();
-                    if (SKIP.some(k => up.includes(k))) return;
-                    if (CATS.some(k => up.includes(k))) { cat = name; return; }
-                    const open = parseFloat(row[1]) || 0, add = parseFloat(row[2]) || 0, close = parseFloat(row[3]) || 0, price = parseFloat(row[5]) || 0;
-                    if (open === 0 && price === 0) return;
-                    itemsArr.push({ name, category: cat, open, add, close, price, sheet: sn });
-                });
+    loginBtn.addEventListener('click', () => {
+        console.log('Login button clicked');
+        signInWithGoogle();
+    });
+
+    // Auth state listener – put it early so it catches the redirect
+    supabase.auth.onAuthStateChange(async (event, session) => {
+        console.log('Auth state change:', event, session);
+        if (event === 'SIGNED_IN') {
+            currentUser = session.user;
+            console.log('User signed in:', currentUser);
+            await supabase.from('profiles').upsert({
+                id: currentUser.id,
+                full_name: currentUser.user_metadata?.full_name || currentUser.email,
+                avatar_url: currentUser.user_metadata?.avatar_url || '',
+            }, { onConflict: 'id' });
+            if (currentUser.user_metadata?.avatar_url) {
+                userAvatar.src = currentUser.user_metadata.avatar_url;
+                userAvatar.style.display = 'block';
+            }
+            hideLoading();
+            showApp();
+            initVoice();
+            await loadProductsFromSupabase();
+        } else if (event === 'SIGNED_OUT') {
+            currentUser = null;
+            userAvatar.style.display = 'none';
+            showLogin();
+        }
+    });
+
+    // Check for existing session on page load (in case of refresh)
+    (async () => {
+        const { data: { session } } = await supabase.auth.getSession();
+        console.log('Initial session check:', session);
+        if (session) {
+            // The onAuthStateChange listener will fire, but we can also force it here if needed
+        }
+    })();
+
+    function doLogout() { supabase.auth.signOut(); }
+    logoutBtn.addEventListener('click', () => confirmOverlay.classList.add('visible'));
+    confirmCancel.addEventListener('click', () => confirmOverlay.classList.remove('visible'));
+    confirmExit.addEventListener('click', () => { confirmOverlay.classList.remove('visible'); doLogout(); });
+    confirmOverlay.addEventListener('click', e => { if (e.target === confirmOverlay) confirmOverlay.classList.remove('visible'); });
+
+    function showLogin() { loginScreen.classList.add('active'); appScreen.classList.remove('active'); }
+    function showApp() { hideLoading(); loginScreen.classList.remove('active'); appScreen.classList.add('active'); }
+
+    // ============ LOAD PRODUCTS FROM SUPABASE ============
+    async function loadProductsFromSupabase() {
+        showLoading('Loading products…');
+        const { data, error } = await supabase.from('products').select('*').eq('user_id', currentUser.id);
+        if (error) { showToast('Error loading products: ' + error.message); hideLoading(); return; }
+        if (data.length === 0) {
+            items = [];
+            swipeZone.innerHTML = `<div class="empty-state"><div class="empty-icon">📂</div><h3>No products found</h3><p>Click “Import Excel” to load your inventory sheet.</p></div>`;
+            hideLoading();
+            return;
+        }
+        items = data.map(p => ({
+            id: p.id,
+            name: p.name,
+            category: p.category,
+            price: p.price,
+            sheet: p.sheet_name || '',
+            open: p.opening || 0,
+            add: 0,
+            close: 0,
+        }));
+        hideLoading();
+        buildCategoryFilter();
+        buildSearchBar();
+        await startSwipe();
+    }
+
+    // ============ EXCEL IMPORT ============
+    importBtn.addEventListener('click', () => importFileInput.click());
+    importFileInput.addEventListener('change', async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        showLoading('Importing Excel…');
+        try {
+            const buf = await file.arrayBuffer();
+            const wb = XLSX.read(buf, { type: 'array' });
+            const parsed = parseWorkbookToArray(wb);
+            for (const prod of parsed) {
+                const { error } = await supabase.from('products').upsert({
+                    user_id: currentUser.id,
+                    name: prod.name,
+                    category: prod.category,
+                    price: prod.price,
+                    sheet_name: prod.sheet,
+                    opening: prod.open,
+                }, { onConflict: 'user_id, name' });
+                if (error) console.error('Insert error:', error);
+            }
+            await loadProductsFromSupabase();
+            showToast(`✅ Imported ${parsed.length} products`);
+        } catch (err) {
+            showToast('Error: ' + err.message);
+            console.error(err);
+        }
+        hideLoading();
+        importFileInput.value = '';
+    });
+
+    function parseWorkbookToArray(wb) {
+        const itemsArr = [];
+        const SKIP = ['TOTAL', 'GIFT SHOP', 'INVENTORY', 'OPENING', 'CLOSING', 'PRODUCT', 'ITEM', 'NAME', 'DESCRIPTION'];
+        const CATS = ['CANS', 'BOTTLES', 'ENERGY', 'CHIPS', 'ICE CREAM', 'GUM', 'ACCESSORIES', 'MEDICINES', 'TOYS', 'HATS', 'HOODIE', 'POOL', 'SMOKE', 'CANDY', 'SNACK', 'DRINK', 'BEVERAGE', 'CLOTHING'];
+        wb.SheetNames.forEach(sn => {
+            const sheet = wb.Sheets[sn];
+            const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
+            let cat = sn;
+            rows.forEach(row => {
+                if (!row || row.length < 2) return;
+                const name = String(row[0] || '').trim();
+                if (!name) return;
+                const up = name.toUpperCase();
+                if (SKIP.some(k => up.includes(k))) return;
+                if (CATS.some(k => up.includes(k))) { cat = name; return; }
+                const open = parseFloat(row[1]) || 0, add = parseFloat(row[2]) || 0, close = parseFloat(row[3]) || 0, price = parseFloat(row[5]) || 0;
+                if (open === 0 && price === 0) return;
+                itemsArr.push({ name, category: cat, open, add, close, price, sheet: sn });
             });
-            return itemsArr;
-        }
+        });
+        return itemsArr;
+    }
 
-        // ============ CATEGORY FILTER & SEARCH ============
-        function buildCategoryFilter() {
-            const cats = ['All', ...new Set(items.map(i => i.category))];
-            catFilterBar.innerHTML = '';
-            cats.forEach(cat => {
-                const ch = document.createElement('button');
-                ch.className = 'cat-chip' + (cat === 'All' ? ' active' : '');
-                ch.textContent = cat === 'All' ? `🗂 All (${items.length})` : cat;
-                ch.addEventListener('click', () => {
-                    activeCategory = cat;
-                    document.querySelectorAll('.cat-chip').forEach(c => c.classList.remove('active'));
-                    ch.classList.add('active');
-                    applyFilter();
-                    const inp = document.getElementById('inp-close');
-                    if (inp) inp.focus();
-                });
-                catFilterBar.appendChild(ch);
+    // ============ CATEGORY FILTER & SEARCH ============
+    function buildCategoryFilter() {
+        const cats = ['All', ...new Set(items.map(i => i.category))];
+        catFilterBar.innerHTML = '';
+        cats.forEach(cat => {
+            const ch = document.createElement('button');
+            ch.className = 'cat-chip' + (cat === 'All' ? ' active' : '');
+            ch.textContent = cat === 'All' ? `🗂 All (${items.length})` : cat;
+            ch.addEventListener('click', () => {
+                activeCategory = cat;
+                document.querySelectorAll('.cat-chip').forEach(c => c.classList.remove('active'));
+                ch.classList.add('active');
+                applyFilter();
+                const inp = document.getElementById('inp-close');
+                if (inp) inp.focus();
             });
-            catFilterBar.style.display = cats.length > 2 ? 'flex' : 'none';
+            catFilterBar.appendChild(ch);
+        });
+        catFilterBar.style.display = cats.length > 2 ? 'flex' : 'none';
+    }
+
+    function buildSearchBar() { searchBarWrap.classList.remove('open'); searchInput.value = ''; searchQuery = ''; }
+    searchToggle.addEventListener('click', () => { searchBarWrap.classList.toggle('open'); if (searchBarWrap.classList.contains('open')) searchInput.focus(); });
+    searchInput.addEventListener('input', () => { searchQuery = searchInput.value.trim().toLowerCase(); searchClear.classList.toggle('show', !!searchQuery); applyFilter(); });
+    searchClear.addEventListener('click', () => { searchInput.value = ''; searchQuery = ''; searchClear.classList.remove('show'); applyFilter(); });
+
+    function applyFilter() {
+        if (items.length === 0) return;
+        const remaining = items.filter(item => {
+            const catOk = activeCategory === 'All' || item.category === activeCategory;
+            const searchOk = !searchQuery || item.name.toLowerCase().includes(searchQuery) || item.category.toLowerCase().includes(searchQuery);
+            return catOk && searchOk;
+        });
+        if (searchQuery && remaining.length > 0) {
+            const firstMatch = items.findIndex(i => remaining[0].name === i.name);
+            if (firstMatch !== -1 && firstMatch !== currentIndex) { currentIndex = firstMatch; renderCard(); return; }
         }
+        filteredItems = remaining;
+        renderCard();
+    }
 
-        function buildSearchBar() { searchBarWrap.classList.remove('open'); searchInput.value = ''; searchQuery = ''; }
-        searchToggle.addEventListener('click', () => { searchBarWrap.classList.toggle('open'); if (searchBarWrap.classList.contains('open')) searchInput.focus(); });
-        searchInput.addEventListener('input', () => { searchQuery = searchInput.value.trim().toLowerCase(); searchClear.classList.toggle('show', !!searchQuery); applyFilter(); });
-        searchClear.addEventListener('click', () => { searchInput.value = ''; searchQuery = ''; searchClear.classList.remove('show'); applyFilter(); });
+    // ============ NOTES ============
+    function loadNotes() { try { itemNotes = JSON.parse(localStorage.getItem('giftshop_notes') || '{}'); } catch (e) { itemNotes = {}; } }
+    function saveNotes() { try { localStorage.setItem('giftshop_notes', JSON.stringify(itemNotes)); } catch (e) {} }
 
-        function applyFilter() {
-            if (items.length === 0) return;
-            const remaining = items.filter(item => {
-                const catOk = activeCategory === 'All' || item.category === activeCategory;
-                const searchOk = !searchQuery || item.name.toLowerCase().includes(searchQuery) || item.category.toLowerCase().includes(searchQuery);
-                return catOk && searchOk;
+    // ============ SESSION & COUNTS ============
+    async function createOrGetActiveSession() {
+        const now = new Date();
+        const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+        const sessionName = `${months[now.getMonth()]} ${now.getFullYear()}`;
+        const { data: existing } = await supabase.from('sessions').select('id').eq('name', sessionName).eq('user_id', currentUser.id).single();
+        if (existing) {
+            activeSessionId = existing.id;
+        } else {
+            const { data: newSession } = await supabase.from('sessions').insert({ user_id: currentUser.id, name: sessionName }).select().single();
+            if (newSession) activeSessionId = newSession.id;
+        }
+        activeSessionName = sessionName;
+        await loadSessionCounts();
+    }
+
+    async function loadSessionCounts() {
+        if (!activeSessionId) return;
+        const { data: counts } = await supabase.from('counts').select('product_id, added, closing, notes').eq('session_id', activeSessionId);
+        results = {};
+        if (counts) {
+            counts.forEach(c => {
+                const product = items.find(i => i.id === c.product_id);
+                if (product) results[product.name] = { close: c.closing, add: c.added, sheet: product.sheet, notes: c.notes || '' };
             });
-            if (searchQuery && remaining.length > 0) {
-                const firstMatch = items.findIndex(i => remaining[0].name === i.name);
-                if (firstMatch !== -1 && firstMatch !== currentIndex) { currentIndex = firstMatch; renderCard(); return; }
-            }
-            filteredItems = remaining;
-            renderCard();
         }
+        updateQuickStats();
+    }
 
-        // ============ NOTES (temporary localStorage) ============
-        function loadNotes() { try { itemNotes = JSON.parse(localStorage.getItem('giftshop_notes') || '{}'); } catch (e) { itemNotes = {}; } }
-        function saveNotes() { try { localStorage.setItem('giftshop_notes', JSON.stringify(itemNotes)); } catch (e) {} }
+    async function startSwipe() {
+        currentIndex = 0; results = {}; undoStack = []; selectedReviewItems = new Set();
+        loadNotes();
+        generateBtn.disabled = true; csvBtn.disabled = true;
+        reportResult.className = 'report-result';
+        await createOrGetActiveSession();
+        updateQuickStats();
+        renderCard();
+    }
 
-        // ============ SESSION & COUNTS ============
-        async function createOrGetActiveSession() {
-            const now = new Date();
-            const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-            const sessionName = `${months[now.getMonth()]} ${now.getFullYear()}`;
-            const { data: existing } = await supabase.from('sessions').select('id').eq('name', sessionName).eq('user_id', currentUser.id).single();
-            if (existing) {
-                activeSessionId = existing.id;
-            } else {
-                const { data: newSession } = await supabase.from('sessions').insert({ user_id: currentUser.id, name: sessionName }).select().single();
-                if (newSession) activeSessionId = newSession.id;
-            }
-            activeSessionName = sessionName;
-            await loadSessionCounts();
+    // ============ RENDER CARD ============
+    function renderCard() {
+        updateProgress();
+        updateQuickStats();
+        if (items.length === 0) {
+            swipeZone.innerHTML = '<div class="empty-state"><div class="empty-icon">📂</div><h3>No products loaded</h3><p>Click “Import Excel” to load your inventory sheet.</p></div>';
+            return;
         }
-
-        async function loadSessionCounts() {
-            if (!activeSessionId) return;
-            const { data: counts } = await supabase.from('counts').select('product_id, added, closing, notes').eq('session_id', activeSessionId);
-            results = {};
-            if (counts) {
-                counts.forEach(c => {
-                    const product = items.find(i => i.id === c.product_id);
-                    if (product) results[product.name] = { close: c.closing, add: c.added, sheet: product.sheet, notes: c.notes || '' };
-                });
-            }
+        if (currentIndex >= items.length) {
+            swipeZone.innerHTML = `<div class="done-card"><div class="done-emoji">🎉</div><div class="done-title">All Done!</div><div class="done-sub">Saved ${Object.keys(results).length} of ${items.length} items.</div><button class="btn-restart" onclick="startSwipe()">↺ Start Over</button></div>`;
+            launchConfetti();
             updateQuickStats();
+            return;
         }
-
-        // ============ START SWIPE ============
-        async function startSwipe() {
-            currentIndex = 0; results = {}; undoStack = []; selectedReviewItems = new Set();
-            loadNotes();
-            generateBtn.disabled = true; csvBtn.disabled = true;
-            reportResult.className = 'report-result';
-            await createOrGetActiveSession();
-            updateQuickStats();
-            renderCard();
-        }
-
-        // ============ RENDER CARD ============
-        function renderCard() {
-            updateProgress();
-            updateQuickStats();
-            if (items.length === 0) {
-                swipeZone.innerHTML = '<div class="empty-state"><div class="empty-icon">📂</div><h3>No products loaded</h3><p>Click “Import Excel” to load your inventory sheet.</p></div>';
-                return;
-            }
-            if (currentIndex >= items.length) {
-                swipeZone.innerHTML = `<div class="done-card"><div class="done-emoji">🎉</div><div class="done-title">All Done!</div><div class="done-sub">Saved ${Object.keys(results).length} of ${items.length} items.</div><button class="btn-restart" onclick="startSwipe()">↺ Start Over</button></div>`;
-                launchConfetti();
-                updateQuickStats();
-                return;
-            }
-            const item = items[currentIndex];
-            const existingNote = itemNotes[item.name] || '';
-            const lowThresh = getLowStockThreshold(item);
-            const isLow = isLowStock(item, item.close);
-            swipeZone.innerHTML = `
-            <div class="card-stack">
-              <div class="inv-card${isLow ? ' low-stock' : ''}" id="cur-card">
-                <span class="swipe-ind save" id="ind-save">✅ Save</span>
-                <span class="swipe-ind skip" id="ind-skip">⏭ Skip</span>
-                <div class="card-cat-pill">📁 ${esc(item.category)}${isLow ? `<span class="low-stock-badge">⚠ Low Stock (≤${lowThresh})</span>` : ''}</div>
-                <div class="card-name-row">${prodIcon(item.name)}<div class="card-prod-name">${esc(item.name)}</div></div>
-                ${historyHtml(item.name)}
-                <div class="card-stats">
-                  <div class="stat-chip"><div class="stat-label">Opening</div><div class="stat-val">${item.open}</div></div>
-                  <div class="stat-chip"><div class="stat-label">Last Close</div><div class="stat-val">${item.close||'—'}</div></div>
-                  <div class="stat-chip"><div class="stat-label">Price</div><div class="stat-val">$${item.price.toFixed(2)}</div></div>
-                </div>
-                <div class="quick-presets">
-                  <span class="preset-label">Quick Add:</span>
-                  <button class="preset-chip" data-preset="1">1</button><button class="preset-chip" data-preset="5">5</button><button class="preset-chip" data-preset="10">10</button><button class="preset-chip" data-preset="20">20</button><button class="preset-chip" data-preset="50">50</button>
-                </div>
-                <div class="inp-row">
-                  <div class="inp-col"><div class="inp-col-label">📥 Add</div><div class="inp-wrap-sm"><button class="stepper-btn" data-target="inp-add" data-delta="-1">−</button><input class="card-input" type="number" id="inp-add" value="0" min="0" inputmode="numeric" /><button class="stepper-btn" data-target="inp-add" data-delta="1">+</button></div></div>
-                  <div class="inp-col"><div class="inp-col-label">📦 Close</div><div class="inp-wrap-sm"><button class="stepper-btn" data-target="inp-close" data-delta="-1">−</button><input class="card-input" type="number" id="inp-close" value="${item.close}" min="0" inputmode="numeric" /><button class="stepper-btn" data-target="inp-close" data-delta="1">+</button></div></div>
-                </div>
-                <div class="notes-row"><textarea class="notes-input" id="inp-notes" placeholder="📝 Quick note…">${esc(existingNote)}</textarea></div>
-                <div class="cost-preview" id="cost-preview">—</div>
-                <div class="card-btns"><button class="btn-skip-c" id="btn-skip">⬅ Skip</button><button class="btn-save-c" id="btn-save">Save ➡</button></div>
-              </div>
+        const item = items[currentIndex];
+        const existingNote = itemNotes[item.name] || '';
+        const lowThresh = getLowStockThreshold(item);
+        const isLow = isLowStock(item, item.close);
+        swipeZone.innerHTML = `
+        <div class="card-stack">
+          <div class="inv-card${isLow ? ' low-stock' : ''}" id="cur-card">
+            <span class="swipe-ind save" id="ind-save">✅ Save</span>
+            <span class="swipe-ind skip" id="ind-skip">⏭ Skip</span>
+            <div class="card-cat-pill">📁 ${esc(item.category)}${isLow ? `<span class="low-stock-badge">⚠ Low Stock (≤${lowThresh})</span>` : ''}</div>
+            <div class="card-name-row">${prodIcon(item.name)}<div class="card-prod-name">${esc(item.name)}</div></div>
+            ${historyHtml(item.name)}
+            <div class="card-stats">
+              <div class="stat-chip"><div class="stat-label">Opening</div><div class="stat-val">${item.open}</div></div>
+              <div class="stat-chip"><div class="stat-label">Last Close</div><div class="stat-val">${item.close||'—'}</div></div>
+              <div class="stat-chip"><div class="stat-label">Price</div><div class="stat-val">$${item.price.toFixed(2)}</div></div>
             </div>
-            <div class="swipe-hint"><span>⬅ Skip <span class="kb-shortcut">← Esc</span></span><span><span class="kb-shortcut">Enter →</span> Save ➡</span></div>`;
+            <div class="quick-presets">
+              <span class="preset-label">Quick Add:</span>
+              <button class="preset-chip" data-preset="1">1</button><button class="preset-chip" data-preset="5">5</button><button class="preset-chip" data-preset="10">10</button><button class="preset-chip" data-preset="20">20</button><button class="preset-chip" data-preset="50">50</button>
+            </div>
+            <div class="inp-row">
+              <div class="inp-col"><div class="inp-col-label">📥 Add</div><div class="inp-wrap-sm"><button class="stepper-btn" data-target="inp-add" data-delta="-1">−</button><input class="card-input" type="number" id="inp-add" value="0" min="0" inputmode="numeric" /><button class="stepper-btn" data-target="inp-add" data-delta="1">+</button></div></div>
+              <div class="inp-col"><div class="inp-col-label">📦 Close</div><div class="inp-wrap-sm"><button class="stepper-btn" data-target="inp-close" data-delta="-1">−</button><input class="card-input" type="number" id="inp-close" value="${item.close}" min="0" inputmode="numeric" /><button class="stepper-btn" data-target="inp-close" data-delta="1">+</button></div></div>
+            </div>
+            <div class="notes-row"><textarea class="notes-input" id="inp-notes" placeholder="📝 Quick note…">${esc(existingNote)}</textarea></div>
+            <div class="cost-preview" id="cost-preview">—</div>
+            <div class="card-btns"><button class="btn-skip-c" id="btn-skip">⬅ Skip</button><button class="btn-save-c" id="btn-save">Save ➡</button></div>
+          </div>
+        </div>
+        <div class="swipe-hint"><span>⬅ Skip <span class="kb-shortcut">← Esc</span></span><span><span class="kb-shortcut">Enter →</span> Save ➡</span></div>`;
 
-            const card = document.getElementById('cur-card');
-            const addInp = document.getElementById('inp-add');
-            const closeInp = document.getElementById('inp-close');
-            const notesInp = document.getElementById('inp-notes');
-            const costPrev = document.getElementById('cost-preview');
-            const indSave = document.getElementById('ind-save');
-            const indSkip = document.getElementById('ind-skip');
+        const card = document.getElementById('cur-card');
+        const addInp = document.getElementById('inp-add');
+        const closeInp = document.getElementById('inp-close');
+        const notesInp = document.getElementById('inp-notes');
+        const costPrev = document.getElementById('cost-preview');
+        const indSave = document.getElementById('ind-save');
+        const indSkip = document.getElementById('ind-skip');
 
-            function updateCost() {
-                const c = parseFloat(closeInp.value) || 0, a = parseFloat(addInp.value) || 0;
-                costPrev.textContent = `Usage: ${Math.max(0, item.open + a - c)} units · Close value: $${(c * item.price).toFixed(2)}`;
-                if (isLowStock(item, c)) card.classList.add('low-stock'); else card.classList.remove('low-stock');
-            }
-            addInp.addEventListener('input', updateCost);
-            closeInp.addEventListener('input', updateCost);
-            notesInp.addEventListener('input', () => { itemNotes[item.name] = notesInp.value; saveNotes(); });
-            updateCost();
-            card.querySelectorAll('.preset-chip').forEach(chip => { chip.addEventListener('click', () => { const val = parseInt(chip.dataset.preset); addInp.value = val; addInp.dispatchEvent(new Event('input')); addInp.focus(); }); });
-            card.querySelectorAll('.stepper-btn').forEach(btn => { let pressTimer; const target = () => document.getElementById(btn.dataset.target); const delta = () => parseInt(btn.dataset.delta); const step = (mult = 1) => { const inp = target(); const v = (parseFloat(inp.value) || 0) + delta() * mult; inp.value = Math.max(0, v); updateCost(); }; btn.addEventListener('click', () => step(1)); btn.addEventListener('mousedown', () => { pressTimer = setTimeout(() => step(5), 500); }); btn.addEventListener('touchstart', () => { pressTimer = setTimeout(() => step(5), 500); }, { passive: true }); btn.addEventListener('mouseup', () => clearTimeout(pressTimer)); btn.addEventListener('touchend', () => clearTimeout(pressTimer)); });
-            closeInp.addEventListener('keydown', e => { if (e.key === 'Enter') swipeCard('right'); });
-            document.getElementById('btn-save').addEventListener('click', () => swipeCard('right'));
-            document.getElementById('btn-skip').addEventListener('click', () => swipeCard('left'));
-            // Swipe gestures
-            let startX = 0, startY = 0, isDragging = false, isHoriz = false;
-            const IGNORE = new Set(['BUTTON','INPUT','TEXTAREA','SELECT','LABEL']);
-            const dragStart = (x, y, tgt) => { if (isProcessing || IGNORE.has(tgt.tagName) || tgt.closest('.stepper-btn') || tgt.closest('.preset-chip')) return; isDragging = true; isHoriz = false; startX = x; startY = y; card.classList.add('dragging'); };
-            const dragMove = (x, y) => { if (!isDragging) return; const dx = x - startX, dy = y - startY; if (!isHoriz) { if (Math.abs(dx) < 5 && Math.abs(dy) < 5) return; if (Math.abs(dx) > Math.abs(dy)) isHoriz = true; else { isDragging = false; card.classList.remove('dragging'); return; } } card.style.transform = `translateX(${dx}px) rotate(${dx*0.035}deg)`; card.style.opacity = String(1 - Math.abs(dx)/350); indSave.style.opacity = dx > 30 ? String(Math.min(1, (dx-30)/60)) : '0'; indSkip.style.opacity = dx < -30 ? String(Math.min(1, (-dx-30)/60)) : '0'; };
-            const dragEnd = x => { if (!isDragging) return; isDragging = false; isHoriz = false; card.classList.remove('dragging'); const d = x - startX; if (d > 80) swipeCard('right'); else if (d < -80) swipeCard('left'); else { card.style.transform = ''; card.style.opacity = '1'; indSave.style.opacity = '0'; indSkip.style.opacity = '0'; } };
-            card.addEventListener('mousedown', e => dragStart(e.clientX, e.clientY, e.target));
-            document.addEventListener('mousemove', e => { if (isDragging) dragMove(e.clientX, e.clientY); });
-            document.addEventListener('mouseup', e => dragEnd(e.clientX));
-            card.addEventListener('touchstart', e => dragStart(e.touches[0].clientX, e.touches[0].clientY, e.target), { passive: true });
-            card.addEventListener('touchmove', e => { if (isDragging && isHoriz) e.preventDefault(); dragMove(e.touches[0].clientX, e.touches[0].clientY); }, { passive: false });
-            card.addEventListener('touchend', e => dragEnd(e.changedTouches[0].clientX));
-            closeInp.focus();
+        function updateCost() {
+            const c = parseFloat(closeInp.value) || 0, a = parseFloat(addInp.value) || 0;
+            costPrev.textContent = `Usage: ${Math.max(0, item.open + a - c)} units · Close value: $${(c * item.price).toFixed(2)}`;
+            if (isLowStock(item, c)) card.classList.add('low-stock'); else card.classList.remove('low-stock');
         }
+        addInp.addEventListener('input', updateCost);
+        closeInp.addEventListener('input', updateCost);
+        notesInp.addEventListener('input', () => { itemNotes[item.name] = notesInp.value; saveNotes(); });
+        updateCost();
+        card.querySelectorAll('.preset-chip').forEach(chip => { chip.addEventListener('click', () => { const val = parseInt(chip.dataset.preset); addInp.value = val; addInp.dispatchEvent(new Event('input')); addInp.focus(); }); });
+        card.querySelectorAll('.stepper-btn').forEach(btn => { let pressTimer; const target = () => document.getElementById(btn.dataset.target); const delta = () => parseInt(btn.dataset.delta); const step = (mult = 1) => { const inp = target(); const v = (parseFloat(inp.value) || 0) + delta() * mult; inp.value = Math.max(0, v); updateCost(); }; btn.addEventListener('click', () => step(1)); btn.addEventListener('mousedown', () => { pressTimer = setTimeout(() => step(5), 500); }); btn.addEventListener('touchstart', () => { pressTimer = setTimeout(() => step(5), 500); }, { passive: true }); btn.addEventListener('mouseup', () => clearTimeout(pressTimer)); btn.addEventListener('touchend', () => clearTimeout(pressTimer)); });
+        closeInp.addEventListener('keydown', e => { if (e.key === 'Enter') swipeCard('right'); });
+        document.getElementById('btn-save').addEventListener('click', () => swipeCard('right'));
+        document.getElementById('btn-skip').addEventListener('click', () => swipeCard('left'));
+        // Swipe gestures
+        let startX = 0, startY = 0, isDragging = false, isHoriz = false;
+        const IGNORE = new Set(['BUTTON','INPUT','TEXTAREA','SELECT','LABEL']);
+        const dragStart = (x, y, tgt) => { if (isProcessing || IGNORE.has(tgt.tagName) || tgt.closest('.stepper-btn') || tgt.closest('.preset-chip')) return; isDragging = true; isHoriz = false; startX = x; startY = y; card.classList.add('dragging'); };
+        const dragMove = (x, y) => { if (!isDragging) return; const dx = x - startX, dy = y - startY; if (!isHoriz) { if (Math.abs(dx) < 5 && Math.abs(dy) < 5) return; if (Math.abs(dx) > Math.abs(dy)) isHoriz = true; else { isDragging = false; card.classList.remove('dragging'); return; } } card.style.transform = `translateX(${dx}px) rotate(${dx*0.035}deg)`; card.style.opacity = String(1 - Math.abs(dx)/350); indSave.style.opacity = dx > 30 ? String(Math.min(1, (dx-30)/60)) : '0'; indSkip.style.opacity = dx < -30 ? String(Math.min(1, (-dx-30)/60)) : '0'; };
+        const dragEnd = x => { if (!isDragging) return; isDragging = false; isHoriz = false; card.classList.remove('dragging'); const d = x - startX; if (d > 80) swipeCard('right'); else if (d < -80) swipeCard('left'); else { card.style.transform = ''; card.style.opacity = '1'; indSave.style.opacity = '0'; indSkip.style.opacity = '0'; } };
+        card.addEventListener('mousedown', e => dragStart(e.clientX, e.clientY, e.target));
+        document.addEventListener('mousemove', e => { if (isDragging) dragMove(e.clientX, e.clientY); });
+        document.addEventListener('mouseup', e => dragEnd(e.clientX));
+        card.addEventListener('touchstart', e => dragStart(e.touches[0].clientX, e.touches[0].clientY, e.target), { passive: true });
+        card.addEventListener('touchmove', e => { if (isDragging && isHoriz) e.preventDefault(); dragMove(e.touches[0].clientX, e.touches[0].clientY); }, { passive: false });
+        card.addEventListener('touchend', e => dragEnd(e.changedTouches[0].clientX));
+        closeInp.focus();
+    }
 
-        // ============ SWIPE CARD (save to Supabase) ============
-        async function swipeCard(direction) {
-            if (isProcessing) return;
-            const card = document.getElementById('cur-card');
-            if (!card) return;
-            isProcessing = true;
-            const item = items[currentIndex];
-            const notesInp = document.getElementById('inp-notes');
-            if (notesInp) { itemNotes[item.name] = notesInp.value; saveNotes(); }
-            undoStack.push({ index: currentIndex, item, savedData: results[item.name] || null, direction });
-            if (direction === 'right') {
-                const closeVal = parseFloat(document.getElementById('inp-close')?.value) || 0;
-                const addVal = parseFloat(document.getElementById('inp-add')?.value) || 0;
-                const note = itemNotes[item.name] || '';
-                const { error } = await supabase.from('counts').upsert({
-                    product_id: item.id,
-                    session_id: activeSessionId,
-                    user_id: currentUser.id,
-                    opening: item.open,
-                    added: addVal,
-                    closing: closeVal,
-                    notes: note,
-                }, { onConflict: 'product_id, session_id' });
-                if (!error) {
-                    results[item.name] = { close: closeVal, add: addVal, sheet: item.sheet, notes: note };
-                } else {
-                    showToast('Error saving: ' + error.message);
-                }
-                card.style.transition = 'transform .28s cubic-bezier(.2,.8,.2,1),opacity .28s ease';
-                card.style.transform = 'translateX(120%) rotate(12deg)';
-                card.style.opacity = '0';
-                if (navigator.vibrate) navigator.vibrate(8);
+    async function swipeCard(direction) {
+        if (isProcessing) return;
+        const card = document.getElementById('cur-card');
+        if (!card) return;
+        isProcessing = true;
+        const item = items[currentIndex];
+        const notesInp = document.getElementById('inp-notes');
+        if (notesInp) { itemNotes[item.name] = notesInp.value; saveNotes(); }
+        undoStack.push({ index: currentIndex, item, savedData: results[item.name] || null, direction });
+        if (direction === 'right') {
+            const closeVal = parseFloat(document.getElementById('inp-close')?.value) || 0;
+            const addVal = parseFloat(document.getElementById('inp-add')?.value) || 0;
+            const note = itemNotes[item.name] || '';
+            const { error } = await supabase.from('counts').upsert({
+                product_id: item.id,
+                session_id: activeSessionId,
+                user_id: currentUser.id,
+                opening: item.open,
+                added: addVal,
+                closing: closeVal,
+                notes: note,
+            }, { onConflict: 'product_id, session_id' });
+            if (!error) {
+                results[item.name] = { close: closeVal, add: addVal, sheet: item.sheet, notes: note };
             } else {
-                card.style.transition = 'transform .28s cubic-bezier(.2,.8,.2,1),opacity .28s ease';
-                card.style.transform = 'translateX(-120%) rotate(-12deg)';
-                card.style.opacity = '0';
+                showToast('Error saving: ' + error.message);
             }
-            showUndoBar(direction === 'right' ? `✅ "${item.name}" saved` : `⏭ "${item.name}" skipped`);
-            updateQuickStats();
-            setTimeout(() => {
-                currentIndex++;
-                isProcessing = false;
-                renderCard();
-                const nextInp = document.getElementById('inp-close');
-                if (nextInp) { nextInp.focus(); nextInp.select(); }
-            }, 290);
+            card.style.transition = 'transform .28s cubic-bezier(.2,.8,.2,1),opacity .28s ease';
+            card.style.transform = 'translateX(120%) rotate(12deg)';
+            card.style.opacity = '0';
+            if (navigator.vibrate) navigator.vibrate(8);
+        } else {
+            card.style.transition = 'transform .28s cubic-bezier(.2,.8,.2,1),opacity .28s ease';
+            card.style.transform = 'translateX(-120%) rotate(-12deg)';
+            card.style.opacity = '0';
         }
-
-        // ============ UNDO ============
-        let undoTimer;
-        function showUndoBar(msg) { clearTimeout(undoTimer); undoMsg.textContent = msg; undoBar.classList.add('show'); undoTimer = setTimeout(() => undoBar.classList.remove('show'), 2800); }
-        undoBtn.addEventListener('click', async () => {
-            if (!undoStack.length) return;
-            undoBar.classList.remove('show');
-            const last = undoStack.pop();
-            currentIndex = last.index;
-            if (last.savedData) {
-                results[last.item.name] = last.savedData;
-                await supabase.from('counts').upsert({
-                    product_id: last.item.id,
-                    session_id: activeSessionId,
-                    user_id: currentUser.id,
-                    opening: last.item.open,
-                    added: last.savedData.add,
-                    closing: last.savedData.close,
-                    notes: last.savedData.notes || '',
-                }, { onConflict: 'product_id, session_id' });
-            } else {
-                delete results[last.item.name];
-                await supabase.from('counts').delete().eq('product_id', last.item.id).eq('session_id', activeSessionId);
-            }
+        showUndoBar(direction === 'right' ? `✅ "${item.name}" saved` : `⏭ "${item.name}" skipped`);
+        updateQuickStats();
+        setTimeout(() => {
+            currentIndex++;
             isProcessing = false;
             renderCard();
-            updateQuickStats();
-            showToast('↩ Undone');
+            const nextInp = document.getElementById('inp-close');
+            if (nextInp) { nextInp.focus(); nextInp.select(); }
+        }, 290);
+    }
+
+    let undoTimer;
+    function showUndoBar(msg) { clearTimeout(undoTimer); undoMsg.textContent = msg; undoBar.classList.add('show'); undoTimer = setTimeout(() => undoBar.classList.remove('show'), 2800); }
+    undoBtn.addEventListener('click', async () => {
+        if (!undoStack.length) return;
+        undoBar.classList.remove('show');
+        const last = undoStack.pop();
+        currentIndex = last.index;
+        if (last.savedData) {
+            results[last.item.name] = last.savedData;
+            await supabase.from('counts').upsert({
+                product_id: last.item.id,
+                session_id: activeSessionId,
+                user_id: currentUser.id,
+                opening: last.item.open,
+                added: last.savedData.add,
+                closing: last.savedData.close,
+                notes: last.savedData.notes || '',
+            }, { onConflict: 'product_id, session_id' });
+        } else {
+            delete results[last.item.name];
+            await supabase.from('counts').delete().eq('product_id', last.item.id).eq('session_id', activeSessionId);
+        }
+        isProcessing = false;
+        renderCard();
+        updateQuickStats();
+        showToast('↩ Undone');
+    });
+
+    function updateProgress() {
+        const total = items.length, done = Math.min(currentIndex, total);
+        const pct = total > 0 ? (done / total) * 100 : 0;
+        progressFill.style.width = `${pct}%`;
+        progressLabel.textContent = `${done} / ${total}`;
+        const savedCount = Object.keys(results).length;
+        if (savedCount > 0) {
+            generateBtn.disabled = false;
+            generateBtn2.disabled = false;
+            csvBtn.disabled = false;
+            generateBtn.innerHTML = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg> Generate Excel (${savedCount} items)`;
+        } else {
+            generateBtn.disabled = true; generateBtn2.disabled = true; csvBtn.disabled = true;
+            generateBtn.innerHTML = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg> Generate Excel Report`;
+        }
+    }
+
+    function generateExcelReport() {
+        const savedNames = Object.keys(results);
+        if (!savedNames.length) { showToast('No data saved yet!'); return; }
+        const wb = XLSX.utils.book_new();
+        const data = [['Product','Category','Opening','Add','Close','Usage','Price','Close Value','Notes']];
+        savedNames.forEach(name => {
+            const item = items.find(i => i.name === name);
+            const r = results[name];
+            if (!item || !r) return;
+            const usage = item.open + r.add - r.close;
+            const closeVal = r.close * item.price;
+            data.push([name, item.category, item.open, r.add, r.close, usage, item.price.toFixed(2), closeVal.toFixed(2), r.notes||'']);
         });
+        const ws = XLSX.utils.aoa_to_sheet(data);
+        XLSX.utils.book_append_sheet(wb, ws, 'Inventory');
+        const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+        const blob = new Blob([wbout], { type: 'application/octet-stream' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `inventory_${activeSessionName.replace(' ','_')}.xlsx`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        showToast('✅ Report downloaded!');
+    }
+    generateBtn.addEventListener('click', generateExcelReport);
+    generateBtn2.addEventListener('click', generateExcelReport);
 
-        // ============ PROGRESS & GENERATE ============
-        function updateProgress() {
-            const total = items.length, done = Math.min(currentIndex, total);
-            const pct = total > 0 ? (done / total) * 100 : 0;
-            progressFill.style.width = `${pct}%`;
-            progressLabel.textContent = `${done} / ${total}`;
-            const savedCount = Object.keys(results).length;
-            if (savedCount > 0) {
-                generateBtn.disabled = false;
-                generateBtn2.disabled = false;
-                csvBtn.disabled = false;
-                generateBtn.innerHTML = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg> Generate Excel (${savedCount} items)`;
-            } else {
-                generateBtn.disabled = true; generateBtn2.disabled = true; csvBtn.disabled = true;
-                generateBtn.innerHTML = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg> Generate Excel Report`;
-            }
-        }
-
-        // ============ GENERATE EXCEL DOWNLOAD ============
-        function generateExcelReport() {
-            const savedNames = Object.keys(results);
-            if (!savedNames.length) { showToast('No data saved yet!'); return; }
-            const wb = XLSX.utils.book_new();
-            const data = [['Product','Category','Opening','Add','Close','Usage','Price','Close Value','Notes']];
-            savedNames.forEach(name => {
-                const item = items.find(i => i.name === name);
-                const r = results[name];
-                if (!item || !r) return;
-                const usage = item.open + r.add - r.close;
-                const closeVal = r.close * item.price;
-                data.push([name, item.category, item.open, r.add, r.close, usage, item.price.toFixed(2), closeVal.toFixed(2), r.notes||'']);
-            });
-            const ws = XLSX.utils.aoa_to_sheet(data);
-            XLSX.utils.book_append_sheet(wb, ws, 'Inventory');
-            const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
-            const blob = new Blob([wbout], { type: 'application/octet-stream' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `inventory_${activeSessionName.replace(' ','_')}.xlsx`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-            showToast('✅ Report downloaded!');
-        }
-        generateBtn.addEventListener('click', generateExcelReport);
-        generateBtn2.addEventListener('click', generateExcelReport);
-
-        // ============ CSV EXPORT ============
-        function exportCSV() {
-            const savedNames = Object.keys(results);
-            if (!savedNames.length) { showToast('No data to export'); return; }
-            let csv = 'Product,Category,Opening,Add,Close,Usage,Price,Close Value,Notes\n';
-            savedNames.forEach(name => {
-                const item = items.find(i => i.name === name);
-                const data = results[name];
-                if (!item || !data) return;
-                const usage = item.open + data.add - data.close;
-                const closeVal = data.close * item.price;
-                const note = (itemNotes[name] || '').replace(/"/g, '""');
-                csv += `"${name}","${item.category}",${item.open},${data.add},${data.close},${usage},${item.price.toFixed(2)},${closeVal.toFixed(2)},"${note}"\n`;
-            });
-            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `inventory_${new Date().toISOString().slice(0,10)}.csv`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-            showToast('📥 CSV downloaded');
-        }
-        csvBtn.addEventListener('click', exportCSV);
-
-        // ============ VOICE RECOGNITION (same as original) ============
-        function initVoice() {
-            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-            if (!SpeechRecognition) { voiceToggle.style.display = 'none'; return; }
-            voiceToggle.style.display = 'flex';
-            recognition = new SpeechRecognition();
-            recognition.continuous = false;
-            recognition.interimResults = false;
-            recognition.lang = 'en-US';
-            recognition.maxAlternatives = 1;
-            recognition.onresult = (event) => {
-                voiceErrorCount = 0;
-                const last = event.results[event.results.length - 1];
-                if (!last.isFinal) return;
-                const cmd = last[0].transcript.toLowerCase().trim();
-                processVoiceCommand(cmd);
-                if (voiceActive) scheduleVoiceRestart();
-            };
-            recognition.onerror = (event) => {
-                voiceErrorCount++;
-                const err = event.error;
-                if (err === 'no-speech' || err === 'audio-capture') {
-                    if (voiceActive && voiceErrorCount < 5) scheduleVoiceRestart(800);
-                } else if (err === 'network') {
-                    if (voiceActive && voiceErrorCount < 3) scheduleVoiceRestart(2000);
-                } else if (err === 'not-allowed') {
-                    voiceActive = false;
-                    voiceToggle.classList.remove('voice-active');
-                    voiceIndicator.classList.remove('show');
-                    showToast('🎤 Microphone access denied');
-                } else {
-                    if (voiceActive && voiceErrorCount < 3) scheduleVoiceRestart(1200);
-                }
-            };
-            recognition.onend = () => { if (voiceActive && voiceErrorCount < 5) scheduleVoiceRestart(400); };
-        }
-
-        function scheduleVoiceRestart(delay = 500) {
-            clearTimeout(voiceRestartTimeout);
-            voiceRestartTimeout = setTimeout(() => {
-                if (!voiceActive) return;
-                try { recognition.start(); } catch (e) { scheduleVoiceRestart(1000); }
-            }, delay);
-        }
-
-        function processVoiceCommand(cmd) {
-            if (!document.getElementById('cur-card')) return;
-            const addInp = document.getElementById('inp-add');
-            const closeInp = document.getElementById('inp-close');
-            if (cmd.includes('save') || cmd.includes('done') || cmd.includes('submit') || cmd.includes('right')) {
-                swipeCard('right');
-                showToast('🎤 Voice: Saved');
-            } else if (cmd.includes('skip') || cmd.includes('next') || cmd.includes('pass') || cmd.includes('left')) {
-                swipeCard('left');
-                showToast('🎤 Voice: Skipped');
-            } else if (cmd.includes('undo') || cmd.includes('go back') || cmd.includes('reverse')) {
-                undoBtn.click();
-                showToast('🎤 Voice: Undone');
-            } else {
-                const numMatch = cmd.match(/(\d+)/);
-                const num = numMatch ? parseInt(numMatch[1]) : null;
-                if (num !== null && addInp && closeInp) {
-                    if (cmd.includes('add') || cmd.includes('plus') || cmd.includes('increase')) {
-                        addInp.value = num;
-                        addInp.dispatchEvent(new Event('input'));
-                        showToast('🎤 Voice: Add = ' + num);
-                    } else if (cmd.includes('close') || cmd.includes('set') || cmd.includes('count') || cmd.includes('remaining')) {
-                        closeInp.value = num;
-                        closeInp.dispatchEvent(new Event('input'));
-                        showToast('🎤 Voice: Close = ' + num);
-                    }
-                }
-            }
-        }
-        voiceToggle.addEventListener('click', () => {
-            if (!recognition) { showToast('Voice not supported in this browser'); return; }
-            voiceActive = !voiceActive;
-            voiceErrorCount = 0;
-            clearTimeout(voiceRestartTimeout);
-            if (voiceActive) {
-                try { recognition.start(); } catch (e) { scheduleVoiceRestart(500); }
-                voiceToggle.classList.add('voice-active');
-                voiceIndicator.classList.add('show');
-                showToast('🎤 Voice control active');
-            } else {
-                try { recognition.stop(); } catch (e) {}
-                voiceToggle.classList.remove('voice-active');
-                voiceIndicator.classList.remove('show');
-            }
-        });
-
-        // ============ KEYBOARD SHORTCUTS ============
-        document.addEventListener('keydown', e => {
-            const tag = document.activeElement?.tagName;
-            const isInput = tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT';
-            const card = document.getElementById('cur-card');
-            if (!card && !isInput) return;
-            if (e.ctrlKey && e.key === 'f') { e.preventDefault(); searchToggle.click(); return; }
-            if (e.ctrlKey && e.key === 'z' && undoStack.length > 0) { e.preventDefault(); undoBtn.click(); return; }
-            if (!isInput && e.key === 'v' && !e.ctrlKey && !e.metaKey) { e.preventDefault(); voiceToggle.click(); return; }
-            if (!card || isInput) return;
-            if (e.key === 'ArrowRight' || e.key === 'Enter') { e.preventDefault(); swipeCard('right'); }
-            else if (e.key === 'ArrowLeft' || e.key === 'Escape') { e.preventDefault(); swipeCard('left'); }
-            else if (e.key === 'ArrowUp') { e.preventDefault(); const inp = document.getElementById('inp-close'); if (inp) { inp.value = Math.max(0, (parseFloat(inp.value) || 0) + 1); inp.dispatchEvent(new Event('input')); } }
-            else if (e.key === 'ArrowDown') { e.preventDefault(); const inp = document.getElementById('inp-close'); if (inp) { inp.value = Math.max(0, (parseFloat(inp.value) || 0) - 1); inp.dispatchEvent(new Event('input')); } }
-            if (!isInput && e.key >= '1' && e.key <= '9' && !e.ctrlKey && !e.metaKey) {
-                const presetVals = [1, 2, 5, 10, 20, 50, 100, 200, 500];
-                const idx = parseInt(e.key) - 1;
-                const addInp = document.getElementById('inp-add');
-                if (addInp) { addInp.value = presetVals[idx]; addInp.dispatchEvent(new Event('input')); showToast(`Quick-add: ${presetVals[idx]}`); }
-            }
-        });
-
-        // ============ TAB NAVIGATION ============
-        document.querySelectorAll('[data-tab]').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const tab = btn.dataset.tab;
-                document.querySelectorAll('[data-tab]').forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-                document.getElementById('view-' + tab).classList.add('active');
-                if (tab === 'review') renderReview();
-                if (tab === 'summary') renderSummary();
-            });
-        });
-
-        // ============ REVIEW ============
-        function getReviewSortFn() {
-            const sortBy = sortSelect.value;
-            switch (sortBy) {
-                case 'name': return (a, b) => a.name.localeCompare(b.name);
-                case 'category': return (a, b) => (a.category || '').localeCompare(b.category || '');
-                case 'value-desc': return (a, b) => (b.close * b.price) - (a.close * a.price);
-                case 'value-asc': return (a, b) => (a.close * a.price) - (b.close * b.price);
-                case 'close-desc': return (a, b) => b.close - a.close;
-                default: return () => 0;
-            }
-        }
-
-        function renderReview() {
-            const list = document.getElementById('review-list');
-            const count = document.getElementById('review-count');
-            const bulkActions = document.getElementById('bulk-actions');
-            const savedNames = Object.keys(results);
-            count.textContent = `${savedNames.length} item${savedNames.length!==1?'s':''} saved`;
-            if (!savedNames.length) {
-                list.innerHTML = '<div class="review-empty">No items saved yet.<br>Go to the Swipe tab to start counting.</div>';
-                bulkActions.style.display = 'none';
-                return;
-            }
-            const sortFn = getReviewSortFn();
-            const sorted = savedNames.map(name => {
-                const item = items.find(i => i.name === name);
-                const data = results[name];
-                return { name, item, data, close: data ? data.close : 0, price: item ? item.price : 0, category: item ? item.category : '' };
-            }).sort(sortFn);
-            list.innerHTML = sorted.map(({ name, item, data, close, price, category }) => {
-                if (!item || !data) return '';
-                const isSel = selectedReviewItems.has(name);
-                return `<div class="review-item${isSel?' selected':''}" data-name="${esc(name)}">
-              <div class="review-check" data-select="${esc(name)}">${isSel?'✓':''}</div>
-              <div class="review-item-icon" style="background:${iconColor(name)}">${name.charAt(0).toUpperCase()}</div>
-              <div class="review-item-info"><div class="review-item-name">${esc(name)}</div><div class="review-item-cat">${esc(category)}</div></div>
-              <div class="review-item-val"><div class="review-val-close">Close: ${close}</div><div class="review-val-add">Add: ${data.add}</div></div>
-              <button class="btn-edit-review" data-name="${esc(name)}">Edit</button></div>`;
-            }).join('');
-            bulkActions.style.display = selectedReviewItems.size > 0 ? 'flex' : 'none';
-            document.getElementById('bulk-count').textContent = `${selectedReviewItems.size} selected`;
-            list.querySelectorAll('.review-check').forEach(check => {
-                check.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    const nm = check.dataset.select;
-                    if (selectedReviewItems.has(nm)) selectedReviewItems.delete(nm);
-                    else selectedReviewItems.add(nm);
-                    renderReview();
-                });
-            });
-            list.querySelectorAll('.review-item').forEach(ri => {
-                ri.addEventListener('click', (e) => {
-                    if (e.target.closest('.review-check') || e.target.closest('.btn-edit-review')) return;
-                    const nm = ri.dataset.name;
-                    if (selectedReviewItems.has(nm)) selectedReviewItems.delete(nm);
-                    else selectedReviewItems.add(nm);
-                    renderReview();
-                });
-            });
-            list.querySelectorAll('.btn-edit-review').forEach(btn => btn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                openEditModal(btn.dataset.name);
-            }));
-        }
-        sortSelect.addEventListener('change', () => renderReview());
-        document.getElementById('btn-bulk-edit').addEventListener('click', () => {
-            if (selectedReviewItems.size === 0) return;
-            bulkModalSub.textContent = `Set values for ${selectedReviewItems.size} selected item(s)`;
-            bulkAdd.value = 0;
-            bulkClose.value = 0;
-            bulkModal.classList.remove('hidden');
-        });
-        document.getElementById('btn-bulk-clear').addEventListener('click', () => {
-            selectedReviewItems.forEach(name => delete results[name]);
-            selectedReviewItems.clear();
-            updateQuickStats();
-            renderReview();
-            showToast('🗑 Cleared selected items');
-        });
-        bulkCancel.addEventListener('click', () => bulkModal.classList.add('hidden'));
-        bulkModal.addEventListener('click', e => { if (e.target === bulkModal) bulkModal.classList.add('hidden'); });
-        bulkSave.addEventListener('click', () => {
-            const addVal = parseFloat(bulkAdd.value) || 0;
-            const closeVal = parseFloat(bulkClose.value) || 0;
-            selectedReviewItems.forEach(name => {
-                if (results[name]) {
-                    results[name].add = addVal;
-                    results[name].close = closeVal;
-                }
-            });
-            bulkModal.classList.add('hidden');
-            updateQuickStats();
-            renderReview();
-            showToast(`✅ Updated ${selectedReviewItems.size} items`);
-        });
-
-        function openEditModal(name) {
+    function exportCSV() {
+        const savedNames = Object.keys(results);
+        if (!savedNames.length) { showToast('No data to export'); return; }
+        let csv = 'Product,Category,Opening,Add,Close,Usage,Price,Close Value,Notes\n';
+        savedNames.forEach(name => {
             const item = items.find(i => i.name === name);
             const data = results[name];
             if (!item || !data) return;
-            editingProductName = name;
-            modalTitle.textContent = name;
-            modalSub.textContent = `${item.category} · $${item.price.toFixed(2)}`;
-            modalAdd.value = data.add;
-            modalClose.value = data.close;
-            editModal.classList.remove('hidden');
-            setTimeout(() => modalClose.focus(), 200);
-        }
-        modalCancel.addEventListener('click', () => editModal.classList.add('hidden'));
-        editModal.addEventListener('click', e => { if (e.target === editModal) editModal.classList.add('hidden'); });
-        modalSave.addEventListener('click', () => {
-            if (!editingProductName) return;
-            results[editingProductName].close = parseFloat(modalClose.value) || 0;
-            results[editingProductName].add = parseFloat(modalAdd.value) || 0;
-            editModal.classList.add('hidden');
-            renderReview();
-            updateQuickStats();
-            showToast('✅ Updated');
+            const usage = item.open + data.add - data.close;
+            const closeVal = data.close * item.price;
+            const note = (itemNotes[name] || '').replace(/"/g, '""');
+            csv += `"${name}","${item.category}",${item.open},${data.add},${data.close},${usage},${item.price.toFixed(2)},${closeVal.toFixed(2)},"${note}"\n`;
         });
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `inventory_${new Date().toISOString().slice(0,10)}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        showToast('📥 CSV downloaded');
+    }
+    csvBtn.addEventListener('click', exportCSV);
 
-        // ============ SUMMARY ============
-        function renderSummary() {
-            const savedNames = Object.keys(results);
-            const total = items.length;
-            let totalValue = 0;
-            savedNames.forEach(name => {
-                const item = items.find(i => i.name === name);
-                if (item) totalValue += (results[name].close * item.price);
-            });
-            document.getElementById('kpi-saved').textContent = savedNames.length;
-            document.getElementById('kpi-total').textContent = total;
-            document.getElementById('kpi-value').textContent = `$${totalValue.toFixed(0)}`;
-            document.getElementById('kpi-progress').textContent = total > 0 ? `${Math.round((Math.min(currentIndex,total)/total)*100)}%` : '0%';
-            const topList = document.getElementById('summary-top-list');
-            const sorted = savedNames.map(name => {
-                const item = items.find(i => i.name === name);
-                return { name, value: item ? results[name].close * item.price : 0, close: item ? results[name].close : 0 };
-            }).sort((a, b) => b.value - a.value);
-            const top8 = sorted.slice(0, 8);
-            if (!sorted.length) {
-                topList.innerHTML = '<div style="color:var(--text-muted);text-align:center;padding:20px;font-size:var(--sm);">No saved items yet — start swiping!</div>';
+    // ============ VOICE (unchanged) ============
+    function initVoice() {
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SpeechRecognition) { voiceToggle.style.display = 'none'; return; }
+        voiceToggle.style.display = 'flex';
+        recognition = new SpeechRecognition();
+        recognition.continuous = false;
+        recognition.interimResults = false;
+        recognition.lang = 'en-US';
+        recognition.maxAlternatives = 1;
+        recognition.onresult = (event) => {
+            voiceErrorCount = 0;
+            const last = event.results[event.results.length - 1];
+            if (!last.isFinal) return;
+            const cmd = last[0].transcript.toLowerCase().trim();
+            processVoiceCommand(cmd);
+            if (voiceActive) scheduleVoiceRestart();
+        };
+        recognition.onerror = (event) => {
+            voiceErrorCount++;
+            const err = event.error;
+            if (err === 'no-speech' || err === 'audio-capture') {
+                if (voiceActive && voiceErrorCount < 5) scheduleVoiceRestart(800);
+            } else if (err === 'network') {
+                if (voiceActive && voiceErrorCount < 3) scheduleVoiceRestart(2000);
+            } else if (err === 'not-allowed') {
+                voiceActive = false;
+                voiceToggle.classList.remove('voice-active');
+                voiceIndicator.classList.remove('show');
+                showToast('🎤 Microphone access denied');
             } else {
-                topList.innerHTML = sorted.slice(0, 8).map(({ name, value }) => `
-              <div class="summary-item"><div class="review-item-icon" style="background:${iconColor(name)};width:28px;height:28px;font-size:12px;flex-shrink:0;display:flex;align-items:center;justify-content:center;border-radius:50%;color:#fff;font-weight:800">${name.charAt(0).toUpperCase()}</div>
-              <div class="summary-item-name">${esc(name)}</div><div class="summary-item-val">$${value.toFixed(2)}</div></div>`).join('');
+                if (voiceActive && voiceErrorCount < 3) scheduleVoiceRestart(1200);
             }
-            generateBtn2.disabled = savedNames.length === 0;
-            renderChart(top8);
-        }
+        };
+        recognition.onend = () => { if (voiceActive && voiceErrorCount < 5) scheduleVoiceRestart(400); };
+    }
 
-        function renderChart(topItems) {
-            const ctx = document.getElementById('summary-chart');
-            if (!ctx) return;
-            if (summaryChart) summaryChart.destroy();
-            if (topItems.length === 0) {
-                summaryChart = null;
-                const c = ctx.getContext('2d');
-                c.clearRect(0, 0, ctx.width, ctx.height);
-                const fc = getComputedStyle(document.documentElement).getPropertyValue('--text-faint').trim() || '#a0988e';
-                c.fillStyle = fc;
-                c.font = '13px Inter, system-ui, sans-serif';
-                c.textAlign = 'center';
-                c.fillText('No data yet — save some items first', ctx.width / 2, ctx.height / 2);
-                return;
-            }
-            const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-            const textColor = isDark ? '#e8e5df' : '#1a1714';
-            const gridColor = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)';
-            summaryChart = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: topItems.map(t => t.name.length > 16 ? t.name.slice(0, 15) + '…' : t.name),
-                    datasets: [{
-                        label: 'Close Value ($)',
-                        data: topItems.map(t => t.value),
-                        backgroundColor: topItems.map((_, i) => {
-                            const colors = ['#1e6b3a','#288a4c','#3d9a5c','#4cb870','#66c285','#2d7a44','#35a052','#258040'];
-                            return colors[i] || '#3d9a5c';
-                        }),
-                        borderRadius: 9,
-                        borderSkipped: false,
-                    }]
-                },
-                options: {
-                    indexAxis: 'y',
-                    responsive: true,
-                    maintainAspectRatio: true,
-                    plugins: { legend: { display: false }, tooltip: { callbacks: { label: (ctx) => ` $${ctx.raw.toFixed(2)}` } } },
-                    scales: {
-                        x: { ticks: { color: textColor, font: { size: 10 }, callback: v => '$' + v }, grid: { color: gridColor } },
-                        y: { ticks: { color: textColor, font: { size: 10, weight: '600' } }, grid: { display: false } }
-                    }
-                }
-            });
-        }
+    function scheduleVoiceRestart(delay = 500) {
+        clearTimeout(voiceRestartTimeout);
+        voiceRestartTimeout = setTimeout(() => {
+            if (!voiceActive) return;
+            try { recognition.start(); } catch (e) { scheduleVoiceRestart(1000); }
+        }, delay);
+    }
 
-        // ============ HELPERS ============
-        function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
-        const ICON_COLORS = ['#1e6b3a', '#c0392b', '#2471a3', '#e67e22', '#8e6b3e', '#00838f', '#c62828', '#2e7d32', '#5b2c8e', '#bf360c'];
-        function iconColor(name) { const h = name.split('').reduce((a, c) => a + c.charCodeAt(0), 0); return ICON_COLORS[h % ICON_COLORS.length]; }
-        function prodIcon(name) { return `<span class="prod-icon" style="background:${iconColor(name)}">${name.charAt(0).toUpperCase()}</span>`; }
-        function historyHtml(name) {
-            let hist = {};
-            try { hist = JSON.parse(localStorage.getItem('giftshop_history') || '{}'); } catch (e) {}
-            const h = hist[name] || [];
-            if (!h.length) return `<div class="history-box">📊 <span style="color:var(--text-faint);font-size:var(--xs);font-weight:400;">No history yet</span></div>`;
-            return `<div class="history-box">📊 ${h.slice(-4).map(x => `<span class="hist-tag">${x.month}: <strong>${x.close}</strong></span>`).join('')}</div>`;
-        }
-        function getLowStockThreshold(item) {
-            try {
-                const hist = JSON.parse(localStorage.getItem('giftshop_history') || '{}');
-                const h = hist[item.name] || [];
-                if (h.length >= 2) {
-                    const avgClose = h.reduce((s, x) => s + x.close, 0) / h.length;
-                    return Math.round(avgClose * 0.4);
+    function processVoiceCommand(cmd) {
+        if (!document.getElementById('cur-card')) return;
+        const addInp = document.getElementById('inp-add');
+        const closeInp = document.getElementById('inp-close');
+        if (cmd.includes('save') || cmd.includes('done') || cmd.includes('submit') || cmd.includes('right')) {
+            swipeCard('right');
+            showToast('🎤 Voice: Saved');
+        } else if (cmd.includes('skip') || cmd.includes('next') || cmd.includes('pass') || cmd.includes('left')) {
+            swipeCard('left');
+            showToast('🎤 Voice: Skipped');
+        } else if (cmd.includes('undo') || cmd.includes('go back') || cmd.includes('reverse')) {
+            undoBtn.click();
+            showToast('🎤 Voice: Undone');
+        } else {
+            const numMatch = cmd.match(/(\d+)/);
+            const num = numMatch ? parseInt(numMatch[1]) : null;
+            if (num !== null && addInp && closeInp) {
+                if (cmd.includes('add') || cmd.includes('plus') || cmd.includes('increase')) {
+                    addInp.value = num;
+                    addInp.dispatchEvent(new Event('input'));
+                    showToast('🎤 Voice: Add = ' + num);
+                } else if (cmd.includes('close') || cmd.includes('set') || cmd.includes('count') || cmd.includes('remaining')) {
+                    closeInp.value = num;
+                    closeInp.dispatchEvent(new Event('input'));
+                    showToast('🎤 Voice: Close = ' + num);
                 }
-            } catch (e) {}
-            return Math.round(item.open * 0.3) || 5;
-        }
-        function isLowStock(item, closeVal) { const threshold = getLowStockThreshold(item); return closeVal < threshold && item.open > 0; }
-        function launchConfetti() {
-            const colors = ['#1e6b3a', '#4cb870', '#ffd700', '#ff6b6b', '#4fc3f7', '#ce93d8', '#e67e22'];
-            for (let i = 0; i < 60; i++) {
-                const p = document.createElement('div');
-                p.className = 'confetti-piece';
-                p.style.cssText = `left:${Math.random()*100}vw;top:-10px;background:${colors[Math.floor(Math.random()*colors.length)]};animation-delay:${Math.random()*.6}s;animation-duration:${1.2+Math.random()*1}s;width:${4+Math.random()*8}px;height:${4+Math.random()*8}px;border-radius:${Math.random()>.5?'50%':'2px'}`;
-                document.body.appendChild(p);
-                setTimeout(() => p.remove(), 2400);
             }
         }
-        function updateQuickStats() {
-            const saved = Object.keys(results);
-            if (saved.length === 0 && currentIndex === 0) { quickStatsBar.style.display = 'none'; return; }
-            quickStatsBar.style.display = 'flex';
-            document.getElementById('qs-saved').textContent = saved.length;
-            let totalVal = 0, totalClose = 0, lowCount = 0;
-            saved.forEach(name => {
-                const item = items.find(i => i.name === name);
-                if (item) {
-                    const cv = results[name].close;
-                    totalVal += cv * item.price;
-                    totalClose += cv;
-                    if (isLowStock(item, cv)) lowCount++;
-                }
-            });
-            document.getElementById('qs-value').textContent = '$' + totalVal.toFixed(0);
-            document.getElementById('qs-avg').textContent = saved.length > 0 ? Math.round(totalClose / saved.length) : '—';
-            document.getElementById('qs-low').textContent = lowCount;
-            document.getElementById('qs-low').classList.toggle('warn', lowCount > 0);
-            document.getElementById('qs-low').classList.toggle('green', lowCount === 0 && saved.length > 0);
+    }
+    voiceToggle.addEventListener('click', () => {
+        if (!recognition) { showToast('Voice not supported in this browser'); return; }
+        voiceActive = !voiceActive;
+        voiceErrorCount = 0;
+        clearTimeout(voiceRestartTimeout);
+        if (voiceActive) {
+            try { recognition.start(); } catch (e) { scheduleVoiceRestart(500); }
+            voiceToggle.classList.add('voice-active');
+            voiceIndicator.classList.add('show');
+            showToast('🎤 Voice control active');
+        } else {
+            try { recognition.stop(); } catch (e) {}
+            voiceToggle.classList.remove('voice-active');
+            voiceIndicator.classList.remove('show');
         }
-    </script>
+    });
+
+    // ============ KEYBOARD SHORTCUTS ============
+    document.addEventListener('keydown', e => {
+        const tag = document.activeElement?.tagName;
+        const isInput = tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT';
+        const card = document.getElementById('cur-card');
+        if (!card && !isInput) return;
+        if (e.ctrlKey && e.key === 'f') { e.preventDefault(); searchToggle.click(); return; }
+        if (e.ctrlKey && e.key === 'z' && undoStack.length > 0) { e.preventDefault(); undoBtn.click(); return; }
+        if (!isInput && e.key === 'v' && !e.ctrlKey && !e.metaKey) { e.preventDefault(); voiceToggle.click(); return; }
+        if (!card || isInput) return;
+        if (e.key === 'ArrowRight' || e.key === 'Enter') { e.preventDefault(); swipeCard('right'); }
+        else if (e.key === 'ArrowLeft' || e.key === 'Escape') { e.preventDefault(); swipeCard('left'); }
+        else if (e.key === 'ArrowUp') { e.preventDefault(); const inp = document.getElementById('inp-close'); if (inp) { inp.value = Math.max(0, (parseFloat(inp.value) || 0) + 1); inp.dispatchEvent(new Event('input')); } }
+        else if (e.key === 'ArrowDown') { e.preventDefault(); const inp = document.getElementById('inp-close'); if (inp) { inp.value = Math.max(0, (parseFloat(inp.value) || 0) - 1); inp.dispatchEvent(new Event('input')); } }
+        if (!isInput && e.key >= '1' && e.key <= '9' && !e.ctrlKey && !e.metaKey) {
+            const presetVals = [1, 2, 5, 10, 20, 50, 100, 200, 500];
+            const idx = parseInt(e.key) - 1;
+            const addInp = document.getElementById('inp-add');
+            if (addInp) { addInp.value = presetVals[idx]; addInp.dispatchEvent(new Event('input')); showToast(`Quick-add: ${presetVals[idx]}`); }
+        }
+    });
+
+    // ============ TAB NAVIGATION ============
+    document.querySelectorAll('[data-tab]').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const tab = btn.dataset.tab;
+            document.querySelectorAll('[data-tab]').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+            document.getElementById('view-' + tab).classList.add('active');
+            if (tab === 'review') renderReview();
+            if (tab === 'summary') renderSummary();
+        });
+    });
+
+    // ============ REVIEW ============
+    function getReviewSortFn() {
+        const sortBy = sortSelect.value;
+        switch (sortBy) {
+            case 'name': return (a, b) => a.name.localeCompare(b.name);
+            case 'category': return (a, b) => (a.category || '').localeCompare(b.category || '');
+            case 'value-desc': return (a, b) => (b.close * b.price) - (a.close * a.price);
+            case 'value-asc': return (a, b) => (a.close * a.price) - (b.close * b.price);
+            case 'close-desc': return (a, b) => b.close - a.close;
+            default: return () => 0;
+        }
+    }
+
+    function renderReview() {
+        const list = document.getElementById('review-list');
+        const count = document.getElementById('review-count');
+        const bulkActions = document.getElementById('bulk-actions');
+        const savedNames = Object.keys(results);
+        count.textContent = `${savedNames.length} item${savedNames.length!==1?'s':''} saved`;
+        if (!savedNames.length) {
+            list.innerHTML = '<div class="review-empty">No items saved yet.<br>Go to the Swipe tab to start counting.</div>';
+            bulkActions.style.display = 'none';
+            return;
+        }
+        const sortFn = getReviewSortFn();
+        const sorted = savedNames.map(name => {
+            const item = items.find(i => i.name === name);
+            const data = results[name];
+            return { name, item, data, close: data ? data.close : 0, price: item ? item.price : 0, category: item ? item.category : '' };
+        }).sort(sortFn);
+        list.innerHTML = sorted.map(({ name, item, data, close, price, category }) => {
+            if (!item || !data) return '';
+            const isSel = selectedReviewItems.has(name);
+            return `<div class="review-item${isSel?' selected':''}" data-name="${esc(name)}">
+          <div class="review-check" data-select="${esc(name)}">${isSel?'✓':''}</div>
+          <div class="review-item-icon" style="background:${iconColor(name)}">${name.charAt(0).toUpperCase()}</div>
+          <div class="review-item-info"><div class="review-item-name">${esc(name)}</div><div class="review-item-cat">${esc(category)}</div></div>
+          <div class="review-item-val"><div class="review-val-close">Close: ${close}</div><div class="review-val-add">Add: ${data.add}</div></div>
+          <button class="btn-edit-review" data-name="${esc(name)}">Edit</button></div>`;
+        }).join('');
+        bulkActions.style.display = selectedReviewItems.size > 0 ? 'flex' : 'none';
+        document.getElementById('bulk-count').textContent = `${selectedReviewItems.size} selected`;
+        list.querySelectorAll('.review-check').forEach(check => {
+            check.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const nm = check.dataset.select;
+                if (selectedReviewItems.has(nm)) selectedReviewItems.delete(nm);
+                else selectedReviewItems.add(nm);
+                renderReview();
+            });
+        });
+        list.querySelectorAll('.review-item').forEach(ri => {
+            ri.addEventListener('click', (e) => {
+                if (e.target.closest('.review-check') || e.target.closest('.btn-edit-review')) return;
+                const nm = ri.dataset.name;
+                if (selectedReviewItems.has(nm)) selectedReviewItems.delete(nm);
+                else selectedReviewItems.add(nm);
+                renderReview();
+            });
+        });
+        list.querySelectorAll('.btn-edit-review').forEach(btn => btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            openEditModal(btn.dataset.name);
+        }));
+    }
+    sortSelect.addEventListener('change', () => renderReview());
+    document.getElementById('btn-bulk-edit').addEventListener('click', () => {
+        if (selectedReviewItems.size === 0) return;
+        bulkModalSub.textContent = `Set values for ${selectedReviewItems.size} selected item(s)`;
+        bulkAdd.value = 0;
+        bulkClose.value = 0;
+        bulkModal.classList.remove('hidden');
+    });
+    document.getElementById('btn-bulk-clear').addEventListener('click', () => {
+        selectedReviewItems.forEach(name => delete results[name]);
+        selectedReviewItems.clear();
+        updateQuickStats();
+        renderReview();
+        showToast('🗑 Cleared selected items');
+    });
+    bulkCancel.addEventListener('click', () => bulkModal.classList.add('hidden'));
+    bulkModal.addEventListener('click', e => { if (e.target === bulkModal) bulkModal.classList.add('hidden'); });
+    bulkSave.addEventListener('click', () => {
+        const addVal = parseFloat(bulkAdd.value) || 0;
+        const closeVal = parseFloat(bulkClose.value) || 0;
+        selectedReviewItems.forEach(name => {
+            if (results[name]) { results[name].add = addVal; results[name].close = closeVal; }
+        });
+        bulkModal.classList.add('hidden');
+        updateQuickStats();
+        renderReview();
+        showToast(`✅ Updated ${selectedReviewItems.size} items`);
+    });
+
+    function openEditModal(name) {
+        const item = items.find(i => i.name === name);
+        const data = results[name];
+        if (!item || !data) return;
+        editingProductName = name;
+        modalTitle.textContent = name;
+        modalSub.textContent = `${item.category} · $${item.price.toFixed(2)}`;
+        modalAdd.value = data.add;
+        modalClose.value = data.close;
+        editModal.classList.remove('hidden');
+        setTimeout(() => modalClose.focus(), 200);
+    }
+    modalCancel.addEventListener('click', () => editModal.classList.add('hidden'));
+    editModal.addEventListener('click', e => { if (e.target === editModal) editModal.classList.add('hidden'); });
+    modalSave.addEventListener('click', () => {
+        if (!editingProductName) return;
+        results[editingProductName].close = parseFloat(modalClose.value) || 0;
+        results[editingProductName].add = parseFloat(modalAdd.value) || 0;
+        editModal.classList.add('hidden');
+        renderReview();
+        updateQuickStats();
+        showToast('✅ Updated');
+    });
+
+    // ============ SUMMARY ============
+    function renderSummary() {
+        const savedNames = Object.keys(results);
+        const total = items.length;
+        let totalValue = 0;
+        savedNames.forEach(name => {
+            const item = items.find(i => i.name === name);
+            if (item) totalValue += (results[name].close * item.price);
+        });
+        document.getElementById('kpi-saved').textContent = savedNames.length;
+        document.getElementById('kpi-total').textContent = total;
+        document.getElementById('kpi-value').textContent = `$${totalValue.toFixed(0)}`;
+        document.getElementById('kpi-progress').textContent = total > 0 ? `${Math.round((Math.min(currentIndex,total)/total)*100)}%` : '0%';
+        const topList = document.getElementById('summary-top-list');
+        const sorted = savedNames.map(name => {
+            const item = items.find(i => i.name === name);
+            return { name, value: item ? results[name].close * item.price : 0, close: item ? results[name].close : 0 };
+        }).sort((a, b) => b.value - a.value);
+        if (!sorted.length) {
+            topList.innerHTML = '<div style="color:var(--text-muted);text-align:center;padding:20px;font-size:var(--sm);">No saved items yet — start swiping!</div>';
+        } else {
+            topList.innerHTML = sorted.slice(0, 8).map(({ name, value }) => `
+          <div class="summary-item"><div class="review-item-icon" style="background:${iconColor(name)};width:28px;height:28px;font-size:12px;flex-shrink:0;display:flex;align-items:center;justify-content:center;border-radius:50%;color:#fff;font-weight:800">${name.charAt(0).toUpperCase()}</div>
+          <div class="summary-item-name">${esc(name)}</div><div class="summary-item-val">$${value.toFixed(2)}</div></div>`).join('');
+        }
+        generateBtn2.disabled = savedNames.length === 0;
+        renderChart(sorted.slice(0, 8));
+    }
+
+    function renderChart(topItems) {
+        const ctx = document.getElementById('summary-chart');
+        if (!ctx) return;
+        if (summaryChart) summaryChart.destroy();
+        if (topItems.length === 0) {
+            summaryChart = null;
+            const c = ctx.getContext('2d');
+            c.clearRect(0, 0, ctx.width, ctx.height);
+            const fc = getComputedStyle(document.documentElement).getPropertyValue('--text-faint').trim() || '#a0988e';
+            c.fillStyle = fc;
+            c.font = '13px Inter, system-ui, sans-serif';
+            c.textAlign = 'center';
+            c.fillText('No data yet — save some items first', ctx.width / 2, ctx.height / 2);
+            return;
+        }
+        const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+        const textColor = isDark ? '#e8e5df' : '#1a1714';
+        const gridColor = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)';
+        summaryChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: topItems.map(t => t.name.length > 16 ? t.name.slice(0, 15) + '…' : t.name),
+                datasets: [{
+                    label: 'Close Value ($)',
+                    data: topItems.map(t => t.value),
+                    backgroundColor: topItems.map((_, i) => {
+                        const colors = ['#1e6b3a','#288a4c','#3d9a5c','#4cb870','#66c285','#2d7a44','#35a052','#258040'];
+                        return colors[i] || '#3d9a5c';
+                    }),
+                    borderRadius: 9,
+                    borderSkipped: false,
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: { legend: { display: false }, tooltip: { callbacks: { label: (ctx) => ` $${ctx.raw.toFixed(2)}` } } },
+                scales: {
+                    x: { ticks: { color: textColor, font: { size: 10 }, callback: v => '$' + v }, grid: { color: gridColor } },
+                    y: { ticks: { color: textColor, font: { size: 10, weight: '600' } }, grid: { display: false } }
+                }
+            }
+        });
+    }
+
+    // ============ HELPERS ============
+    function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+    const ICON_COLORS = ['#1e6b3a', '#c0392b', '#2471a3', '#e67e22', '#8e6b3e', '#00838f', '#c62828', '#2e7d32', '#5b2c8e', '#bf360c'];
+    function iconColor(name) { const h = name.split('').reduce((a, c) => a + c.charCodeAt(0), 0); return ICON_COLORS[h % ICON_COLORS.length]; }
+    function prodIcon(name) { return `<span class="prod-icon" style="background:${iconColor(name)}">${name.charAt(0).toUpperCase()}</span>`; }
+    function historyHtml(name) {
+        let hist = {};
+        try { hist = JSON.parse(localStorage.getItem('giftshop_history') || '{}'); } catch (e) {}
+        const h = hist[name] || [];
+        if (!h.length) return `<div class="history-box">📊 <span style="color:var(--text-faint);font-size:var(--xs);font-weight:400;">No history yet</span></div>`;
+        return `<div class="history-box">📊 ${h.slice(-4).map(x => `<span class="hist-tag">${x.month}: <strong>${x.close}</strong></span>`).join('')}</div>`;
+    }
+    function getLowStockThreshold(item) {
+        try {
+            const hist = JSON.parse(localStorage.getItem('giftshop_history') || '{}');
+            const h = hist[item.name] || [];
+            if (h.length >= 2) { const avgClose = h.reduce((s, x) => s + x.close, 0) / h.length; return Math.round(avgClose * 0.4); }
+        } catch (e) {}
+        return Math.round(item.open * 0.3) || 5;
+    }
+    function isLowStock(item, closeVal) { const threshold = getLowStockThreshold(item); return closeVal < threshold && item.open > 0; }
+    function launchConfetti() {
+        const colors = ['#1e6b3a', '#4cb870', '#ffd700', '#ff6b6b', '#4fc3f7', '#ce93d8', '#e67e22'];
+        for (let i = 0; i < 60; i++) {
+            const p = document.createElement('div');
+            p.className = 'confetti-piece';
+            p.style.cssText = `left:${Math.random()*100}vw;top:-10px;background:${colors[Math.floor(Math.random()*colors.length)]};animation-delay:${Math.random()*.6}s;animation-duration:${1.2+Math.random()*1}s;width:${4+Math.random()*8}px;height:${4+Math.random()*8}px;border-radius:${Math.random()>.5?'50%':'2px'}`;
+            document.body.appendChild(p);
+            setTimeout(() => p.remove(), 2400);
+        }
+    }
+    function updateQuickStats() {
+        const saved = Object.keys(results);
+        if (saved.length === 0 && currentIndex === 0) { quickStatsBar.style.display = 'none'; return; }
+        quickStatsBar.style.display = 'flex';
+        document.getElementById('qs-saved').textContent = saved.length;
+        let totalVal = 0, totalClose = 0, lowCount = 0;
+        saved.forEach(name => {
+            const item = items.find(i => i.name === name);
+            if (item) {
+                const cv = results[name].close;
+                totalVal += cv * item.price;
+                totalClose += cv;
+                if (isLowStock(item, cv)) lowCount++;
+            }
+        });
+        document.getElementById('qs-value').textContent = '$' + totalVal.toFixed(0);
+        document.getElementById('qs-avg').textContent = saved.length > 0 ? Math.round(totalClose / saved.length) : '—';
+        document.getElementById('qs-low').textContent = lowCount;
+        document.getElementById('qs-low').classList.toggle('warn', lowCount > 0);
+        document.getElementById('qs-low').classList.toggle('green', lowCount === 0 && saved.length > 0);
+    }
+</script>
+
+    
 </body>
 </html>
