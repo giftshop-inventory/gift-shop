@@ -12,6 +12,29 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <!-- Add this script before your other scripts -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+  const SUPABASE_URL = 'https://aqybyckpfphnaxybkdmq.supabase.co';  // from step 1
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFxeWJ5Y2twZnBobmF4eWJrZG1xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMzMDg1OTksImV4cCI6MjA5ODg4NDU5OX0.KwoV1kPSG2GsDRfd6ppDLgLyb3i2QsLBlzck3zbUArE';                     // from API settings
+
+  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  async function signInWithGoogle() {
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: 'https://giftshop-inventory.github.io/gift-shop/',
+      },
+    });
+    if (error) alert('Login error: ' + error.message);
+  }
+
+  document.getElementById('login-btn').addEventListener('click', signInWithGoogle);
+</script>
+
+    
     <script src="https://apis.google.com/js/api.js"></script>
     <script src="https://accounts.google.com/gsi/client"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
