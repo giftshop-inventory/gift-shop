@@ -1890,6 +1890,62 @@
             .tab-bar { padding-bottom: calc(2px + env(safe-area-inset-bottom)); }
         }
 
+        
+        #toast {
+            display: none;
+            position: fixed;
+            top: 12px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--text);
+            color: var(--bg);
+            padding: 10px 18px;
+            border-radius: var(--r-full);
+            font-size: var(--sm);
+            font-weight: 600;
+            z-index: 700;
+            pointer-events: none;
+        }
+        #toast.show { display: block; }
+        
+        .voice-indicator {
+            display: none;
+            position: fixed;
+            top: 12px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--danger-lt);
+            color: var(--danger);
+            padding: 8px 16px;
+            border-radius: var(--r-full);
+            font-size: var(--sm);
+            font-weight: 600;
+            z-index: 700;
+            align-items: center;
+            gap: 6px;
+            pointer-events: none;
+        }
+        .voice-indicator.show { display: flex; }
+        .mic-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--danger); }
+        
+        .undo-bar {
+            display: none;
+            position: fixed;
+            bottom: 70px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--surface);
+            border: 1px solid var(--divider);
+            box-shadow: var(--shadow-md);
+            padding: 8px 12px;
+            border-radius: var(--r-full);
+            font-size: var(--sm);
+            z-index: 700;
+            align-items: center;
+            gap: 10px;
+        }
+        .undo-bar.show { display: flex; }
+        .btn-undo { color: var(--info); font-weight: 700; }
         /* HIDDEN FILE INPUT */
         #import-file-input { display: none; }
     </style>
@@ -1998,7 +2054,10 @@
     // ============ SUPABASE SETUP ============
     const SUPABASE_URL = 'https://aqybyckpfphnaxybkdmq.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFxeWJ5Y2twZnBobmF4eWJrZG1xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMzMDg1OTksImV4cCI6MjA5ODg4NDU5OX0.KwoV1kPSG2GsDRfd6ppDLgLyb3i2QsLBlzck3zbUArE';
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    if (!window._supabaseClient) {
+    window._supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+}
+const supabase = window._supabaseClient;
 
     // ============ GLOBALS ============
     const THEME_KEY = 'giftshop_theme';
