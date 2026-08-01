@@ -2009,6 +2009,8 @@
         let isProcessing = false, undoStack = [];
         let activeCategory = 'All', searchQuery = '';
         let selectedReviewItems = new Set();
+        let editingProductName = null;   // ← ADD THIS LINE
+
         let voiceActive = false, recognition = null;
         let voiceErrorCount = 0, voiceRestartTimeout = null;
         let summaryChart = null;
@@ -2069,8 +2071,10 @@
             });
             if (error) alert('Login error: ' + error.message);
         }
-        loginBtn.addEventListener('click', signInWithGoogle);
-
+loginBtn.addEventListener('click', () => {
+  alert('Login button clicked');
+  signInWithGoogle();
+});
         supabase.auth.onAuthStateChange(async (event, session) => {
             if (event === 'SIGNED_IN') {
                 currentUser = session.user;
