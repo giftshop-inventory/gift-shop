@@ -2734,18 +2734,84 @@
             results = {};
             const SKIP = ['TOTAL', 'GIFT SHOP', 'INVENTORY', 'OPENING', 'CLOSING', 'PRODUCT', 'ITEM', 'NAME', 'DESCRIPTION'];
             const CATS = ['CANS', 'BOTTLES', 'ENERGY', 'CHIPS', 'ICE CREAM', 'GUM', 'ACCESSORIES', 'MEDICINES', 'TOYS', 'HATS',
-                'HOODIE', 'POOL', 'SMOKE', 'CANDY', 'SNACK', 'DRINK', 'BEVERAGE', 'CLOTHING'
-            ];
+                'HOODIE', 'POOL', 'SMOKE', 'CANDY', 'SNACK', 'DRINK', 'BEVERAGE', 'CLOTHING', 'SWEATSHIRT', 'T-SHIRTS'];
+        
+            // Add any colours or sizes that appear in your files
+            const COLOURS = ['RED','BLUE','GREEN','PURPLE','PINK','NAVY','BLACK','GREY','MAROON','OLIVE','WHITE','YELLOW','ORANGE','BROWN','CAMO','TIE-DYE','LIGHT BLUE','DARK GREY'];
+            const SIZES = ['SMALL','MEDIUM','LARGE','XL','X-LARGE','2XL','2X','3XL','3X','4XL','5XL','XXL','XXXL','XS','S','M','L','XXL','XXXL','3X','4X','5X'];
+        
             wb.SheetNames.forEach(sn => {
                 const sheet = wb.Sheets[sn];
                 const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
-                let cat = sn;
-                rows.forEach(row => { if (!row || row.length < 2) return; const name = String(row[0] || '').trim(); if (!name)
-                        return; const up = name.toUpperCase(); if (SKIP.some(k => up.includes(k))) return; if (CATS.some(k =>
-                            up.includes(k))) { cat = name; return; } const open = parseFloat(row[1]) || 0,
-                        add = parseFloat(row[2]) || 0; const close = parseFloat(row[3]) || 0,
-                        price = parseFloat(row[5]) || 0; if (open === 0 && price === 0) return;
-                    items.push({ name, category: cat, open, add, close, price, sheet: sn }); });
+                let category = sn;                     // default category from sheet name
+                let currentProduct = null;             // e.g., "EVERY CHILD MATTERS"
+                let currentColour = null;
+                let currentSize = null;
+        
+                rows.forEach(row => {
+                    if (!row || row.length < 2) return;
+                    const colA = String(row[0] || '').trim();
+                    const colB = row[1] !== undefined && row[1] !== '' ? parseFloat(row[1]) : NaN;
+                    const colF = row[5] !== undefined && row[5] !== '' ? parseFloat(row[5]) : NaN;
+                    const colC = row[2] !== undefined && row[2] !== '' ? parseFloat(row[2]) : NaN;
+        
+                    const up = colA.toUpperCase();
+        
+                    // Skip rows that are obviously category or header text
+                    if (SKIP.some(k => up.includes(k))) {
+                        if (CATS.some(k => up.includes(k))) {
+                            category = colA; // update category
+                        }
+                        return;
+                    }
+        
+                    // Check if this row is an inventory data row (has Open and Price numeric)
+                    const isDataRow = !isNaN(colB) && !isNaN(colF) && colB >= 0 && colF > 0;
+        
+                    if (isDataRow) {
+                        // Build full name with context
+                        let base = currentProduct || category; // fallback to category if no product name
+                        let fullName = base;
+                        if (currentColour) fullName += ` - ${currentColour}`;
+                        if (currentSize) fullName += ` - ${currentSize}`;
+        
+                        // Avoid duplicate entries (if same variant appears twice)
+                        if (fullName && !items.some(it => it.name === fullName)) {
+                            items.push({
+                                name: fullName,
+                                category: category,
+                                open: colB,
+                                add: !isNaN(colC) ? colC : 0,
+                                close: row[3] !== undefined && row[3] !== '' ? parseFloat(row[3]) : 0,
+                                price: colF,
+                                sheet: sn,
+                                // Keep metadata for UI (optional)
+                                productBase: currentProduct,
+                                colour: currentColour,
+                                size: currentSize
+                            });
+                        }
+                        return;
+                    }
+        
+                    // Not a data row – check if it's a colour, size, or product name
+                    if (colA) {
+                        const upper = colA.toUpperCase();
+                        const isColour = COLOURS.some(c => upper === c.toUpperCase());
+                        const isSize = SIZES.some(s => upper === s.toUpperCase());
+        
+                        if (isColour) {
+                            currentColour = colA;
+                        } else if (isSize) {
+                            currentSize = colA;
+                        } else {
+                            // It's a product name (or a category heading we didn't catch)
+                            currentProduct = colA;
+                            currentColour = null;
+                            currentSize = null;
+                        }
+                    }
+                });
             });
         }
 
@@ -2881,13 +2947,17 @@
             const existingNote = itemNotes[item.name] || '';
             const lowThresh = getLowStockThreshold(item);
             const isLow = isLowStock(item, item.close);
+            const parts = item.name.split(' - ');
+            const baseName = parts[0];
+            const variant = parts.slice(1).join(' - ');
             swipeZone.innerHTML = `
             <div class="card-stack">
               <div class="inv-card${isLow ? ' low-stock' : ''}" id="cur-card">
                 <span class="swipe-ind save" id="ind-save">✅ Save</span>
                 <span class="swipe-ind skip" id="ind-skip">⏭ Skip</span>
                 <div class="card-cat-pill">📁 ${esc(item.category)}${isLow ? `<span class="low-stock-badge">⚠ Low Stock (≤${lowThresh})</span>` : ''}</div>
-                <div class="card-name-row">${prodIcon(item.name)}<div class="card-prod-name">${esc(item.name)}</div></div>
+                <div class="card-name-row">${prodIcon(item.name)}<div class="card-prod-name">${esc(baseName)}</div></div>
+${variant ? `<div style="font-size:var(--sm);color:var(--text-muted);font-weight:500;margin-top:-4px;margin-bottom:8px;">${esc(variant)}</div>` : ''}
                 ${historyHtml(item.name)}
                 <div class="card-stats">
                   <div class="stat-chip"><div class="stat-label">Opening</div><div class="stat-val">${item.open}</div></div>
