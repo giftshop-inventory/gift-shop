@@ -38,7 +38,10 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js">
     </script>
     <style>
-        /* ── same as your original styles ── */
+        /* ── ALL STYLES ARE THE SAME AS YOUR ORIGINAL ── */
+        /* (I've kept every style exactly as you had them, no changes) */
+        /* To save space, I'm including the full style block from your original code. */
+        /* Since the user provided the full code, I'll copy the style block verbatim. */
         :root,
         [data-theme="light"] {
             --bg: #f5f3ef;
@@ -2701,7 +2704,8 @@
             // ── expanded colours & sizes ──
             const COLOURS = ['RED', 'BLUE', 'GREEN', 'PURPLE', 'PINK', 'NAVY', 'BLACK', 'GREY', 'MAROON', 'OLIVE',
                 'WHITE', 'YELLOW', 'ORANGE', 'BROWN', 'CAMO', 'TIE-DYE', 'LIGHT BLUE', 'DARK GREY', 'TEAL', 'LIME',
-                'MAGENTA', 'CORAL', 'GOLD', 'SILVER', 'BEIGE', 'CHARCOAL', 'MINT', 'LAVENDER', 'PEACH', 'RUST'
+                'MAGENTA', 'CORAL', 'GOLD', 'SILVER', 'BEIGE', 'CHARCOAL', 'MINT', 'LAVENDER', 'PEACH', 'RUST',
+                'OLIVE GREEN', 'DARK BLUE', 'LIGHT GREEN', 'KHAKI', 'TAN', 'MUSTARD', 'BURGUNDY', 'RASPBERRY'
             ];
             const SIZES = ['SMALL', 'MEDIUM', 'LARGE', 'XL', 'X-LARGE', '2XL', '2 XL', '2X', '3XL', '3XL', '3X',
                 '4XL', '4X', '5XL', '5X', 'XXL', 'XXXL', 'XS', 'S', 'M', 'L', 'XXL', 'XXXL', '3X', '4X', '5X',
@@ -2715,7 +2719,7 @@
                 let currentProduct = null;
                 let currentColour = null;
                 let currentSize = null;
-                let pendingProduct = null; // holds product until we see a data row
+                let pendingProduct = null;
                 let pendingColour = null;
                 let pendingSize = null;
 
@@ -2725,17 +2729,15 @@
                     const colB = row[1] !== undefined && row[1] !== '' ? parseFloat(row[1]) : NaN;
                     const colC = row[2] !== undefined && row[2] !== '' ? parseFloat(row[2]) : NaN;
                     const colD = row[3] !== undefined && row[3] !== '' ? parseFloat(row[3]) : NaN;
-                    // price: try column F (index 5), then E (4), then default 0
                     let price = 0;
                     if (row[5] !== undefined && row[5] !== '' && !isNaN(parseFloat(row[5]))) price = parseFloat(row[5]);
                     else if (row[4] !== undefined && row[4] !== '' && !isNaN(parseFloat(row[4]))) price = parseFloat(row[4]);
-                    // if still 0, try column G
                     if (price === 0 && row[6] !== undefined && row[6] !== '' && !isNaN(parseFloat(row[6]))) price = parseFloat(
                         row[6]);
 
                     const up = colA.toUpperCase();
 
-                    // skip obvious headers / set category
+                    // skip headers / set category
                     if (SKIP.some(k => up.includes(k))) {
                         if (CATS.some(k => up.includes(k))) {
                             category = colA;
@@ -2743,15 +2745,14 @@
                         return;
                     }
 
-                    // ── determine if this row is a product, colour, or size ──
+                    // Determine if this row is a colour, size, or product
                     const isColour = COLOURS.some(c => up === c.toUpperCase());
                     const isSize = SIZES.some(s => up === s.toUpperCase());
 
-                    // If colA is a colour or size, treat as context; otherwise it's a product name
                     if (colA) {
                         if (isColour) {
                             currentColour = colA;
-                            // keep product pending
+                            // keep product
                         } else if (isSize) {
                             currentSize = colA;
                         } else {
@@ -2765,10 +2766,8 @@
                         }
                     }
 
-                    // ── check if this row is actual inventory data ──
-                    // a data row must have a valid opening count (colB >= 0) AND either price > 0 or we accept it anyway
+                    // Check if this row is actual inventory data
                     const hasOpening = !isNaN(colB) && colB >= 0;
-                    // if price is missing we still accept it (use default 0)
                     const isValidData = hasOpening;
 
                     if (isValidData) {
@@ -2780,7 +2779,7 @@
                         if (c) fullName += ` - ${c}`;
                         if (s) fullName += ` - ${s}`;
 
-                        // fallback: if fullName is just category, use product from row
+                        // fallback
                         if (!fullName || fullName === category) {
                             fullName = colA || category;
                         }
@@ -2788,7 +2787,6 @@
                         // Avoid duplicates (but allow same name with different colour/size)
                         const key = fullName;
                         if (!items.some(it => it.name === key)) {
-                            // read close from colD if available, else from colC (add) if available, else 0
                             let closeVal = 0;
                             if (!isNaN(colD) && colD >= 0) closeVal = colD;
                             else if (!isNaN(colC) && colC >= 0) closeVal = colC;
@@ -2799,21 +2797,21 @@
                                 open: colB,
                                 add: !isNaN(colC) && colC >= 0 ? colC : 0,
                                 close: closeVal,
-                                price: price > 0 ? price : 1.0, // fallback price
+                                price: price > 0 ? price : 1.0,
                                 sheet: sn,
+                                row: ri, // store row index for later update
                                 productBase: currentProduct || pendingProduct,
                                 colour: currentColour || pendingColour,
                                 size: currentSize || pendingSize
                             });
                         }
 
-                        // After creating an item, clear pending so we don't reuse stale values
+                        // Clear pending after creating an item
                         pendingProduct = null;
                         pendingColour = null;
                         pendingSize = null;
                     } else {
-                        // If not a data row, but we have a product/colour/size context, store as pending
-                        // so it can be used by the next data row
+                        // store pending context for next data row
                         if (currentProduct) pendingProduct = currentProduct;
                         if (currentColour) pendingColour = currentColour;
                         if (currentSize) pendingSize = currentSize;
@@ -2821,12 +2819,12 @@
                 });
             });
 
-            // If no items were found, try a more aggressive fallback: treat every row with colA and colB as an item
+            // Fallback: if no items found, treat every row with colA and colB as item
             if (items.length === 0) {
                 wb.SheetNames.forEach(sn => {
                     const sheet = wb.Sheets[sn];
                     const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
-                    rows.forEach(row => {
+                    rows.forEach((row, ri) => {
                         if (!row || row.length < 2) return;
                         const colA = String(row[0] || '').trim();
                         const colB = row[1] !== undefined && row[1] !== '' ? parseFloat(row[1]) : NaN;
@@ -2843,6 +2841,7 @@
                                     close: 0,
                                     price: price,
                                     sheet: sn,
+                                    row: ri,
                                     productBase: name,
                                     colour: null,
                                     size: null
@@ -2869,7 +2868,6 @@
                 fileStatusText.textContent = fname;
                 buildCategoryFilter();
                 buildSearchBar();
-                // reset filteredItems to all items
                 filteredItems = [...items];
                 currentIndex = 0;
                 results = {};
@@ -2890,8 +2888,10 @@
         // ─── CATEGORY FILTER & SEARCH ──────────────────────────────────────────────
         function buildCategoryFilter() {
             const cats = ['All', ...new Set(items.map(i => i.category))];
+            // Sort categories alphabetically, keeping "All" first
+            const sortedCats = ['All', ...cats.filter(c => c !== 'All').sort((a, b) => a.localeCompare(b))];
             catFilterBar.innerHTML = '';
-            cats.forEach(cat => { const ch = document.createElement('button');
+            sortedCats.forEach(cat => { const ch = document.createElement('button');
                 ch.className = 'cat-chip' + (cat === 'All' ? ' active' : '');
                 ch.textContent = cat === 'All' ? `🗂 All (${items.length})` : cat;
                 ch.addEventListener('click', () => { activeCategory = cat;
@@ -2924,7 +2924,6 @@
                 return catOk && searchOk;
             });
             currentIndex = 0;
-            // if filteredItems is empty, show empty state
             if (filteredItems.length === 0) {
                 swipeZone.innerHTML =
                     `<div class="empty-state"><div class="empty-icon">🔍</div><h3>No matches</h3><p>No items match the selected category or search.</p></div>`;
@@ -2968,7 +2967,6 @@
                 fileStatusText.textContent = saved.fileName || 'File'; await loadExcelFile(saved.fileId);
                 results = saved.results;
                 currentIndex = Math.min(saved.currentIndex, items.length);
-                // re-apply filter
                 filteredItems = [...items];
                 if (activeCategory !== 'All') filteredItems = filteredItems.filter(i => i.category === activeCategory);
                 if (searchQuery) filteredItems = filteredItems.filter(i => i.name.toLowerCase().includes(searchQuery) || i
@@ -3429,57 +3427,100 @@
             showToast('📥 CSV downloaded'); }
         csvBtn.addEventListener('click', exportCSV);
 
-        // ─── GENERATE REPORT ────────────────────────────────────────────────────────
-        async function doGenerate(resultEl, btn) { if (!Object.keys(results).length) { showToast(
-                'No data saved yet!'); return; } if (!currentFileId) { showToast('No source file selected'); return; }
+        // ─── GENERATE REPORT (FIXED) ────────────────────────────────────────────────
+        async function doGenerate(resultEl, btn) {
+            if (!Object.keys(results).length) { showToast('No data saved yet!'); return; }
+            if (!currentFileId) { showToast('No source file selected'); return; }
+
             btn.disabled = true;
             btn.innerHTML = '<span>⏳ Generating…</span>';
             resultEl.className = 'report-result';
             resultEl.style.display = 'none';
-            showLoading('Generating report…'); try { const r = await fetch(
-                    `https://www.googleapis.com/drive/v3/files/${currentFileId}?alt=media`, { headers: { Authorization: `Bearer ${accessToken}` } }
-                    ); const buf = await r.arrayBuffer(); const wb = XLSX.read(buf, { type: 'array' });
-                wb.SheetNames.forEach(sn => { const sheet = wb.Sheets[sn]; const rows = XLSX.utils.sheet_to_json(sheet, { header: 1,
-                        defval: '' });
-                    rows.forEach((row, ri) => { const name = String(row[0] || '').trim(); if (!name || !results[name])
-                            return; const saved = results[name]; const openVal = parseFloat(row[1]) || 0; const price =
-                            parseFloat(row[5]) || 0; const usage = openVal + saved.add - saved.close; const setCell = (
-                                col, val) => { const addr = XLSX.utils.encode_cell({ r: ri, c: col }); if (!sheet[
-                                    addr]) sheet[addr] = {};
-                            sheet[addr].v = val;
-                            sheet[addr].t = 'n'; };
-                        setCell(2, saved.add);
-                        setCell(3, saved.close);
-                        setCell(4, usage);
-                        setCell(6, usage * price);
-                        setCell(7, saved.close * price); }); }); const now = new Date(); const months = ['Jan', 'Feb', 'Mar',
-                    'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
-                ]; const newName =
-                    `${months[(now.getMonth()+1)%12]} ${now.getFullYear()+(now.getMonth()===11?1:0)}`; const wbOut = XLSX.write(
-                    wb, { bookType: 'xlsx', type: 'array' }); const blob = new Blob([wbOut], { type:
-                        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }); const meta = JSON.stringify({ name: `${newName}.xlsx`,
-                    mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }); const fd = new FormData();
+            showLoading('Generating report…');
+
+            try {
+                // 1. Fetch the original file
+                const r = await fetch(`https://www.googleapis.com/drive/v3/files/${currentFileId}?alt=media`, { headers: { Authorization: `Bearer ${accessToken}` } });
+                const buf = await r.arrayBuffer();
+                const wb = XLSX.read(buf, { type: 'array' });
+
+                // 2. For each saved item, find its row and sheet, then update cells
+                for (const [name, data] of Object.entries(results)) {
+                    const item = items.find(i => i.name === name);
+                    if (!item || item.row === undefined || !item.sheet) continue;
+                    const sheet = wb.Sheets[item.sheet];
+                    if (!sheet) continue;
+                    const rowIndex = item.row;
+                    // col indexes: 0=name, 1=open, 2=add, 3=close, 4=usage (we'll compute), 5=price, 6=usage*price, 7=close*price
+                    // We'll set add (col 2), close (col 3), usage (col 4), usage*price (col 6), close*price (col 7)
+                    const addVal = data.add || 0;
+                    const closeVal = data.close || 0;
+                    const openVal = item.open || 0;
+                    const priceVal = item.price || 0;
+                    const usage = openVal + addVal - closeVal;
+                    const setCell = (col, val) => {
+                        const addr = XLSX.utils.encode_cell({ r: rowIndex, c: col });
+                        if (!sheet[addr]) sheet[addr] = {};
+                        sheet[addr].v = val;
+                        sheet[addr].t = 'n';
+                    };
+                    setCell(2, addVal);
+                    setCell(3, closeVal);
+                    setCell(4, usage);
+                    setCell(6, usage * priceVal);
+                    setCell(7, closeVal * priceVal);
+                }
+
+                // 3. Save as a new file with month name
+                const now = new Date();
+                const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                const newName = `${months[(now.getMonth()+1)%12]} ${now.getFullYear()+(now.getMonth()===11?1:0)}`;
+                const wbOut = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+                const blob = new Blob([wbOut], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+                const meta = JSON.stringify({ name: `${newName}.xlsx`, mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+                const fd = new FormData();
                 fd.append('metadata', new Blob([meta], { type: 'application/json' }));
-                fd.append('file', blob); const up = await fetch(
-                    'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,name,webViewLink', { method: 'POST',
-                        headers: { Authorization: `Bearer ${accessToken}` }, body: fd }); if (!up.ok) throw new Error(
-                    `Upload failed: ${up.status}`); const upData = await up.json(); try { let hist = JSON.parse(localStorage
-                        .getItem(HISTORY_KEY) || '{}');
-                    Object.entries(results).forEach(([pname, data]) => { if (!hist[pname]) hist[pname] = [];
-                        hist[pname].push({ month: newName, close: data.close }); if (hist[pname].length > 6) hist[pname]
-                            .shift(); });
-                    localStorage.setItem(HISTORY_KEY, JSON.stringify(hist)); } catch (e) {} try { localStorage.removeItem(
-                    AUTOSAVE_KEY); } catch (e) {}
+                fd.append('file', blob);
+                const up = await fetch(
+                    'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,name,webViewLink', {
+                        method: 'POST',
+                        headers: { Authorization: `Bearer ${accessToken}` },
+                        body: fd
+                    });
+                if (!up.ok) throw new Error(`Upload failed: ${up.status}`);
+                const upData = await up.json();
+
+                // 4. Update history
+                try {
+                    let hist = JSON.parse(localStorage.getItem(HISTORY_KEY) || '{}');
+                    Object.entries(results).forEach(([pname, d]) => {
+                        if (!hist[pname]) hist[pname] = [];
+                        hist[pname].push({ month: newName, close: d.close });
+                        if (hist[pname].length > 6) hist[pname].shift();
+                    });
+                    localStorage.setItem(HISTORY_KEY, JSON.stringify(hist));
+                } catch (e) {}
+                try { localStorage.removeItem(AUTOSAVE_KEY); } catch (e) {}
+
                 resultEl.className = 'report-result success';
                 resultEl.style.display = 'block';
                 resultEl.innerHTML =
                     `✅ <strong>${upData.name}</strong> saved! <a href="${upData.webViewLink}" target="_blank" rel="noopener noreferrer">📂 Open in Drive</a>`;
                 await loadDriveFiles();
-                launchConfetti(); } catch (e) { resultEl.className = 'report-result error';
+                launchConfetti();
+
+            } catch (e) {
+                resultEl.className = 'report-result error';
                 resultEl.style.display = 'block';
-                resultEl.textContent = `❌ Error: ${e.message}`; }
+                resultEl.textContent = `❌ Error: ${e.message}`;
+            }
             hideLoading();
-            updateProgress(); }
+            updateProgress();
+            btn.disabled = false;
+            btn.innerHTML =
+                `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg> Generate Report (${Object.keys(results).length} items)`;
+        }
+
         generateBtn.addEventListener('click', () => doGenerate(reportResult, generateBtn));
         generateBtn2.addEventListener('click', () => doGenerate(resultBanner2, generateBtn2));
     </script>
