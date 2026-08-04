@@ -2846,13 +2846,13 @@
 
         function applyFilter() {
             if (items.length === 0) return;
-            const remaining = items.filter((item) => { const catOk = activeCategory === 'All' || item.category ===
-                    activeCategory; const searchOk = !searchQuery || item.name.toLowerCase().includes(searchQuery) || item
-                    .category.toLowerCase().includes(searchQuery); return catOk && searchOk; });
-            if (searchQuery && remaining.length > 0) { const firstMatch = items.findIndex(i => remaining[0].name === i.name); if (
-                    firstMatch !== -1 && firstMatch !== currentIndex) { currentIndex = firstMatch;
-                    renderCard(); return; } }
+            const remaining = items.filter((item) => {
+                const catOk = activeCategory === 'All' || item.category === activeCategory;
+                const searchOk = !searchQuery || item.name.toLowerCase().includes(searchQuery) || item.category.toLowerCase().includes(searchQuery);
+                return catOk && searchOk;
+            });
             filteredItems = remaining;
+            currentIndex = 0;  // Reset to first item of the filtered list
             renderCard();
         }
 
@@ -2915,7 +2915,9 @@
             $('qs-low').classList.toggle('green', lowCount === 0 && saved.length > 0); }
 
         /* ============ SWIPE LOGIC ============ */
-        function startSwipe() { currentIndex = 0;
+        function startSwipe() { 
+            filteredItems = [];
+            currentIndex = 0;
             results = {};
             undoStack = [];
             selectedReviewItems = new Set();
@@ -2926,80 +2928,99 @@
             updateQuickStats();
             renderCard(); try { localStorage.removeItem(AUTOSAVE_KEY); } catch (e) {} }
 
+
+
+
         function renderCard() {
             updateProgress();
             updateQuickStats();
-            if (items.length === 0) { swipeZone.innerHTML =
-                '<div class="empty-state"><div class="empty-icon">⚠️</div><h3>No items found</h3><p>Check your Excel format — we couldn\'t parse any items.</p></div>'; return; }
-            if (currentIndex >= items.length) {
+        
+            // --- NEW: use filtered list if available ---
+            const displayItems = filteredItems.length > 0 ? filteredItems : items;
+        
+            if (displayItems.length === 0) {
                 swipeZone.innerHTML = `
-              <div class="done-card">
-                <div class="done-emoji">🎉</div>
-                <div class="done-title">All Done!</div>
-                <div class="done-sub">Saved ${Object.keys(results).length} of ${items.length} items.</div>
-                <button class="btn-restart" onclick="startSwipe()">↺ Start Over</button>
-              </div>`;
+                    <div class="empty-state">
+                        <div class="empty-icon">🔍</div>
+                        <h3>No matches</h3>
+                        <p>No items match the selected category or search.</p>
+                    </div>`;
+                return;
+            }
+        
+            if (currentIndex >= displayItems.length) {
+                swipeZone.innerHTML = `
+                    <div class="done-card">
+                        <div class="done-emoji">🎉</div>
+                        <div class="done-title">All Done!</div>
+                        <div class="done-sub">Saved ${Object.keys(results).length} items${filteredItems.length > 0 ? ` (filtered view)` : ''}.</div>
+                        <button class="btn-restart" onclick="startSwipe()">↺ Start Over</button>
+                    </div>`;
                 launchConfetti();
                 updateQuickStats();
                 return;
             }
-            const item = items[currentIndex];
+        
+            // --- NEW: get the current item from the filtered list ---
+            const item = displayItems[currentIndex];
             const existingNote = itemNotes[item.name] || '';
             const lowThresh = getLowStockThreshold(item);
             const isLow = isLowStock(item, item.close);
             const parts = item.name.split(' - ');
             const baseName = parts[0];
             const variant = parts.slice(1).join(' - ');
+        
+            // --- THE REST IS EXACTLY YOUR ORIGINAL CODE (unchanged) ---
             swipeZone.innerHTML = `
-            <div class="card-stack">
-              <div class="inv-card${isLow ? ' low-stock' : ''}" id="cur-card">
-                <span class="swipe-ind save" id="ind-save">✅ Save</span>
-                <span class="swipe-ind skip" id="ind-skip">⏭ Skip</span>
-                <div class="card-cat-pill">📁 ${esc(item.category)}${isLow ? `<span class="low-stock-badge">⚠ Low Stock (≤${lowThresh})</span>` : ''}</div>
-                <div class="card-name-row">${prodIcon(item.name)}<div class="card-prod-name">${esc(baseName)}</div></div>
-${variant ? `<div style="font-size:var(--sm);color:var(--text-muted);font-weight:500;margin-top:-4px;margin-bottom:8px;">${esc(variant)}</div>` : ''}
-                ${historyHtml(item.name)}
-                <div class="card-stats">
-                  <div class="stat-chip"><div class="stat-label">Opening</div><div class="stat-val">${item.open}</div></div>
-                  <div class="stat-chip"><div class="stat-label">Last Close</div><div class="stat-val">${item.close||'—'}</div></div>
-                  <div class="stat-chip"><div class="stat-label">Price</div><div class="stat-val">$${item.price.toFixed(2)}</div></div>
-                </div>
-                <div class="quick-presets">
-                  <span class="preset-label">Quick Add:</span>
-                  <button class="preset-chip" data-preset="1">1</button>
-                  <button class="preset-chip" data-preset="5">5</button>
-                  <button class="preset-chip" data-preset="10">10</button>
-                  <button class="preset-chip" data-preset="20">20</button>
-                  <button class="preset-chip" data-preset="50">50</button>
-                </div>
-                <div class="inp-row">
-                  <div class="inp-col">
-                    <div class="inp-col-label">📥 Add</div>
-                    <div class="inp-wrap-sm">
-                      <button class="stepper-btn" data-target="inp-add" data-delta="-1" type="button">−</button>
-                      <input class="card-input" type="number" id="inp-add" value="0" min="0" inputmode="numeric" pattern="[0-9]*" autocomplete="off" />
-                      <button class="stepper-btn" data-target="inp-add" data-delta="1" type="button">+</button>
+                <div class="card-stack">
+                    <div class="inv-card${isLow ? ' low-stock' : ''}" id="cur-card">
+                        <span class="swipe-ind save" id="ind-save">✅ Save</span>
+                        <span class="swipe-ind skip" id="ind-skip">⏭ Skip</span>
+                        <div class="card-cat-pill">📁 ${esc(item.category)}${isLow ? `<span class="low-stock-badge">⚠ Low Stock (≤${lowThresh})</span>` : ''}</div>
+                        <div class="card-name-row">${prodIcon(item.name)}<div class="card-prod-name">${esc(baseName)}</div></div>
+                        ${variant ? `<div style="font-size:var(--sm);color:var(--text-muted);font-weight:500;margin-top:-4px;margin-bottom:8px;">${esc(variant)}</div>` : ''}
+                        ${historyHtml(item.name)}
+                        <div class="card-stats">
+                            <div class="stat-chip"><div class="stat-label">Opening</div><div class="stat-val">${item.open}</div></div>
+                            <div class="stat-chip"><div class="stat-label">Last Close</div><div class="stat-val">${item.close||'—'}</div></div>
+                            <div class="stat-chip"><div class="stat-label">Price</div><div class="stat-val">$${item.price.toFixed(2)}</div></div>
+                        </div>
+                        <div class="quick-presets">
+                            <span class="preset-label">Quick Add:</span>
+                            <button class="preset-chip" data-preset="1">1</button>
+                            <button class="preset-chip" data-preset="5">5</button>
+                            <button class="preset-chip" data-preset="10">10</button>
+                            <button class="preset-chip" data-preset="20">20</button>
+                            <button class="preset-chip" data-preset="50">50</button>
+                        </div>
+                        <div class="inp-row">
+                            <div class="inp-col">
+                                <div class="inp-col-label">📥 Add</div>
+                                <div class="inp-wrap-sm">
+                                    <button class="stepper-btn" data-target="inp-add" data-delta="-1" type="button">−</button>
+                                    <input class="card-input" type="number" id="inp-add" value="0" min="0" inputmode="numeric" pattern="[0-9]*" autocomplete="off" />
+                                    <button class="stepper-btn" data-target="inp-add" data-delta="1" type="button">+</button>
+                                </div>
+                            </div>
+                            <div class="inp-col">
+                                <div class="inp-col-label">📦 Close</div>
+                                <div class="inp-wrap-sm">
+                                    <button class="stepper-btn" data-target="inp-close" data-delta="-1" type="button">−</button>
+                                    <input class="card-input" type="number" id="inp-close" value="${item.close}" min="0" inputmode="numeric" pattern="[0-9]*" autocomplete="off" />
+                                    <button class="stepper-btn" data-target="inp-close" data-delta="1" type="button">+</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="notes-row">
+                            <textarea class="notes-input" id="inp-notes" placeholder="📝 Quick note… (e.g., damaged box, low shelf)" rows="2">${esc(existingNote)}</textarea>
+                        </div>
+                        <div class="cost-preview" id="cost-preview">—</div>
+                        <div class="card-btns"><button class="btn-skip-c" id="btn-skip">⬅ Skip</button><button class="btn-save-c" id="btn-save">Save ➡</button></div>
                     </div>
-                  </div>
-                  <div class="inp-col">
-                    <div class="inp-col-label">📦 Close</div>
-                    <div class="inp-wrap-sm">
-                      <button class="stepper-btn" data-target="inp-close" data-delta="-1" type="button">−</button>
-                      <input class="card-input" type="number" id="inp-close" value="${item.close}" min="0" inputmode="numeric" pattern="[0-9]*" autocomplete="off" />
-                      <button class="stepper-btn" data-target="inp-close" data-delta="1" type="button">+</button>
-                    </div>
-                  </div>
                 </div>
-                <div class="notes-row">
-                  <textarea class="notes-input" id="inp-notes" placeholder="📝 Quick note… (e.g., damaged box, low shelf)" rows="2">${esc(existingNote)}</textarea>
-                </div>
-                
-                <div class="cost-preview" id="cost-preview">—</div>
-                <div class="card-btns"><button class="btn-skip-c" id="btn-skip">⬅ Skip</button><button class="btn-save-c" id="btn-save">Save ➡</button></div>
-              </div>
-            </div>
-            <div class="swipe-hint"><span>⬅ Skip <span class="kb-shortcut">← Esc</span></span><span><span class="kb-shortcut">Enter →</span> Save ➡</span></div>`;
-
+                <div class="swipe-hint"><span>⬅ Skip <span class="kb-shortcut">← Esc</span></span><span><span class="kb-shortcut">Enter →</span> Save ➡</span></div>`;
+        
+            // --- All your event listeners (unchanged) ---
             const card = document.getElementById('cur-card');
             const addInp = document.getElementById('inp-add');
             const closeInp = document.getElementById('inp-close');
@@ -3007,7 +3028,7 @@ ${variant ? `<div style="font-size:var(--sm);color:var(--text-muted);font-weight
             const costPrev = document.getElementById('cost-preview');
             const indSave = document.getElementById('ind-save');
             const indSkip = document.getElementById('ind-skip');
-
+        
             function updateCost() { const c = parseFloat(closeInp.value) || 0,
                     a = parseFloat(addInp.value) || 0;
                 costPrev.textContent =
@@ -3074,29 +3095,59 @@ ${variant ? `<div style="font-size:var(--sm);color:var(--text-muted);font-weight
             closeInp.focus();
         }
 
-        function swipeCard(direction) { if (isProcessing) return; const card = document.getElementById('cur-card'); if (!card)
-                return;
-            isProcessing = true; const item = items[currentIndex]; const notesInp = document.getElementById('inp-notes'); if (
-                notesInp) { itemNotes[item.name] = notesInp.value;
-                saveNotes(); }
-            undoStack.push({ index: currentIndex, item, savedData: results[item.name] || null, direction }); if (direction ===
-                'right') { const closeVal = parseFloat(document.getElementById('inp-close')?.value) || 0; const addVal =
-                parseFloat(document.getElementById('inp-add')?.value) || 0;
+
+        
+
+        
+        function swipeCard(direction) {
+            if (isProcessing) return;
+            const card = document.getElementById('cur-card');
+            if (!card) return;
+        
+            const displayItems = filteredItems.length > 0 ? filteredItems : items;
+            if (currentIndex >= displayItems.length) return;
+        
+            isProcessing = true;
+            const item = displayItems[currentIndex]; // <- use filtered list
+            const notesInp = document.getElementById('inp-notes');
+            if (notesInp) {
+                itemNotes[item.name] = notesInp.value;
+                saveNotes();
+            }
+        
+            undoStack.push({ index: currentIndex, item, savedData: results[item.name] || null, direction });
+        
+            if (direction === 'right') {
+                const closeVal = parseFloat(document.getElementById('inp-close')?.value) || 0;
+                const addVal = parseFloat(document.getElementById('inp-add')?.value) || 0;
                 results[item.name] = { close: closeVal, add: addVal, sheet: item.sheet };
                 card.style.transition = 'transform .28s cubic-bezier(.2,.8,.2,1),opacity .28s ease';
                 card.style.transform = 'translateX(120%) rotate(12deg)';
-                card.style.opacity = '0'; if (navigator.vibrate) navigator.vibrate(8); } else { card.style.transition =
-                    'transform .28s cubic-bezier(.2,.8,.2,1),opacity .28s ease';
+                card.style.opacity = '0';
+                if (navigator.vibrate) navigator.vibrate(8);
+            } else {
+                card.style.transition = 'transform .28s cubic-bezier(.2,.8,.2,1),opacity .28s ease';
                 card.style.transform = 'translateX(-120%) rotate(-12deg)';
-                card.style.opacity = '0'; }
+                card.style.opacity = '0';
+            }
+        
             showUndoBar(direction === 'right' ? `✅ "${item.name}" saved` : `⏭ "${item.name}" skipped`);
             autosave();
             updateQuickStats();
-            setTimeout(() => { currentIndex++;
+        
+            setTimeout(() => {
+                currentIndex++;
                 isProcessing = false;
-                renderCard(); const nextInp = document.getElementById('inp-close'); if (nextInp) { nextInp.focus();
-                    nextInp.select(); } }, 290);
+                renderCard();
+                const nextInp = document.getElementById('inp-close');
+                if (nextInp) {
+                    nextInp.focus();
+                    nextInp.select();
+                }
+            }, 290);
         }
+
+        
 
         /* ============ UNDO ============ */
         let undoTimer;
@@ -3105,31 +3156,44 @@ ${variant ? `<div style="font-size:var(--sm);color:var(--text-muted);font-weight
             undoMsg.textContent = msg;
             undoBar.classList.add('show');
             undoTimer = setTimeout(() => undoBar.classList.remove('show'), 2800); }
-        undoBtn.addEventListener('click', () => { if (!undoStack.length) return;
-            undoBar.classList.remove('show'); const last = undoStack.pop();
-            currentIndex = last.index; if (last.savedData) results[last.item.name] = last.savedData; else delete results[last
-                .item.name];
+        undoBtn.addEventListener('click', () => {
+            if (!undoStack.length) return;
+            undoBar.classList.remove('show');
+            const last = undoStack.pop();
+            currentIndex = last.index;
+            if (last.savedData) results[last.item.name] = last.savedData;
+            else delete results[last.item.name];
             isProcessing = false;
-            renderCard();
+            // Re-apply the current filter to reset the view correctly
+            applyFilter();
             updateQuickStats();
             showToast('↩ Undone');
-            autosave(); });
+            autosave();
+        });
 
         /* ============ PROGRESS & GENERATE STATE ============ */
-        function updateProgress() { const total = items.length,
-                done = Math.min(currentIndex, total); const pct = total > 0 ? (done / total) * 100 : 0;
+        function updateProgress() {
+            const displayItems = filteredItems.length > 0 ? filteredItems : items;
+            const total = displayItems.length;
+            const done = Math.min(currentIndex, total);
+            const pct = total > 0 ? (done / total) * 100 : 0;
             progressFill.style.width = `${pct}%`;
-            progressLabel.textContent = `${done} / ${total}`; const savedCount = Object.keys(results).length; if (savedCount >
-                0) { generateBtn.disabled = false;
+            progressLabel.textContent = `${done} / ${total}`;
+        
+            const savedCount = Object.keys(results).length;
+            if (savedCount > 0) {
+                generateBtn.disabled = false;
                 generateBtn2.disabled = false;
                 csvBtn.disabled = false;
                 generateBtn.innerHTML =
-                    `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg> Generate Report (${savedCount} items)`; } else {
+                    `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg> Generate Report (${savedCount} items)`;
+            } else {
                 generateBtn.disabled = true;
                 generateBtn2.disabled = true;
                 csvBtn.disabled = true;
                 generateBtn.innerHTML =
-                    `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg> Generate Next Month Report`; }
+                    `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg> Generate Next Month Report`;
+            }
         }
 
         /* ============ REVIEW ============ */
