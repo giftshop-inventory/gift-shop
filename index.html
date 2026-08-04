@@ -2729,6 +2729,9 @@
             hideLoading();
         }
 
+
+
+
         function parseWorkbook(wb) {
             items = [];
             results = {};
@@ -2736,15 +2739,14 @@
             const CATS = ['CANS', 'BOTTLES', 'ENERGY', 'CHIPS', 'ICE CREAM', 'GUM', 'ACCESSORIES', 'MEDICINES', 'TOYS', 'HATS',
                 'HOODIE', 'POOL', 'SMOKE', 'CANDY', 'SNACK', 'DRINK', 'BEVERAGE', 'CLOTHING', 'SWEATSHIRT', 'T-SHIRTS'];
         
-            // Add any colours or sizes that appear in your files
             const COLOURS = ['RED','BLUE','GREEN','PURPLE','PINK','NAVY','BLACK','GREY','MAROON','OLIVE','WHITE','YELLOW','ORANGE','BROWN','CAMO','TIE-DYE','LIGHT BLUE','DARK GREY'];
             const SIZES = ['SMALL','MEDIUM','LARGE','XL','X-LARGE','2XL','2X','3XL','3X','4XL','5XL','XXL','XXXL','XS','S','M','L','XXL','XXXL','3X','4X','5X'];
         
             wb.SheetNames.forEach(sn => {
                 const sheet = wb.Sheets[sn];
                 const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
-                let category = sn;                     // default category from sheet name
-                let currentProduct = null;             // e.g., "EVERY CHILD MATTERS"
+                let category = sn;
+                let currentProduct = null;
                 let currentColour = null;
                 let currentSize = null;
         
@@ -2754,28 +2756,43 @@
                     const colB = row[1] !== undefined && row[1] !== '' ? parseFloat(row[1]) : NaN;
                     const colF = row[5] !== undefined && row[5] !== '' ? parseFloat(row[5]) : NaN;
                     const colC = row[2] !== undefined && row[2] !== '' ? parseFloat(row[2]) : NaN;
-        
                     const up = colA.toUpperCase();
         
-                    // Skip rows that are obviously category or header text
+                    // 1. Skip obvious headers / update category
                     if (SKIP.some(k => up.includes(k))) {
                         if (CATS.some(k => up.includes(k))) {
-                            category = colA; // update category
+                            category = colA;
                         }
                         return;
                     }
         
-                    // Check if this row is an inventory data row (has Open and Price numeric)
+                    // 2. Update context from column A (product, colour, or size)
+                    if (colA) {
+                        const isColour = COLOURS.some(c => up === c.toUpperCase());
+                        const isSize = SIZES.some(s => up === s.toUpperCase());
+        
+                        if (isColour) {
+                            currentColour = colA;
+                        } else if (isSize) {
+                            currentSize = colA;
+                        } else {
+                            // It's a product name (reset colour & size)
+                            currentProduct = colA;
+                            currentColour = null;
+                            currentSize = null;
+                        }
+                    }
+        
+                    // 3. Now check if this row is actual inventory data
                     const isDataRow = !isNaN(colB) && !isNaN(colF) && colB >= 0 && colF > 0;
         
                     if (isDataRow) {
-                        // Build full name with context
-                        let base = currentProduct || category; // fallback to category if no product name
+                        let base = currentProduct || category;
                         let fullName = base;
                         if (currentColour) fullName += ` - ${currentColour}`;
                         if (currentSize) fullName += ` - ${currentSize}`;
         
-                        // Avoid duplicate entries (if same variant appears twice)
+                        // Avoid duplicates
                         if (fullName && !items.some(it => it.name === fullName)) {
                             items.push({
                                 name: fullName,
@@ -2785,35 +2802,18 @@
                                 close: row[3] !== undefined && row[3] !== '' ? parseFloat(row[3]) : 0,
                                 price: colF,
                                 sheet: sn,
-                                // Keep metadata for UI (optional)
                                 productBase: currentProduct,
                                 colour: currentColour,
                                 size: currentSize
                             });
                         }
-                        return;
-                    }
-        
-                    // Not a data row – check if it's a colour, size, or product name
-                    if (colA) {
-                        const upper = colA.toUpperCase();
-                        const isColour = COLOURS.some(c => upper === c.toUpperCase());
-                        const isSize = SIZES.some(s => upper === s.toUpperCase());
-        
-                        if (isColour) {
-                            currentColour = colA;
-                        } else if (isSize) {
-                            currentSize = colA;
-                        } else {
-                            // It's a product name (or a category heading we didn't catch)
-                            currentProduct = colA;
-                            currentColour = null;
-                            currentSize = null;
-                        }
                     }
                 });
             });
         }
+
+
+        
 
         /* ============ CATEGORY FILTER & SEARCH ============ */
         function buildCategoryFilter() {
