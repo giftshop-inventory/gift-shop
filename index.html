@@ -33,7 +33,8 @@
     </script>
     <script src="https://accounts.google.com/gsi/client">
     </script>
-    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js">
+    <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.min.js">
+        
     </script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js">
     </script>
@@ -3428,98 +3429,131 @@
         csvBtn.addEventListener('click', exportCSV);
 
         // ─── GENERATE REPORT (FIXED) ────────────────────────────────────────────────
-        async function doGenerate(resultEl, btn) {
-            if (!Object.keys(results).length) { showToast('No data saved yet!'); return; }
-            if (!currentFileId) { showToast('No source file selected'); return; }
 
-            btn.disabled = true;
-            btn.innerHTML = '<span>⏳ Generating…</span>';
-            resultEl.className = 'report-result';
-            resultEl.style.display = 'none';
-            showLoading('Generating report…');
 
-            try {
-                // 1. Fetch the original file
-                const r = await fetch(`https://www.googleapis.com/drive/v3/files/${currentFileId}?alt=media`, { headers: { Authorization: `Bearer ${accessToken}` } });
-                const buf = await r.arrayBuffer();
-                const wb = XLSX.read(buf, { type: 'array' });
+async function doGenerate(resultEl, btn) {
+    if (!Object.keys(results).length) { showToast('No data saved yet!'); return; }
+    if (!currentFileId) { showToast('No source file selected'); return; }
 
-                // 2. For each saved item, find its row and sheet, then update cells
-                for (const [name, data] of Object.entries(results)) {
-                    const item = items.find(i => i.name === name);
-                    if (!item || item.row === undefined || !item.sheet) continue;
-                    const sheet = wb.Sheets[item.sheet];
-                    if (!sheet) continue;
-                    const rowIndex = item.row;
-                    // col indexes: 0=name, 1=open, 2=add, 3=close, 4=usage (we'll compute), 5=price, 6=usage*price, 7=close*price
-                    // We'll set add (col 2), close (col 3), usage (col 4), usage*price (col 6), close*price (col 7)
-                    const addVal = data.add || 0;
-                    const closeVal = data.close || 0;
-                    const openVal = item.open || 0;
-                    const priceVal = item.price || 0;
-                    const usage = openVal + addVal - closeVal;
-                    const setCell = (col, val) => {
-                        const addr = XLSX.utils.encode_cell({ r: rowIndex, c: col });
-                        if (!sheet[addr]) sheet[addr] = {};
-                        sheet[addr].v = val;
-                        sheet[addr].t = 'n';
-                    };
-                    setCell(2, addVal);
-                    setCell(3, closeVal);
-                    setCell(4, usage);
-                    setCell(6, usage * priceVal);
-                    setCell(7, closeVal * priceVal);
+    btn.disabled = true;
+    btn.innerHTML = '<span>⏳ Generating…</span>';
+    resultEl.className = 'report-result';
+    resultEl.style.display = 'none';
+    showLoading('Generating report…');
+
+    try {
+        // 1. Fetch the original file
+        const r = await fetch(`https://www.googleapis.com/drive/v3/files/${currentFileId}?alt=media`, { headers: { Authorization: `Bearer ${accessToken}` } });
+        const buf = await r.arrayBuffer();
+        const wb = XLSX.read(buf, { type: 'array', cellStyles: true });
+
+        // 2. Process each sheet – apply formatting and update data
+        wb.SheetNames.forEach(sheetName => {
+            const sheet = wb.Sheets[sheetName];
+            const range = XLSX.utils.decode_range(sheet['!ref'] || 'A1');
+
+            // --- Right‑align row 4 (index 3) for all columns ---
+            if (range.e.r >= 3) {
+                for (let c = range.s.c; c <= range.e.c; c++) {
+                    const addr = XLSX.utils.encode_cell({ r: 3, c: c });
+                    if (!sheet[addr]) sheet[addr] = { t: 's', v: '' };
+                    if (!sheet[addr].s) sheet[addr].s = {};
+                    sheet[addr].s.alignment = { horizontal: 'right' };
                 }
-
-                // 3. Save as a new file with month name
-                const now = new Date();
-                const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-                const newName = `${months[(now.getMonth()+1)%12]} ${now.getFullYear()+(now.getMonth()===11?1:0)}`;
-                const wbOut = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
-                const blob = new Blob([wbOut], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-                const meta = JSON.stringify({ name: `${newName}.xlsx`, mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-                const fd = new FormData();
-                fd.append('metadata', new Blob([meta], { type: 'application/json' }));
-                fd.append('file', blob);
-                const up = await fetch(
-                    'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,name,webViewLink', {
-                        method: 'POST',
-                        headers: { Authorization: `Bearer ${accessToken}` },
-                        body: fd
-                    });
-                if (!up.ok) throw new Error(`Upload failed: ${up.status}`);
-                const upData = await up.json();
-
-                // 4. Update history
-                try {
-                    let hist = JSON.parse(localStorage.getItem(HISTORY_KEY) || '{}');
-                    Object.entries(results).forEach(([pname, d]) => {
-                        if (!hist[pname]) hist[pname] = [];
-                        hist[pname].push({ month: newName, close: d.close });
-                        if (hist[pname].length > 6) hist[pname].shift();
-                    });
-                    localStorage.setItem(HISTORY_KEY, JSON.stringify(hist));
-                } catch (e) {}
-                try { localStorage.removeItem(AUTOSAVE_KEY); } catch (e) {}
-
-                resultEl.className = 'report-result success';
-                resultEl.style.display = 'block';
-                resultEl.innerHTML =
-                    `✅ <strong>${upData.name}</strong> saved! <a href="${upData.webViewLink}" target="_blank" rel="noopener noreferrer">📂 Open in Drive</a>`;
-                await loadDriveFiles();
-                launchConfetti();
-
-            } catch (e) {
-                resultEl.className = 'report-result error';
-                resultEl.style.display = 'block';
-                resultEl.textContent = `❌ Error: ${e.message}`;
             }
-            hideLoading();
-            updateProgress();
-            btn.disabled = false;
-            btn.innerHTML =
-                `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg> Generate Report (${Object.keys(results).length} items)`;
-        }
+
+            // --- Apply dollar format to columns F, G, H (indices 5,6,7) for data rows ---
+            const formatCols = [5, 6, 7];
+            for (let r = 4; r <= range.e.r; r++) {
+                for (let c of formatCols) {
+                    const addr = XLSX.utils.encode_cell({ r: r, c: c });
+                    if (sheet[addr] && sheet[addr].t === 'n') {
+                        if (!sheet[addr].s) sheet[addr].s = {};
+                        sheet[addr].s.numFmt = '$#,##0.00';
+                    }
+                }
+            }
+
+            // --- Update the actual data (your existing logic) ---
+            const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
+            rows.forEach((row, ri) => {
+                const name = String(row[0] || '').trim();
+                if (!name || !results[name]) return;
+                const saved = results[name];
+                const openVal = parseFloat(row[1]) || 0;
+                const price = parseFloat(row[5]) || 0;
+                const usage = openVal + saved.add - saved.close;
+                const setCell = (col, val) => {
+                    const addr = XLSX.utils.encode_cell({ r: ri, c: col });
+                    if (!sheet[addr]) sheet[addr] = {};
+                    sheet[addr].v = val;
+                    sheet[addr].t = 'n';
+                    // Also apply dollar format to these specific cells
+                    if (col === 6 || col === 7) {
+                        if (!sheet[addr].s) sheet[addr].s = {};
+                        sheet[addr].s.numFmt = '$#,##0.00';
+                    }
+                };
+                setCell(2, saved.add);
+                setCell(3, saved.close);
+                setCell(4, usage);
+                setCell(6, usage * price);
+                setCell(7, saved.close * price);
+            });
+        });
+
+        // 3. Save as a new file
+        const now = new Date();
+        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        const newName = `${months[(now.getMonth()+1)%12]} ${now.getFullYear()+(now.getMonth()===11?1:0)}`;
+        const wbOut = XLSX.write(wb, { bookType: 'xlsx', type: 'array', cellStyles: true });
+        const blob = new Blob([wbOut], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+        const meta = JSON.stringify({ name: `${newName}.xlsx`, mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+        const fd = new FormData();
+        fd.append('metadata', new Blob([meta], { type: 'application/json' }));
+        fd.append('file', blob);
+        const up = await fetch(
+            'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,name,webViewLink', {
+                method: 'POST',
+                headers: { Authorization: `Bearer ${accessToken}` },
+                body: fd
+            });
+        if (!up.ok) throw new Error(`Upload failed: ${up.status}`);
+        const upData = await up.json();
+
+        // 4. Update history
+        try {
+            let hist = JSON.parse(localStorage.getItem(HISTORY_KEY) || '{}');
+            Object.entries(results).forEach(([pname, d]) => {
+                if (!hist[pname]) hist[pname] = [];
+                hist[pname].push({ month: newName, close: d.close });
+                if (hist[pname].length > 6) hist[pname].shift();
+            });
+            localStorage.setItem(HISTORY_KEY, JSON.stringify(hist));
+        } catch (e) {}
+        try { localStorage.removeItem(AUTOSAVE_KEY); } catch (e) {}
+
+        resultEl.className = 'report-result success';
+        resultEl.style.display = 'block';
+        resultEl.innerHTML =
+            `✅ <strong>${upData.name}</strong> saved! <a href="${upData.webViewLink}" target="_blank" rel="noopener noreferrer">📂 Open in Drive</a>`;
+        await loadDriveFiles();
+        launchConfetti();
+
+    } catch (e) {
+        resultEl.className = 'report-result error';
+        resultEl.style.display = 'block';
+        resultEl.textContent = `❌ Error: ${e.message}`;
+    }
+    hideLoading();
+    updateProgress();
+    btn.disabled = false;
+    btn.innerHTML =
+        `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg> Generate Report (${Object.keys(results).length} items)`;
+}
+
+
+        
 
         generateBtn.addEventListener('click', () => doGenerate(reportResult, generateBtn));
         generateBtn2.addEventListener('click', () => doGenerate(resultBanner2, generateBtn2));
